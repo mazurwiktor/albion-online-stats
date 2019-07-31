@@ -23,6 +23,7 @@ name = "damage-meter"
 version = "0.1.0"
 dependencies = [
  "packet_sniffer 0.1.0",
+ "protocol16 0.1.0",
 ]
 
 [[package]]
@@ -165,6 +166,10 @@ dependencies = [
  "pnet_packet 0.22.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pnet_sys 0.22.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "protocol16"
+version = "0.1.0"
 
 [[package]]
 name = "regex"
