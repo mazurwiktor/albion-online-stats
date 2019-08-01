@@ -36,6 +36,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "damage-meter"
 version = "0.1.0"
 dependencies = [
+ "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "packet_sniffer 0.1.0",
  "protocol16 0.1.0",
 ]
