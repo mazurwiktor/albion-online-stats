@@ -12,61 +12,56 @@ use std::io::Read;
 use types::TypeCode;
 use types::Value;
 
-fn deserialize_boolean(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
-    Some(Value::Boolean(buf.get_u8() != 0))
+pub fn deserialize_boolean(buf: &mut Cursor<&[u8]>) -> Option<bool> {
+    Some(buf.get_u8() != 0)
 }
 
-fn deserialize_byte(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
-    Some(Value::Byte(buf.get_u8()))
+pub fn deserialize_byte(buf: &mut Cursor<&[u8]>) -> Option<u8> {
+    Some(buf.get_u8())
 }
 
-fn deserialize_float(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
-    Some(Value::Float(buf.get_f32_be()))
+pub fn deserialize_float(buf: &mut Cursor<&[u8]>) -> Option<f32> {
+    Some(buf.get_f32_be())
 }
 
-fn deserialize_integer(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
-    Some(Value::Integer(buf.get_u32_be()))
+pub fn deserialize_integer(buf: &mut Cursor<&[u8]>) -> Option<u32> {
+    Some(buf.get_u32_be())
 }
 
-fn deserialize_long(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
-    Some(Value::Long(buf.get_i64_be()))
+pub fn deserialize_long(buf: &mut Cursor<&[u8]>) -> Option<i64> {
+    Some(buf.get_i64_be())
 }
 
-fn deserialize_short(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
-    Some(Value::Short(buf.get_i16_be()))
+pub fn deserialize_short(buf: &mut Cursor<&[u8]>) -> Option<i16> {
+    Some(buf.get_i16_be())
 }
 
-fn deserialize_double(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
-    Some(Value::Double(buf.get_f64_be()))
+pub fn deserialize_double(buf: &mut Cursor<&[u8]>) -> Option<f64> {
+    Some(buf.get_f64_be())
 }
 
-fn deserialize_string(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize_string(buf: &mut Cursor<&[u8]>) -> Option<String> {
     let size = buf.get_i16_be();
     let mut local_buffer = vec![0; size as usize];
 
     buf.read_exact(&mut local_buffer[..]).unwrap();
-    Some(Value::String(String::from_utf8(local_buffer).unwrap()))
+    Some(String::from_utf8(local_buffer).unwrap())
 }
 
-fn deserialize_string_array(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize_string_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<String>> {
     let size = buf.get_i16_be() as usize;
     let mut value = vec![];
 
     for _ in 0..size {
         if let Some(v) = deserialize_string(buf) {
-            match v {
-                Value::String(s) => {
-                    value.push(s);
-                }
-                _ => {}
-            }
+            value.push(v);
         }
     }
 
-    Some(Value::StringArray(value))
+    Some(value)
 }
 
-fn deserialize_byte_array(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize_byte_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<u8>> {
     let size = buf.get_u32_be() as usize;
     let mut value = vec![];
 
@@ -74,16 +69,10 @@ fn deserialize_byte_array(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value>
         value.push(buf.get_u8());
     }
 
-    Some(Value::ByteArray(value))
+    Some(value)
 }
 
-// def deserialize_byte_array(byte_stream):
-//     size = deserialize_integer(byte_stream)
-//     if not size:
-//         return []
-//     return list(byte_stream.read(size))
-
-fn deserialize_array(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
     let size = buf.get_i16_be() as usize;
     let mut value = vec![];
 
@@ -97,10 +86,10 @@ fn deserialize_array(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
         value.push(deserialize(type_code, buf).unwrap());
     }
 
-    Some(Value::Array(value))
+    Some(value)
 }
 
-fn deserialize_dictionary(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize_dictionary(buf: &mut Cursor<&[u8]>) -> Option<HashMap<String, Value>> {
     let key_type_code = buf.get_u8();
     let value_type_code = buf.get_u8();
     let size = buf.get_i16_be() as usize;
@@ -129,7 +118,7 @@ fn deserialize_dictionary(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value>
         value.insert(format!("{}", key.unwrap()), val.unwrap());
     }
 
-    Some(Value::Dictionary(value))
+    Some(value)
 }
 
 fn deserialize_parameter_table(buf: &mut Cursor<&[u8]>) -> HashMap<u8, Value> {
@@ -148,16 +137,16 @@ fn deserialize_parameter_table(buf: &mut Cursor<&[u8]>) -> HashMap<u8, Value> {
     value
 }
 
-fn deserialize_event_data(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize_event_data(buf: &mut Cursor<&[u8]>) -> Option<types::EventData> {
     let code = buf.get_u8();
 
-    Some(Value::EventData(types::EventData {
+    Some(types::EventData {
         code,
         parameters: deserialize_parameter_table(buf),
-    }))
+    })
 }
 
-fn deserialize_operation_response(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize_operation_response(buf: &mut Cursor<&[u8]>) -> Option<types::OperationResponse> {
     let code = buf.get_u8();
     let return_code = buf.get_i16_be();
     let debug_message = if let Value::String(s) = deserialize(buf.get_u8(), buf).unwrap() {
@@ -166,24 +155,24 @@ fn deserialize_operation_response(buf: &mut Cursor<&[u8]>) -> std::option::Optio
         "None".to_owned()
     };
     let parameters = deserialize_parameter_table(buf);
-    Some(Value::OperationResponse(types::OperationResponse {
+    Some(types::OperationResponse {
         code,
         return_code,
         debug_message,
         parameters,
-    }))
+    })
 }
 
-fn deserialize_operation_request(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize_operation_request(buf: &mut Cursor<&[u8]>) -> Option<types::OperationRequest> {
     let code = buf.get_u8();
 
-    Some(Value::OperationRequest(types::OperationRequest {
+    Some(types::OperationRequest {
         code,
         parameters: deserialize_parameter_table(buf),
-    }))
+    })
 }
 
-fn deserialize_object_array(buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize_object_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
     let size = buf.get_i16_be() as usize;
     let mut value = vec![];
 
@@ -196,28 +185,28 @@ fn deserialize_object_array(buf: &mut Cursor<&[u8]>) -> std::option::Option<Valu
         value.push(deserialize(type_code, buf).unwrap());
     }
 
-    Some(Value::Array(value))
+    Some(value)
 }
 
-pub fn deserialize(type_code: u8, buf: &mut Cursor<&[u8]>) -> std::option::Option<Value> {
+pub fn deserialize(type_code: u8, buf: &mut Cursor<&[u8]>) -> Option<Value> {
     match TypeCode::from(type_code) {
         TypeCode::Null => Some(Value::None),
-        TypeCode::Boolean => deserialize_boolean(buf),
-        TypeCode::Byte => deserialize_byte(buf),
-        TypeCode::Double => deserialize_double(buf),
-        TypeCode::Float => deserialize_float(buf),
-        TypeCode::Integer => deserialize_integer(buf),
-        TypeCode::Long => deserialize_long(buf),
-        TypeCode::Short => deserialize_short(buf),
-        TypeCode::String => deserialize_string(buf),
-        TypeCode::StringArray => deserialize_string_array(buf),
-        TypeCode::ByteArray => deserialize_byte_array(buf),
-        TypeCode::Array => deserialize_array(buf),
-        TypeCode::Dictionary => deserialize_dictionary(buf),
-        TypeCode::OperationRequest => deserialize_operation_request(buf),
-        TypeCode::OperationResponse => deserialize_operation_response(buf),
-        TypeCode::EventData => deserialize_event_data(buf),
-        TypeCode::ObjectArray => deserialize_object_array(buf),
+        TypeCode::Boolean => if let Some(v) = deserialize_boolean(buf) {Some(Value::Boolean(v))} else {None},
+        TypeCode::Byte => if let Some(v) = deserialize_byte(buf) {Some(Value::Byte(v))} else {None},
+        TypeCode::Double => if let Some(v) = deserialize_double(buf) {Some(Value::Double(v))} else {None},
+        TypeCode::Float => if let Some(v) = deserialize_float(buf) {Some(Value::Float(v))} else {None},
+        TypeCode::Integer => if let Some(v) = deserialize_integer(buf) {Some(Value::Integer(v))} else {None},
+        TypeCode::Long => if let Some(v) = deserialize_long(buf) {Some(Value::Long(v))} else {None},
+        TypeCode::Short => if let Some(v) = deserialize_short(buf) {Some(Value::Short(v))} else {None},
+        TypeCode::String => if let Some(v) = deserialize_string(buf) {Some(Value::String(v))} else {None},
+        TypeCode::StringArray => if let Some(v) = deserialize_string_array(buf) {Some(Value::StringArray(v))} else {None},
+        TypeCode::ByteArray => if let Some(v) = deserialize_byte_array(buf) {Some(Value::ByteArray(v))} else {None},
+        TypeCode::Array => if let Some(v) = deserialize_array(buf) {Some(Value::Array(v))} else {None},
+        TypeCode::Dictionary => if let Some(v) = deserialize_dictionary(buf) {Some(Value::Dictionary(v))} else {None},
+        TypeCode::OperationRequest => if let Some(v) = deserialize_operation_request(buf) {Some(Value::OperationRequest(v))} else {None},
+        TypeCode::OperationResponse => if let Some(v) = deserialize_operation_response(buf) {Some(Value::OperationResponse(v))} else {None},
+        TypeCode::EventData => if let Some(v) = deserialize_event_data(buf) {Some(Value::EventData(v))} else {None},
+        TypeCode::ObjectArray => if let Some(v) = deserialize_object_array(buf) {Some(Value::ObjectArray(v))} else {None},
         _ => panic!("Unimplemented type code {}", type_code),
     }
 }
@@ -634,7 +623,7 @@ mod tests {
         let result = deserialize(type_code, &mut buf);
         if let Some(value) = result {
             match value {
-                Value::Array(v) => {
+                Value::ObjectArray(v) => {
                     if let Value::String(val) = &v[0] {
                         assert_eq!(val, &"test1".to_owned());
                     }
