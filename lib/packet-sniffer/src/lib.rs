@@ -21,6 +21,7 @@ pub struct UdpPacket {
     pub destination_address: IpAddr,
     pub destination_port: u16,
     pub length: u16,
+    pub payload: Vec<u8>
 }
 
 pub fn receive(tx: Sender<UdpPacket>) {
@@ -39,7 +40,7 @@ pub fn receive(tx: Sender<UdpPacket>) {
         Err(e) => panic!("packetdump: unable to create channel: {}", e),
     };
 
-    let child = thread::spawn(move || {
+    thread::spawn(move || {
         loop {
             let mut buf: [u8; 1600] = [0u8; 1600];
             let mut fake_ethernet_frame = MutableEthernetPacket::new(&mut buf[..]).unwrap();
@@ -140,7 +141,8 @@ fn handle_udp_packet(interface_name: &str, source: IpAddr, destination: IpAddr, 
             source_port: udp.get_source(),
             destination_address: destination,
             destination_port: udp.get_destination(),
-            length: udp.get_length()
+            length: udp.get_length(),
+            payload: Vec::from(udp.payload())
         }).unwrap();
     }
 }
