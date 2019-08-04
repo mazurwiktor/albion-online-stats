@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+pub type Parameters = HashMap<u8, Value>;
+
 pub enum TypeCode {
     Unknown = 0,
     Null = 42,
@@ -52,7 +54,7 @@ impl From<u8> for TypeCode {
 #[derive(Clone, Debug, PartialEq)]
 pub struct EventData {
     pub code: u8,
-    pub parameters: HashMap<u8, Value>
+    pub parameters: Parameters
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -60,13 +62,13 @@ pub struct OperationResponse {
     pub code: u8,
     pub return_code: i16,
     pub debug_message: String,
-    pub parameters: HashMap<u8, Value>
+    pub parameters: Parameters
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct OperationRequest {
     pub code: u8,
-    pub parameters: HashMap<u8, Value>
+    pub parameters: Parameters
 }
 
 

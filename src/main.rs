@@ -9,7 +9,7 @@ use std::sync::mpsc;
 
 use packet_sniffer::UdpPacket;
 
-mod protocol;
+mod game_protocol;
 
 fn main() {
     let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = mpsc::channel();
@@ -21,7 +21,13 @@ fn main() {
             if packet.destination_port != 5056 && packet.source_port != 5056 {
                 continue;
             }
-            protocol::decode(&packet.payload);
+            let messages = game_protocol::decode(&packet.payload);
+
+            for msg in messages {
+                if let game_protocol::Message::ChatSay(m) = msg {
+                    println!("Found message {:?}", m);
+                }
+            }
         }
 
 

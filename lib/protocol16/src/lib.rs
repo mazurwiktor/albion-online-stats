@@ -10,7 +10,9 @@ mod types;
 use std::io::Read;
 
 use types::TypeCode;
-use types::Value;
+
+pub use types::Parameters;
+pub use types::Value;
 
 pub fn deserialize_boolean(buf: &mut Cursor<&[u8]>) -> Option<bool> {
     Some(buf.get_u8() != 0)
