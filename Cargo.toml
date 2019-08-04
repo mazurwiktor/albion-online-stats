@@ -10,3 +10,5 @@ edition = "2018"
 packet_sniffer = { path = "./lib/packet-sniffer" }
 protocol16 = { path = "./lib/protocol16" }
 bytes = "0.4"
+simplelog = "0.6"
+log = { version = "0.4", features = ["std"] }

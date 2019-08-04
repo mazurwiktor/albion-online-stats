@@ -1,17 +1,29 @@
 extern crate bytes;
-
 extern crate packet_sniffer;
 extern crate protocol16;
-
-
+use std::fs::File;
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
+
+use simplelog::*;
+use log::*;
+
 
 use packet_sniffer::UdpPacket;
 
 mod game_protocol;
 
 fn main() {
+    CombinedLogger::init(vec![
+        TermLogger::new(LevelFilter::Warn, Config::default(), TerminalMode::Mixed).unwrap(),
+        WriteLogger::new(
+            LevelFilter::Trace,
+            Config::default(),
+            File::create("packet-sniffer.log").unwrap(),
+        ),
+    ])
+    .unwrap();
+
     let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = mpsc::channel();
 
     packet_sniffer::receive(tx);
@@ -24,9 +36,7 @@ fn main() {
             let messages = game_protocol::decode(&packet.payload);
 
             for msg in messages {
-                if let game_protocol::Message::ChatSay(m) = msg {
-                    println!("Found message {:?}", m);
-                }
+                info!("Found message {:?}", msg);
             }
         }
 
