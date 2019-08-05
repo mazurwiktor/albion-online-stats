@@ -69,7 +69,7 @@ fn on_message(cursor: &mut Cursor<&[u8]>, msg_len: u32)  -> Option<Message> {
             if event_data.code != 2 && event_data.parameters.get(&252u8).is_some() {
                 if let protocol16::Value::Short(code) = event_data.parameters.get(&252u8)? {
                     let packet = Packet{code: *code as usize, parameters: event_data.parameters};
-                    debug!("{:?}", packet);
+                    debug!("[{}] {:?}", packet.code, packet);
                     message = packet.decode()
                 }
             }

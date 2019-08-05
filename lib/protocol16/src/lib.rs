@@ -8,11 +8,33 @@ use bytes::Buf;
 mod types;
 
 use std::io::Read;
+use std::error;
+use std::fmt;
 
 use types::TypeCode;
 
 pub use types::Parameters;
 pub use types::Value;
+
+
+#[derive(Debug, Clone)]
+pub struct DeserializationError
+{
+    type_code: u8
+}
+
+impl fmt::Display for DeserializationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Failed to deserialize type_code {}", self.type_code)
+    }
+}
+
+impl error::Error for DeserializationError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        None
+    }
+}
+
 
 pub fn deserialize_boolean(buf: &mut Cursor<&[u8]>) -> Option<bool> {
     Some(buf.get_u8() != 0)
@@ -132,8 +154,9 @@ fn deserialize_parameter_table(buf: &mut Cursor<&[u8]>) -> HashMap<u8, Value> {
         let key_type_code = buf.get_u8();
         let value_type_code = buf.get_u8();
         let val = deserialize(value_type_code, buf);
-
-        value.insert(key_type_code, val.unwrap());
+        if let Ok(val) = val {
+            value.insert(key_type_code, val);
+        }
     }
 
     value
@@ -190,26 +213,26 @@ pub fn deserialize_object_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
     Some(value)
 }
 
-pub fn deserialize(type_code: u8, buf: &mut Cursor<&[u8]>) -> Option<Value> {
+pub fn deserialize(type_code: u8, buf: &mut Cursor<&[u8]>) -> Result<Value, DeserializationError> {
     match TypeCode::from(type_code) {
-        TypeCode::Null => Some(Value::None),
-        TypeCode::Boolean => if let Some(v) = deserialize_boolean(buf) {Some(Value::Boolean(v))} else {None},
-        TypeCode::Byte => if let Some(v) = deserialize_byte(buf) {Some(Value::Byte(v))} else {None},
-        TypeCode::Double => if let Some(v) = deserialize_double(buf) {Some(Value::Double(v))} else {None},
-        TypeCode::Float => if let Some(v) = deserialize_float(buf) {Some(Value::Float(v))} else {None},
-        TypeCode::Integer => if let Some(v) = deserialize_integer(buf) {Some(Value::Integer(v))} else {None},
-        TypeCode::Long => if let Some(v) = deserialize_long(buf) {Some(Value::Long(v))} else {None},
-        TypeCode::Short => if let Some(v) = deserialize_short(buf) {Some(Value::Short(v))} else {None},
-        TypeCode::String => if let Some(v) = deserialize_string(buf) {Some(Value::String(v))} else {None},
-        TypeCode::StringArray => if let Some(v) = deserialize_string_array(buf) {Some(Value::StringArray(v))} else {None},
-        TypeCode::ByteArray => if let Some(v) = deserialize_byte_array(buf) {Some(Value::ByteArray(v))} else {None},
-        TypeCode::Array => if let Some(v) = deserialize_array(buf) {Some(Value::Array(v))} else {None},
-        TypeCode::Dictionary => if let Some(v) = deserialize_dictionary(buf) {Some(Value::Dictionary(v))} else {None},
-        TypeCode::OperationRequest => if let Some(v) = deserialize_operation_request(buf) {Some(Value::OperationRequest(v))} else {None},
-        TypeCode::OperationResponse => if let Some(v) = deserialize_operation_response(buf) {Some(Value::OperationResponse(v))} else {None},
-        TypeCode::EventData => if let Some(v) = deserialize_event_data(buf) {Some(Value::EventData(v))} else {None},
-        TypeCode::ObjectArray => if let Some(v) = deserialize_object_array(buf) {Some(Value::ObjectArray(v))} else {None},
-        _ => panic!("Unimplemented type code {}", type_code),
+        TypeCode::Null => Ok(Value::None),
+        TypeCode::Boolean => if let Some(v) = deserialize_boolean(buf) {Ok(Value::Boolean(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::Byte => if let Some(v) = deserialize_byte(buf) {Ok(Value::Byte(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::Double => if let Some(v) = deserialize_double(buf) {Ok(Value::Double(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::Float => if let Some(v) = deserialize_float(buf) {Ok(Value::Float(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::Integer => if let Some(v) = deserialize_integer(buf) {Ok(Value::Integer(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::Long => if let Some(v) = deserialize_long(buf) {Ok(Value::Long(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::Short => if let Some(v) = deserialize_short(buf) {Ok(Value::Short(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::String => if let Some(v) = deserialize_string(buf) {Ok(Value::String(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::StringArray => if let Some(v) = deserialize_string_array(buf) {Ok(Value::StringArray(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::ByteArray => if let Some(v) = deserialize_byte_array(buf) {Ok(Value::ByteArray(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::Array => if let Some(v) = deserialize_array(buf) {Ok(Value::Array(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::Dictionary => if let Some(v) = deserialize_dictionary(buf) {Ok(Value::Dictionary(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::OperationRequest => if let Some(v) = deserialize_operation_request(buf) {Ok(Value::OperationRequest(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::OperationResponse => if let Some(v) = deserialize_operation_response(buf) {Ok(Value::OperationResponse(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::EventData => if let Some(v) = deserialize_event_data(buf) {Ok(Value::EventData(v))} else {Err(DeserializationError{type_code})},
+        TypeCode::ObjectArray => if let Some(v) = deserialize_object_array(buf) {Ok(Value::ObjectArray(v))} else {Err(DeserializationError{type_code})},
+        _ => Err(DeserializationError{type_code}),
     }
 }
 
