@@ -19,7 +19,7 @@ fn main() {
         WriteLogger::new(
             LevelFilter::Trace,
             Config::default(),
-            File::create("packet-sniffer.log").unwrap(),
+            File::create("damage-meter.log").unwrap(),
         ),
     ])
     .unwrap();
