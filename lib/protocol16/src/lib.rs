@@ -68,8 +68,10 @@ pub fn deserialize_string(buf: &mut Cursor<&[u8]>) -> Option<String> {
     let size = buf.get_i16_be();
     let mut local_buffer = vec![0; size as usize];
 
-    buf.read_exact(&mut local_buffer[..]).unwrap();
-    Some(String::from_utf8(local_buffer).unwrap())
+    if let Ok(_) = buf.read_exact(&mut local_buffer[..]) {
+        return Some(String::from_utf8(local_buffer).unwrap());
+    }
+    None
 }
 
 pub fn deserialize_string_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<String>> {
@@ -90,7 +92,11 @@ pub fn deserialize_byte_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<u8>> {
     let mut value = vec![];
 
     for _ in 0..size {
-        value.push(buf.get_u8());
+        if buf.remaining() > 0 {
+            value.push(buf.get_u8());
+        } else {
+            return None
+        }
     }
 
     Some(value)

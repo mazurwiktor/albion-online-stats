@@ -10,6 +10,8 @@ static LOG_OUT: u8 = 4;
 static SEND_UNRELIABLE: u8 = 7;
 static SEND_RELIABLE: u8 = 6;
 
+static RESPONSE_CONSTANT: usize = 1000;
+
 static MSG_TYPE_REQUEST: u8 = 2;
 static MSG_TYPE_RESPONSE: u8 = 3;
 static MSG_TYPE_EVENT: u8 = 4;
@@ -69,15 +71,21 @@ fn on_message(cursor: &mut Cursor<&[u8]>, msg_len: u32)  -> Option<Message> {
             if event_data.code != 2 && event_data.parameters.get(&252u8).is_some() {
                 if let protocol16::Value::Short(code) = event_data.parameters.get(&252u8)? {
                     let packet = Packet{code: *code as usize, parameters: event_data.parameters};
-                    debug!("[{}] {:?}", packet.code, packet);
-                    message = packet.decode()
+                    debug!("EVENT: [{}] {:?}", packet.code, packet);
+                    message = packet.decode();
                 }
             }
         }
     } else if msg_type == MSG_TYPE_REQUEST {
 
     } else if msg_type == MSG_TYPE_RESPONSE {
-        
+        if let Some(response) = protocol16::deserialize_operation_response(&mut payload) {
+            let code = response.code as usize + RESPONSE_CONSTANT;
+            let packet = Packet{code, parameters: response.parameters};
+            debug!("RESPONSE: [{}] {:?}", packet.code, packet);
+
+            message = packet.decode();
+        }
     }
 
     cursor.advance(operation_length as usize);
