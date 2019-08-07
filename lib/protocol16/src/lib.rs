@@ -37,45 +37,54 @@ impl error::Error for DeserializationError {
 
 
 pub fn deserialize_boolean(buf: &mut Cursor<&[u8]>) -> Option<bool> {
-    Some(buf.get_u8() != 0)
+    let v = if buf.remaining() > 0 {buf.get_u8()} else { return None;};
+    Some(v != 0)
 }
 
 pub fn deserialize_byte(buf: &mut Cursor<&[u8]>) -> Option<u8> {
-    Some(buf.get_u8())
+    let v = if buf.remaining() > 0 {buf.get_u8()} else { return None;};
+    Some(v)
 }
 
 pub fn deserialize_float(buf: &mut Cursor<&[u8]>) -> Option<f32> {
-    Some(buf.get_f32_be())
+    let v = if buf.remaining() >= 4 {buf.get_f32_be()} else { return None;};
+    Some(v)
 }
 
 pub fn deserialize_integer(buf: &mut Cursor<&[u8]>) -> Option<u32> {
-    Some(buf.get_u32_be())
+    let v = if buf.remaining() >= 4 {buf.get_u32_be()} else { return None;};
+    Some(v)
 }
 
 pub fn deserialize_long(buf: &mut Cursor<&[u8]>) -> Option<i64> {
-    Some(buf.get_i64_be())
+    let v = if buf.remaining() >= 8 {buf.get_i64_be()} else { return None;};
+    Some(v)
 }
 
 pub fn deserialize_short(buf: &mut Cursor<&[u8]>) -> Option<i16> {
-    Some(buf.get_i16_be())
+    let v = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
+    Some(v)
 }
 
 pub fn deserialize_double(buf: &mut Cursor<&[u8]>) -> Option<f64> {
-    Some(buf.get_f64_be())
+    let v = if buf.remaining() >= 8 {buf.get_f64_be()} else { return None;};
+    Some(v)
 }
 
 pub fn deserialize_string(buf: &mut Cursor<&[u8]>) -> Option<String> {
-    let size = buf.get_i16_be();
+    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
     let mut local_buffer = vec![0; size as usize];
 
     if let Ok(_) = buf.read_exact(&mut local_buffer[..]) {
-        return Some(String::from_utf8(local_buffer).unwrap());
+        if let Ok(s) = String::from_utf8(local_buffer) {
+            return Some(s)
+        }
     }
     None
 }
 
 pub fn deserialize_string_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<String>> {
-    let size = buf.get_i16_be() as usize;
+    let size = if buf.remaining() >= 2 {buf.get_i16_be() as usize } else { return None;};
     let mut value = vec![];
 
     for _ in 0..size {
@@ -103,7 +112,7 @@ pub fn deserialize_byte_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<u8>> {
 }
 
 pub fn deserialize_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
-    let size = buf.get_i16_be() as usize;
+    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
     let mut value = vec![];
 
     if size == 0 {
@@ -113,7 +122,11 @@ pub fn deserialize_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
     let type_code = buf.get_u8();
 
     for _ in 0..size {
-        value.push(deserialize(type_code, buf).unwrap());
+        if let Ok(v) = deserialize(type_code, buf) {
+            value.push(v);
+        } else {
+            break;
+        }
     }
 
     Some(value)
@@ -122,7 +135,7 @@ pub fn deserialize_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
 pub fn deserialize_dictionary(buf: &mut Cursor<&[u8]>) -> Option<HashMap<String, Value>> {
     let key_type_code = buf.get_u8();
     let value_type_code = buf.get_u8();
-    let size = buf.get_i16_be() as usize;
+    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
 
     if size == 0 {
         return None;
@@ -152,13 +165,13 @@ pub fn deserialize_dictionary(buf: &mut Cursor<&[u8]>) -> Option<HashMap<String,
 }
 
 fn deserialize_parameter_table(buf: &mut Cursor<&[u8]>) -> HashMap<u8, Value> {
-    let size = buf.get_i16_be() as usize;
-
     let mut value: HashMap<u8, Value> = HashMap::new();
 
+    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return value;};
+
     for _ in 0..size {
-        let key_type_code = buf.get_u8();
-        let value_type_code = buf.get_u8();
+        let key_type_code = if buf.remaining() > 0 { buf.get_u8() } else { break; };
+        let value_type_code = if buf.remaining() > 0 { buf.get_u8() } else { break; };
         let val = deserialize(value_type_code, buf);
         if let Ok(val) = val {
             value.insert(key_type_code, val);
@@ -204,7 +217,7 @@ pub fn deserialize_operation_request(buf: &mut Cursor<&[u8]>) -> Option<types::O
 }
 
 pub fn deserialize_object_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
-    let size = buf.get_i16_be() as usize;
+    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
     let mut value = vec![];
 
     if size == 0 {
@@ -212,7 +225,7 @@ pub fn deserialize_object_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
     }
 
     for _ in 0..size {
-        let type_code = buf.get_u8();
+        let type_code = if buf.remaining() > 0 { buf.get_u8() } else { break; };
         value.push(deserialize(type_code, buf).unwrap());
     }
 
