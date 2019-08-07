@@ -11,4 +11,6 @@ packet_sniffer = { path = "./lib/packet-sniffer" }
 protocol16 = { path = "./lib/protocol16" }
 bytes = "0.4"
 simplelog = "0.6"
+timer = "0.1"
+chrono = "0.4"
 log = { version = "0.4", features = ["std"] }
