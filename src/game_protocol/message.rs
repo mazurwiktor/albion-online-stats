@@ -10,6 +10,7 @@ macro_rules! deserialize_number {
             match p {
                 Value::Short(v) => Some(*v as usize),
                 Value::Integer(v) => Some(*v as usize),
+                Value::Byte(v) => Some(*v as usize),
                 _ => {
                     error!("Failed to deserialize {}", $name);
                     None
@@ -192,7 +193,21 @@ impl CharacterStats {
 }
 
 #[derive(Debug)]
+pub struct Leave {
+    pub source: usize
+}
+
+impl Leave {
+    fn encode(val: Parameters) -> Option<Message> {
+        let source = deserialize_number!(val, 0, "Leave::source")?;
+
+        Some(Message::Leave(Leave{source}))
+    }
+}
+
+#[derive(Debug)]
 pub enum Message {
+    Leave(Leave),
     ChatSay(ChatSay),
     NewCharacter(NewCharacter),
     HealthUpdate(HealthUpdate),
@@ -203,6 +218,7 @@ pub enum Message {
 impl Packet {
     pub fn decode(self) -> Option<Message> {
         match self.code {
+            1 => Leave::encode(self.parameters),
             6 => HealthUpdate::encode(self.parameters),
             24 => NewCharacter::encode(self.parameters),
             63 => ChatSay::encode(self.parameters),

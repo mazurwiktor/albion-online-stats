@@ -76,6 +76,10 @@ impl Player
 
     pub fn get_damage_dealt(&self) -> f32 { self.damage_dealt }
 
+    pub fn get_time_elapsed(&self) -> f32 {
+        *self.time_elapsed.lock().unwrap()
+    }
+
     pub fn get_dps(&self) -> f32 { 
         let elapsed = *self.time_elapsed.lock().unwrap();
         if elapsed == 0.0 {

@@ -8,7 +8,7 @@ use std::sync::mpsc;
 
 use simplelog::*;
 use log::*;
-
+use std::time::Instant;
 
 use packet_sniffer::UdpPacket;
 
@@ -31,7 +31,7 @@ fn main() {
     packet_sniffer::receive(tx);
 
     let mut meter = meter::Meter::new();
-
+    let now = Instant::now();
     loop {
         if let Ok(packet) = rx.recv() {
             if packet.destination_port != 5056 && packet.source_port != 5056 {
@@ -43,18 +43,24 @@ fn main() {
                 debug!("Found message {:?}", msg);
 
                 match msg {
+                    game_protocol::Message::Leave(msg) => meter.register_leave(msg.source),
                     game_protocol::Message::NewCharacter(msg) => meter.register_player(&msg.character_name, msg.source),
-                    game_protocol::Message::CharacterStats(msg) => meter.register_player(&msg.character_name, msg.source),
+                    game_protocol::Message::CharacterStats(msg) => meter.register_main_player(&msg.character_name, msg.source),
                     game_protocol::Message::HealthUpdate(msg) => meter.register_damage_dealt(msg.source, msg.value),
                     game_protocol::Message::RegenerationHealthChanged(msg) => {
                         match msg.regeneration_rate {
                             Some(_) => meter.register_combat_leave(msg.source),
-                            None => meter.register_combat_enter(msg.source)
+                            None => meter.register_combat_enter(msg.source) // TODO: handle death
                         }
                     }
                     _ => {}
                 }
             }
+            if now.elapsed().as_millis() % 10 == 0 {
+                print!("{}[2J", 27 as char);
+                println!("{:?}", meter.get_instance_session());
+            }
+
         }
 
 
