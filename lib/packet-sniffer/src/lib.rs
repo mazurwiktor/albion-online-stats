@@ -27,11 +27,22 @@ pub struct UdpPacket {
 pub fn receive(tx: Sender<UdpPacket>) {
     use pnet::datalink::Channel::Ethernet;
     let interfaces = datalink::interfaces();
-    let interface = interfaces
+    let up_interface = datalink::interfaces()
+        .into_iter()
+        .filter(|i| !i.is_loopback() && !i.is_up())
+        .next();
+
+    let any_interface = datalink::interfaces()
         .into_iter()
         .filter(|i| !i.is_loopback())
-        .next()
-        .unwrap();
+        .next();
+    
+    let interface = if up_interface.is_some() {
+        up_interface.unwrap()
+    } else {
+        any_interface.unwrap()
+    };
+
 
     // Create a channel to receive on
     let (_, mut rx) = match datalink::channel(&interface, Default::default()) {

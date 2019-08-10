@@ -10,6 +10,7 @@ static LOG_OUT: u8 = 4;
 static SEND_UNRELIABLE: u8 = 7;
 static SEND_RELIABLE: u8 = 6;
 
+static REQUEST_CONSTANT: usize = 10000;
 static RESPONSE_CONSTANT: usize = 1000;
 
 static MSG_TYPE_REQUEST: u8 = 2;
@@ -77,7 +78,13 @@ fn on_message(cursor: &mut Cursor<&[u8]>, msg_len: u32)  -> Option<Message> {
             }
         }
     } else if msg_type == MSG_TYPE_REQUEST {
+        if let Some(request) = protocol16::deserialize_operation_request(&mut payload) {
+            let code = request.code as usize + REQUEST_CONSTANT;
+            let packet = Packet{code, parameters: request.parameters};
+            debug!("REQUEST: [{}] {:?}", packet.code, packet);
 
+            message = packet.decode();
+        }
     } else if msg_type == MSG_TYPE_RESPONSE {
         if let Some(response) = protocol16::deserialize_operation_response(&mut payload) {
             let code = response.code as usize + RESPONSE_CONSTANT;
