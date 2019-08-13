@@ -26,7 +26,6 @@ pub struct UdpPacket {
 
 pub fn receive(tx: Sender<UdpPacket>) {
     use pnet::datalink::Channel::Ethernet;
-    let interfaces = datalink::interfaces();
     let up_interface = datalink::interfaces()
         .into_iter()
         .filter(|i| !i.is_loopback() && !i.is_up())
@@ -46,11 +45,7 @@ pub fn receive(tx: Sender<UdpPacket>) {
     let config = pnet::datalink::Config{
         write_buffer_size: 65536,
         read_buffer_size: 65536,
-        read_timeout: None,
-        write_timeout: None,
-        channel_type: pnet::datalink::ChannelType::Layer2,
-        bpf_fd_attempts: 1000,
-        linux_fanout: None
+        ..Default::default()
     };
 
     // Create a channel to receive on
