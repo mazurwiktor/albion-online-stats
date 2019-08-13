@@ -1,26 +1,21 @@
 extern crate bytes;
+mod types;
 
+use std::{error, fmt};
+use std::io::{Read, Cursor};
 use std::collections::HashMap;
-use std::io::Cursor;
 
 use bytes::Buf;
 
-mod types;
-
-use std::io::Read;
-use std::error;
-use std::fmt;
 
 use types::TypeCode;
 
 pub use types::Parameters;
 pub use types::Value;
 
-
 #[derive(Debug, Clone)]
-pub struct DeserializationError
-{
-    type_code: u8
+pub struct DeserializationError {
+    type_code: u8,
 }
 
 impl fmt::Display for DeserializationError {
@@ -35,56 +30,91 @@ impl error::Error for DeserializationError {
     }
 }
 
-
 pub fn deserialize_boolean(buf: &mut Cursor<&[u8]>) -> Option<bool> {
-    let v = if buf.remaining() > 0 {buf.get_u8()} else { return None;};
+    let v = if buf.remaining() > 0 {
+        buf.get_u8()
+    } else {
+        return None;
+    };
     Some(v != 0)
 }
 
 pub fn deserialize_byte(buf: &mut Cursor<&[u8]>) -> Option<u8> {
-    let v = if buf.remaining() > 0 {buf.get_u8()} else { return None;};
+    let v = if buf.remaining() > 0 {
+        buf.get_u8()
+    } else {
+        return None;
+    };
     Some(v)
 }
 
 pub fn deserialize_float(buf: &mut Cursor<&[u8]>) -> Option<f32> {
-    let v = if buf.remaining() >= 4 {buf.get_f32_be()} else { return None;};
+    let v = if buf.remaining() >= 4 {
+        buf.get_f32_be()
+    } else {
+        return None;
+    };
     Some(v)
 }
 
 pub fn deserialize_integer(buf: &mut Cursor<&[u8]>) -> Option<u32> {
-    let v = if buf.remaining() >= 4 {buf.get_u32_be()} else { return None;};
+    let v = if buf.remaining() >= 4 {
+        buf.get_u32_be()
+    } else {
+        return None;
+    };
     Some(v)
 }
 
 pub fn deserialize_long(buf: &mut Cursor<&[u8]>) -> Option<i64> {
-    let v = if buf.remaining() >= 8 {buf.get_i64_be()} else { return None;};
+    let v = if buf.remaining() >= 8 {
+        buf.get_i64_be()
+    } else {
+        return None;
+    };
     Some(v)
 }
 
 pub fn deserialize_short(buf: &mut Cursor<&[u8]>) -> Option<i16> {
-    let v = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
+    let v = if buf.remaining() >= 2 {
+        buf.get_i16_be()
+    } else {
+        return None;
+    };
     Some(v)
 }
 
 pub fn deserialize_double(buf: &mut Cursor<&[u8]>) -> Option<f64> {
-    let v = if buf.remaining() >= 8 {buf.get_f64_be()} else { return None;};
+    let v = if buf.remaining() >= 8 {
+        buf.get_f64_be()
+    } else {
+        return None;
+    };
     Some(v)
 }
 
 pub fn deserialize_string(buf: &mut Cursor<&[u8]>) -> Option<String> {
-    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
+    let size = if buf.remaining() >= 2 {
+        buf.get_i16_be()
+    } else {
+        return None;
+    };
     let mut local_buffer = vec![0; size as usize];
 
     if let Ok(_) = buf.read_exact(&mut local_buffer[..]) {
         if let Ok(s) = String::from_utf8(local_buffer) {
-            return Some(s)
+            return Some(s);
         }
     }
     None
 }
 
 pub fn deserialize_string_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<String>> {
-    let size = if buf.remaining() >= 2 {buf.get_i16_be() as usize } else { return None;};
+    let size = if buf.remaining() >= 2 {
+        buf.get_i16_be() as usize
+    } else {
+        return None;
+    };
     let mut value = vec![];
 
     for _ in 0..size {
@@ -104,7 +134,7 @@ pub fn deserialize_byte_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<u8>> {
         if buf.remaining() > 0 {
             value.push(buf.get_u8());
         } else {
-            return None
+            return None;
         }
     }
 
@@ -112,7 +142,11 @@ pub fn deserialize_byte_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<u8>> {
 }
 
 pub fn deserialize_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
-    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
+    let size = if buf.remaining() >= 2 {
+        buf.get_i16_be()
+    } else {
+        return None;
+    };
     let mut value = vec![];
 
     if size == 0 {
@@ -135,7 +169,11 @@ pub fn deserialize_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
 pub fn deserialize_dictionary(buf: &mut Cursor<&[u8]>) -> Option<HashMap<String, Value>> {
     let key_type_code = buf.get_u8();
     let value_type_code = buf.get_u8();
-    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
+    let size = if buf.remaining() >= 2 {
+        buf.get_i16_be()
+    } else {
+        return None;
+    };
 
     if size == 0 {
         return None;
@@ -167,11 +205,23 @@ pub fn deserialize_dictionary(buf: &mut Cursor<&[u8]>) -> Option<HashMap<String,
 fn deserialize_parameter_table(buf: &mut Cursor<&[u8]>) -> HashMap<u8, Value> {
     let mut value: HashMap<u8, Value> = HashMap::new();
 
-    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return value;};
+    let size = if buf.remaining() >= 2 {
+        buf.get_i16_be()
+    } else {
+        return value;
+    };
 
     for _ in 0..size {
-        let key_type_code = if buf.remaining() > 0 { buf.get_u8() } else { break; };
-        let value_type_code = if buf.remaining() > 0 { buf.get_u8() } else { break; };
+        let key_type_code = if buf.remaining() > 0 {
+            buf.get_u8()
+        } else {
+            break;
+        };
+        let value_type_code = if buf.remaining() > 0 {
+            buf.get_u8()
+        } else {
+            break;
+        };
         let val = deserialize(value_type_code, buf);
         if let Ok(val) = val {
             value.insert(key_type_code, val);
@@ -217,7 +267,11 @@ pub fn deserialize_operation_request(buf: &mut Cursor<&[u8]>) -> Option<types::O
 }
 
 pub fn deserialize_object_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
-    let size = if buf.remaining() >= 2 {buf.get_i16_be()} else { return None;};
+    let size = if buf.remaining() >= 2 {
+        buf.get_i16_be()
+    } else {
+        return None;
+    };
     let mut value = vec![];
 
     if size == 0 {
@@ -225,7 +279,11 @@ pub fn deserialize_object_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
     }
 
     for _ in 0..size {
-        let type_code = if buf.remaining() > 0 { buf.get_u8() } else { break; };
+        let type_code = if buf.remaining() > 0 {
+            buf.get_u8()
+        } else {
+            break;
+        };
         value.push(deserialize(type_code, buf).unwrap());
     }
 
@@ -235,23 +293,55 @@ pub fn deserialize_object_array(buf: &mut Cursor<&[u8]>) -> Option<Vec<Value>> {
 pub fn deserialize(type_code: u8, buf: &mut Cursor<&[u8]>) -> Result<Value, DeserializationError> {
     match TypeCode::from(type_code) {
         TypeCode::Null => Ok(Value::None),
-        TypeCode::Boolean => if let Some(v) = deserialize_boolean(buf) {Ok(Value::Boolean(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::Byte => if let Some(v) = deserialize_byte(buf) {Ok(Value::Byte(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::Double => if let Some(v) = deserialize_double(buf) {Ok(Value::Double(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::Float => if let Some(v) = deserialize_float(buf) {Ok(Value::Float(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::Integer => if let Some(v) = deserialize_integer(buf) {Ok(Value::Integer(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::Long => if let Some(v) = deserialize_long(buf) {Ok(Value::Long(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::Short => if let Some(v) = deserialize_short(buf) {Ok(Value::Short(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::String => if let Some(v) = deserialize_string(buf) {Ok(Value::String(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::StringArray => if let Some(v) = deserialize_string_array(buf) {Ok(Value::StringArray(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::ByteArray => if let Some(v) = deserialize_byte_array(buf) {Ok(Value::ByteArray(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::Array => if let Some(v) = deserialize_array(buf) {Ok(Value::Array(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::Dictionary => if let Some(v) = deserialize_dictionary(buf) {Ok(Value::Dictionary(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::OperationRequest => if let Some(v) = deserialize_operation_request(buf) {Ok(Value::OperationRequest(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::OperationResponse => if let Some(v) = deserialize_operation_response(buf) {Ok(Value::OperationResponse(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::EventData => if let Some(v) = deserialize_event_data(buf) {Ok(Value::EventData(v))} else {Err(DeserializationError{type_code})},
-        TypeCode::ObjectArray => if let Some(v) = deserialize_object_array(buf) {Ok(Value::ObjectArray(v))} else {Err(DeserializationError{type_code})},
-        _ => Err(DeserializationError{type_code}),
+        TypeCode::Boolean => deserialize_boolean(buf)
+            .map(|v| Ok(Value::Boolean(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::Byte => deserialize_byte(buf)
+            .map(|v| Ok(Value::Byte(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::Double => deserialize_double(buf)
+            .map(|v| Ok(Value::Double(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::Float => deserialize_float(buf)
+            .map(|v| Ok(Value::Float(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::Integer => deserialize_integer(buf)
+            .map(|v| Ok(Value::Integer(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::Long => deserialize_long(buf)
+            .map(|v| Ok(Value::Long(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::Short => deserialize_short(buf)
+            .map(|v| Ok(Value::Short(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::String => deserialize_string(buf)
+            .map(|v| Ok(Value::String(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::StringArray => deserialize_string_array(buf)
+            .map(|v| Ok(Value::StringArray(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::ByteArray => deserialize_byte_array(buf)
+            .map(|v| Ok(Value::ByteArray(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::Array => deserialize_array(buf)
+            .map(|v| Ok(Value::Array(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::Dictionary => deserialize_dictionary(buf)
+            .map(|v| Ok(Value::Dictionary(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::OperationRequest => deserialize_operation_request(buf)
+            .map(|v| Ok(Value::OperationRequest(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::OperationResponse => deserialize_operation_response(buf)
+            .map(|v| Ok(Value::OperationResponse(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::EventData => deserialize_event_data(buf)
+            .map(|v| Ok(Value::EventData(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        TypeCode::ObjectArray => deserialize_object_array(buf)
+            .map(|v| Ok(Value::ObjectArray(v)))
+            .unwrap_or(Err(DeserializationError { type_code })),
+        _ => Err(DeserializationError { type_code }),
     }
 }
 
@@ -270,18 +360,17 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Dictionary(v) => {
-                    return assert_eq!(
-                        v.get("testKey1"),
-                        Some(&Value::String("testValue1".to_owned()))
-                    )
-                }
-                _ => assert!(false),
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Dictionary(v) => {
+                return assert_eq!(
+                    v.get("testKey1"),
+                    Some(&Value::String("testValue1".to_owned()))
+                )
             }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -294,24 +383,24 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Array(v) => {
-                    if let Value::String(val) = &v[0] {
-                        assert_eq!(val, &"test1".to_owned());
-                    }
-                    if let Value::String(val) = &v[1] {
-                        assert_eq!(val, &"test2".to_owned());
-                    }
-                    return;
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+
+        match value {
+            Value::Array(v) => {
+                if let Value::String(val) = &v[0] {
+                    assert_eq!(val, &"test1".to_owned());
                 }
-                Value::StringArray(v) => {
-                    return assert_eq!(vec!["test1".to_owned(), "test2".to_owned()], v)
+                if let Value::String(val) = &v[1] {
+                    assert_eq!(val, &"test2".to_owned());
                 }
-                _ => assert!(false),
+                return;
             }
+            Value::StringArray(v) => {
+                return assert_eq!(vec!["test1".to_owned(), "test2".to_owned()], v)
+            }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -321,13 +410,12 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Byte(v) => return assert_eq!(v, 6),
-                _ => assert!(false),
-            }
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Byte(v) => return assert_eq!(v, 6),
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -337,19 +425,13 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Double(v) => return assert_eq!(v, 1234.55),
-                _ => assert!(false),
-            }
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Double(v) => return assert_eq!(v, 1234.55),
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
-    //     typed_code = struct.unpack("B", byte_stream.read(1))[0]
-    //     result = deseliarizer.deserialize(byte_stream, typed_code)
-
-    //     assert result
-    //     assert result == 1234.55
 
     #[test]
     fn deserialize_event_data() {
@@ -361,20 +443,19 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::EventData(v) => {
-                    assert_eq!(v.code, 100);
-                    assert_eq!(
-                        v.parameters.get(&0).unwrap(),
-                        &Value::String("test1".to_owned())
-                    );
-                    return;
-                }
-                _ => assert!(false),
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::EventData(v) => {
+                assert_eq!(v.code, 100);
+                assert_eq!(
+                    v.parameters.get(&0).unwrap(),
+                    &Value::String("test1".to_owned())
+                );
+                return;
             }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -384,13 +465,12 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Float(v) => return assert_eq!(v, 1234.55),
-                _ => assert!(false),
-            }
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Float(v) => return assert_eq!(v, 1234.55),
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -400,13 +480,12 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Integer(v) => return assert_eq!(v, 1234),
-                _ => assert!(false),
-            }
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Integer(v) => return assert_eq!(v, 1234),
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -416,13 +495,12 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Short(v) => return assert_eq!(v, 1234),
-                _ => assert!(false),
-            }
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Short(v) => return assert_eq!(v, 1234),
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -432,13 +510,12 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Long(v) => return assert_eq!(v, 1234),
-                _ => assert!(false),
-            }
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Long(v) => return assert_eq!(v, 1234),
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -448,28 +525,21 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Array(v) => {
-                    if let Value::Integer(val) = v[0] {
-                        assert_eq!(val, 0);
-                    }
-                    if let Value::Integer(val) = v[1] {
-                        assert_eq!(val, 1);
-                    }
-                    return;
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Array(v) => {
+                if let Value::Integer(val) = v[0] {
+                    assert_eq!(val, 0);
                 }
-                _ => assert!(false),
+                if let Value::Integer(val) = v[1] {
+                    assert_eq!(val, 1);
+                }
+                return;
             }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
-    //     typed_code = struct.unpack("B", byte_stream.read(1))[0]
-    //     result = deseliarizer.deserialize(byte_stream, typed_code)
-
-    //     assert result
-    //     assert result[0] == 0
-    //     assert result[1] == 1
 
     #[test]
     fn deserialize_boolean() {
@@ -478,14 +548,14 @@ mod tests {
 
         let type_code = buf.get_u8();
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Boolean(v) => return assert_eq!(v, true),
-                _ => assert!(false),
-            }
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Boolean(v) => return assert_eq!(v, true),
+            _ => assert!(false),
         }
-        assert!(false);
     }
+
     #[test]
     fn deserialize_operation_response() {
         let value = vec![
@@ -496,21 +566,20 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::OperationResponse(v) => {
-                    assert_eq!(v.code, 100);
-                    assert_eq!(v.return_code, 100);
-                    assert_eq!(
-                        v.parameters.get(&1).unwrap(),
-                        &Value::String("test2".to_owned())
-                    );
-                    return;
-                }
-                _ => assert!(false),
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::OperationResponse(v) => {
+                assert_eq!(v.code, 100);
+                assert_eq!(v.return_code, 100);
+                assert_eq!(
+                    v.parameters.get(&1).unwrap(),
+                    &Value::String("test2".to_owned())
+                );
+                return;
             }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -523,20 +592,19 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::OperationRequest(v) => {
-                    assert_eq!(v.code, 100);
-                    assert_eq!(
-                        v.parameters.get(&1).unwrap(),
-                        &Value::String("test2".to_owned())
-                    );
-                    return;
-                }
-                _ => assert!(false),
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::OperationRequest(v) => {
+                assert_eq!(v.code, 100);
+                assert_eq!(
+                    v.parameters.get(&1).unwrap(),
+                    &Value::String("test2".to_owned())
+                );
+                return;
             }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -548,13 +616,12 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::String(v) => return assert_eq!(&v, "test_message"),
-                _ => assert!(false),
-            }
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::String(v) => return assert_eq!(&v, "test_message"),
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -564,17 +631,16 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::ByteArray(v) => {
-                    assert_eq!(&v[0], &6);
-                    assert_eq!(&v[1], &7);
-                    return;
-                }
-                _ => assert!(false),
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::ByteArray(v) => {
+                assert_eq!(&v[0], &6);
+                assert_eq!(&v[1], &7);
+                return;
             }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -587,18 +653,17 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Array(v) => {
-                    if let Value::Dictionary(val) = &v[0] {
-                        assert_eq!(val.get("0").unwrap(), &Value::String("test1".to_owned()));
-                    }
-                    return;
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Array(v) => {
+                if let Value::Dictionary(val) = &v[0] {
+                    assert_eq!(val.get("0").unwrap(), &Value::String("test1".to_owned()));
                 }
-                _ => assert!(false),
+                return;
             }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -608,21 +673,21 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Array(v) => {
-                    if let Value::ByteArray(val) = &v[0] {
-                        assert_eq!(val[0], 0);
-                        assert_eq!(val[1], 2);
-                        assert_eq!(val[2], 4);
-                        assert_eq!(val[3], 8);
-                        return;
-                    }
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+
+        match value {
+            Value::Array(v) => {
+                if let Value::ByteArray(val) = &v[0] {
+                    assert_eq!(val[0], 0);
+                    assert_eq!(val[1], 2);
+                    assert_eq!(val[2], 4);
+                    assert_eq!(val[3], 8);
+                    return;
                 }
-                _ => assert!(false),
             }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -635,24 +700,23 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::Array(v) => {
-                    if let Value::Integer(val) = &v[0][0] {
-                        assert_eq!(val, &1);
-                    }
-                    if let Value::Integer(val) = &v[0][1] {
-                        assert_eq!(val, &2);
-                    }
-                    if let Value::Integer(val) = &v[0][2] {
-                        assert_eq!(val, &3);
-                    }
-                    return;
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+        match value {
+            Value::Array(v) => {
+                if let Value::Integer(val) = &v[0][0] {
+                    assert_eq!(val, &1);
                 }
-                _ => assert!(false),
+                if let Value::Integer(val) = &v[0][1] {
+                    assert_eq!(val, &2);
+                }
+                if let Value::Integer(val) = &v[0][2] {
+                    assert_eq!(val, &3);
+                }
+                return;
             }
+            _ => assert!(false),
         }
-        panic!("Unimplemented!")
     }
 
     #[test]
@@ -665,20 +729,19 @@ mod tests {
         let type_code = buf.get_u8();
 
         let result = deserialize(type_code, &mut buf);
-        if let Some(value) = result {
-            match value {
-                Value::ObjectArray(v) => {
-                    if let Value::String(val) = &v[0] {
-                        assert_eq!(val, &"test1".to_owned());
-                    }
-                    if let Value::String(val) = &v[1] {
-                        assert_eq!(val, &"test2".to_owned());
-                    }
-                    return;
+        assert!(result.is_ok(), "Unimplemented!");
+        let value = result.unwrap();
+
+        match value {
+            Value::ObjectArray(v) => {
+                if let Value::String(val) = &v[0] {
+                    assert_eq!(val, &"test1".to_owned());
                 }
-                _ => assert!(false),
+                if let Value::String(val) = &v[1] {
+                    assert_eq!(val, &"test2".to_owned());
+                }
             }
-        }
-        panic!("Unimplemented!")
+            _ => assert!(false),
+        };
     }
 }
