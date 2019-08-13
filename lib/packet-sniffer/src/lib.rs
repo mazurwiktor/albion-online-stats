@@ -43,9 +43,18 @@ pub fn receive(tx: Sender<UdpPacket>) {
         any_interface.unwrap()
     };
 
+    let config = pnet::datalink::Config{
+        write_buffer_size: 65536,
+        read_buffer_size: 65536,
+        read_timeout: None,
+        write_timeout: None,
+        channel_type: pnet::datalink::ChannelType::Layer2,
+        bpf_fd_attempts: 1000,
+        linux_fanout: None
+    };
 
     // Create a channel to receive on
-    let (_, mut rx) = match datalink::channel(&interface, Default::default()) {
+    let (_, mut rx) = match datalink::channel(&interface, config) {
         Ok(Ethernet(tx, rx)) => (tx, rx),
         Ok(_) => panic!("packetdump: unhandled channel type: {}"),
         Err(e) => panic!("packetdump: unable to create channel: {}", e),
