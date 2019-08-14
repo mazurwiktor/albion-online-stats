@@ -2,3 +2,4 @@
 **/*.rs.bk
 lib/**/target
 damage-meter.log
+*.so

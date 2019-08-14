@@ -11,12 +11,16 @@ mod player;
 use player::Player;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-struct DPS(f32);
+pub struct DPS(f32);
 
 impl DPS {
     fn new(damage: f32, time: f32) -> Self {
         Self(damage / time * 1000.0)
-    } 
+    }
+
+    pub fn value(&self) -> f32 {
+        self.0
+    }
 }
 
 #[derive(Hash, Eq, PartialEq)]
@@ -28,10 +32,10 @@ pub struct Session {
 
 #[derive(Debug, PartialEq)]
 pub struct PlayerStatistics {
-    player: String,
-    damage: f32,
-    time_in_combat: f32,
-    dps: DPS
+    pub player: String,
+    pub damage: f32,
+    pub time_in_combat: f32,
+    pub dps: DPS
 }
 
 impl Session {
