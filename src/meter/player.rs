@@ -1,6 +1,4 @@
-use std::thread;
 use std::sync::{Arc, Mutex};
-use std::borrow::Cow;
 
 use timer;
 
@@ -13,30 +11,29 @@ enum CombatState
 
 struct Time
 {
-    guard: timer::Guard,
-    timer: timer::Timer
+    _guard: timer::Guard,
+    _timer: timer::Timer
 }
 
 pub struct Player
 {
     pub id: usize,
-    name: String,
     damage_dealt: f32,
     time_elapsed: Arc<Mutex<f32>>,
     combat_state: Arc<Mutex<CombatState>>,
-    time: Time
+    _time: Time
 }
 
 impl Player
 {
-    pub fn new(id: usize, name: &str) -> Self {
-        let timer = timer::Timer::new();
+    pub fn new(id: usize) -> Self {
+        let _timer = timer::Timer::new();
         let time_elapsed = Arc::new(Mutex::new(0.0));
         let combat_state = Arc::new(Mutex::new(CombatState::OutOfCombat));
-        let guard = {
+        let _guard = {
             let time_elapsed = time_elapsed.clone();
             let combat_state = combat_state.clone();
-            timer.schedule_repeating(chrono::Duration::milliseconds(10), move || {
+            _timer.schedule_repeating(chrono::Duration::milliseconds(10), move || {
                 if *combat_state.lock().unwrap() == CombatState::InCombat {
                     *time_elapsed.lock().unwrap() += 10.0;
                 }
@@ -46,11 +43,10 @@ impl Player
 
         Self {
             id, 
-            name: name.to_owned(), 
             damage_dealt: 0.0, 
             time_elapsed, 
             combat_state,
-            time: Time{timer, guard}
+            _time: Time{_timer, _guard}
         }
     }
     
@@ -70,23 +66,10 @@ impl Player
         *self.combat_state.lock().unwrap() = CombatState::OutOfCombat;
     }
 
-    pub fn get_name(&self) -> std::borrow::Cow<str> {
-        std::borrow::Cow::Borrowed(&self.name)
-    }
-
     pub fn get_damage_dealt(&self) -> f32 { self.damage_dealt }
 
     pub fn get_time_elapsed(&self) -> f32 {
         *self.time_elapsed.lock().unwrap()
-    }
-
-    pub fn get_dps(&self) -> f32 { 
-        let elapsed = *self.time_elapsed.lock().unwrap();
-        if elapsed == 0.0 {
-            return 0.0;
-        }
-
-        (self.damage_dealt / *self.time_elapsed.lock().unwrap()) * 1000.0
     }
 }
 
@@ -94,17 +77,16 @@ impl Player
 mod test
 {
     use super::*;
-
+    use std::thread;
+    
     #[allow(unused)]
     fn get_test_player() -> Player {
-        Player::new(1, "test_player")
+        Player::new(1)
     }
 
     #[test]
     fn test_player_initial_stats() {
-        let player = Player::new(1, "test_player");
-
-        assert_eq!(player.name, "test_player");
+        let player = Player::new(1);
 
         assert_eq!(player.get_damage_dealt(), 0.0);
     }
@@ -127,6 +109,5 @@ mod test
 
         thread::sleep(std::time::Duration::from_millis(100));
         assert_eq!(player.get_damage_dealt(), 1000.0);
-        assert!(player.get_dps() < 1000.0);
     }
 }

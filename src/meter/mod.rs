@@ -10,6 +10,15 @@ mod player;
 
 use player::Player;
 
+#[derive(Debug, Copy, Clone, PartialEq)]
+struct DPS(f32);
+
+impl DPS {
+    fn new(damage: f32, time: f32) -> Self {
+        Self(damage / time * 1000.0)
+    } 
+}
+
 #[derive(Hash, Eq, PartialEq)]
 struct PlayerName(String);
 
@@ -17,12 +26,12 @@ pub struct Session {
     players: HashMap<PlayerName, Player>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct PlayerStatistics {
     player: String,
     damage: f32,
     time_in_combat: f32,
-    dps: f32
+    dps: DPS
 }
 
 impl Session {
@@ -39,13 +48,9 @@ impl Session {
                 player: name.0.to_owned(),
                 damage: player.get_damage_dealt(),
                 time_in_combat: player.get_time_elapsed(),
-                dps: player.get_damage_dealt() / player.get_time_elapsed() * 1000.0
+                dps: DPS::new(player.get_damage_dealt(), player.get_time_elapsed())
             })
             .collect()
-    }
-
-    fn get_player_by_name(&self, player_name: &str) -> Option<&Player> {
-        self.players.get(&PlayerName(player_name.to_owned()))
     }
 
     fn get_player_by_id(&mut self, player_id: usize) -> Option<&mut Player> {
@@ -55,7 +60,7 @@ impl Session {
     fn add_player(&mut self, player_name: &str, player_id: usize) {
         self.players.insert(
             PlayerName(player_name.to_owned()),
-            Player::new(player_id, player_name),
+            Player::new(player_id),
         );
     }
 }
@@ -74,7 +79,7 @@ impl Meter {
     }
 
     pub fn register_main_player(&mut self, name: &str, id: usize) {
-        error!("Main player {} registerd with id {}", name, id);
+        debug!("Main player {} registerd with id {}", name, id);
         self.main_player_id = Some(id);
         match self.instance_sessions.back_mut() {
             Some(session) => session.add_player(name, id),
@@ -86,18 +91,19 @@ impl Meter {
         }
     }
 
-    pub fn register_leave(&mut self, id: usize) {
-        if let Some(main_player_id) = self.main_player_id {
-            if id == main_player_id {
-                error!("New session, main player left the instance");
-                self.instance_sessions.push_back(Session::new());
-            }
+    pub fn register_leave(&mut self, id: usize) -> Option<()> {
+        let main_player_id = self.main_player_id?;
+        if id == main_player_id {
+            debug!("New session, main player left the instance");
+            self.instance_sessions.push_back(Session::new());
         }
+
+        Some(())
     }
 
     pub fn register_player(&mut self, name: &str, id: usize) {
         if self.instance_sessions.is_empty() {
-            error!("New session");
+            debug!("New session");
             self.instance_sessions.push_back(Session::new());
         }
 
@@ -105,34 +111,49 @@ impl Meter {
         session.add_player(name, id);
     }
 
-    pub fn register_damage_dealt(&mut self, player_id: usize, damage: f32) {
-        if let Some(session) = self.instance_sessions.back_mut() {
-            if let Some(player) = session.get_player_by_id(player_id) {
-                if damage < 0.0 {
-                    player.register_damage_dealt(f32::abs(damage));
-                }
-            }
+    pub fn register_damage_dealt(&mut self, player_id: usize, damage: f32) -> Option<()> {
+        let session = self.instance_sessions.back_mut()?;
+        let player = session.get_player_by_id(player_id)?;
+        if damage < 0.0 {
+            player.register_damage_dealt(f32::abs(damage));
         }
+
+        Some(())
     }
 
-    pub fn register_combat_enter(&mut self, player_id: usize) {
-        if let Some(session) = self.instance_sessions.back_mut() {
-            if let Some(player) = session.get_player_by_id(player_id) {
-                player.enter_combat();
-            }
-        }
+    pub fn register_combat_enter(&mut self, player_id: usize) -> Option<()> {
+        let session = self.instance_sessions.back_mut()?;
+        let player = session.get_player_by_id(player_id)?;
+
+        player.enter_combat();
+
+        Some(())
     }
 
-    pub fn register_combat_leave(&mut self, player_id: usize) {
-        if let Some(session) = self.instance_sessions.back_mut() {
-            if let Some(player) = session.get_player_by_id(player_id) {
-                player.leave_combat();
-            }
-        }
+    pub fn register_combat_leave(&mut self, player_id: usize) -> Option<()> {
+        let session = self.instance_sessions.back_mut()?;
+        let player = session.get_player_by_id(player_id)?;
+
+        player.leave_combat();
+
+        Some(())
     }
 
     pub fn get_instance_session(&self) -> Option<Vec<PlayerStatistics>> {
         let last_session = self.instance_sessions.back()?;
         Some(last_session.stats())
     }
+}
+
+
+#[test]
+fn test_meter() {
+    let mut meter = Meter::new();
+
+    assert_eq!(meter.get_instance_session(), None);
+
+    meter.register_main_player("name", 0);
+    
+    assert!(meter.get_instance_session().is_some());
+    assert_eq!(meter.get_instance_session().unwrap()[0].player, "name".to_owned());
 }
