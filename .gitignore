@@ -3,3 +3,4 @@
 lib/**/target
 damage-meter.log
 *.so
+.vscode
