@@ -1,0 +1,17 @@
+
+language: rust
+rust:
+  - stable
+script:
+  - cargo build --release --verbose
+before_deploy:
+  - tar cvf albion-stats.tar gui/albion-stats gui/meter.py target/release/libmeter.so
+deploy:
+  provider: releases
+  api_key:
+    secure: $GITHUB_TOKEN
+  file:
+    - "albion-stats.tar"
+  skip_cleanup: true
+  on:
+    tags: true
