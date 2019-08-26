@@ -79,7 +79,7 @@ fn initialize(_py: Python) -> PyResult<u32> {
                         game_protocol::Message::Leave(msg) => meter.register_leave(msg.source).unwrap_or(()),
                         game_protocol::Message::NewCharacter(msg) => meter.register_player(&msg.character_name, msg.source),
                         game_protocol::Message::CharacterStats(msg) => meter.register_main_player(&msg.character_name, msg.source),
-                        game_protocol::Message::HealthUpdate(msg) => meter.register_damage_dealt(msg.source, msg.value).unwrap_or(()),
+                        game_protocol::Message::HealthUpdate(msg) => meter.register_damage_dealt(msg.target, msg.value).unwrap_or(()),
                         game_protocol::Message::RegenerationHealthChanged(msg) => {
                             match msg.regeneration_rate {
                                 Some(_) => meter.register_combat_leave(msg.source).unwrap_or(()),

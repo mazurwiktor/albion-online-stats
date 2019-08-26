@@ -15,7 +15,7 @@ Albion online stats is an extention to MMORPG game - Albion Online. It tracks ne
 
 * copied from [Albion Online Data](https://www.albion-online-data.com/)
 
-## Getting started
+# Getting started
 
 ## Prerequisites
 
@@ -64,7 +64,7 @@ Albion online stats is an extention to MMORPG game - Albion Online. It tracks ne
     ```
 
 
-## License
+# License
 Licensed under either of
 
   * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
