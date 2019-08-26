@@ -53,7 +53,7 @@ class MyWidget(QWidget):
 
         timer = QTimer(self)
         timer.timeout.connect(self.fill_table)
-        timer.start(1000)
+        timer.start(5000)
 
     def session_changed(self, session):
         return self.session != session
