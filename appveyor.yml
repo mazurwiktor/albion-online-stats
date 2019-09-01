@@ -2,12 +2,12 @@ image: Visual Studio 2017
 environment:
   RUST_TEST_THREADS: 1
   matrix:
-    - TARGET: x86_64-pc-windows-msvc
-      RUST_CHANNEL: beta
-      WPD_LIB_PATH: "C:/dl/wpdpack/WpdPack/Lib/x64/Packet.lib"
-      PYTHON: "C:\\Python36-x64"
-      PYTHON_ARCH: "64"
-      VCVARS: "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\bin\\amd64\\vcvars64.bat"
+  - TARGET: x86_64-pc-windows-msvc
+    RUST_CHANNEL: beta
+    WPD_LIB_PATH: "C:/dl/wpdpack/WpdPack/Lib/x64/Packet.lib"
+    PYTHON: "C:\\Python36-x64"
+    PYTHON_ARCH: "64"
+    VCVARS: "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\bin\\amd64\\vcvars64.bat"
 install:
  - SET PATH=%PYTHON%;%path%
  - ps: mkdir C:/dl
@@ -22,29 +22,20 @@ install:
  - choco install winpcap
  - rustc -V
  - cargo -V
-test: false
+build: true
 build_script:
-  - cargo build --release --verbose
+    - cargo build --release --verbose
 after_build:
-- ps: cd ${env:APPVEYOR_BUILD_FOLDER}/gui
-- python -m venv env
-- ps: .\env\Scripts\activate.ps1
-- pip install -r requirements.txt
-- ps: cp ${env:APPVEYOR_BUILD_FOLDER}\target\release\meter.dll libmeter.pyd
-- pyinstaller -F -i ..\assets\albion-stats-icon.ico -r libmeter.pyd meter.py
-- ps: deactivate
-- ps: mv dist\meter.exe ..\albion-online-stats.exe
-- ps: ls
-- ps: ls ..\
-artifacts:
-  path: albion-online-stats.exe
-  name: binary
+  - ps: cd ${env:APPVEYOR_BUILD_FOLDER}/gui
+  - pip install -r requirements.txt
+  - ps: cp ${env:APPVEYOR_BUILD_FOLDER}/target/release/meter.dll libmeter.pyd
+  - pyinstaller -F -w -i ../assets/albion-stats-icon.ico meter.py
 deploy:
   provider: GitHub
   auth_token:
-    secure: cB8zvJaO/tS/Z3v4038LBCsRaO9LqrtRS0CV/eLfHnG5SefWKNSObALSvphoQxC4
-  artifact: binary
+    secure: ${env:GITHUB_TOKEN}
+  artifact: ${env:APPVEYOR_BUILD_FOLDER}/gui/dist/albion-stats.exe
   draft: false
   prerelease: false
   on:
-    APPVEYOR_REPO_TAG: true # deploy on tag push only
+    APPVEYOR_REPO_TAG: true        # deploy on tag push only
