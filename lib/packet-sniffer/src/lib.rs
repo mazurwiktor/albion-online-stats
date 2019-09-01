@@ -1,5 +1,7 @@
 extern crate pnet;
 
+use std::sync::{Arc, Mutex};
+
 use std::net::IpAddr;
 use std::sync::mpsc::Sender;
 use std::thread;
@@ -25,75 +27,69 @@ pub struct UdpPacket {
 }
 
 pub fn receive(tx: Sender<UdpPacket>) {
+    let shared_tx = Arc::new(Mutex::new(tx));
+
     use pnet::datalink::Channel::Ethernet;
-    let up_interface = datalink::interfaces()
-        .into_iter()
-        .filter(|i| !i.is_loopback() && !i.is_up())
-        .next();
 
-    let any_interface = datalink::interfaces()
+    let interfaces = datalink::interfaces()
         .into_iter()
-        .filter(|i| !i.is_loopback())
-        .next();
+        .filter(|i| !i.is_loopback());
     
-    let interface = if up_interface.is_some() {
-        up_interface.unwrap()
-    } else {
-        any_interface.unwrap()
-    };
+    for interface in interfaces {
+        let tx = shared_tx.clone();
+        let config = pnet::datalink::Config{
+            write_buffer_size: 65536,
+            read_buffer_size: 65536,
+            ..Default::default()
+        };
 
-    let config = pnet::datalink::Config{
-        write_buffer_size: 65536,
-        read_buffer_size: 65536,
-        ..Default::default()
-    };
+        // Create a channel to receive on
+        let (_, mut rx) = match datalink::channel(&interface, config) {
+            Ok(Ethernet(tx, rx)) => (tx, rx),
+            Ok(_) => panic!("packetdump: unhandled channel type: {}"),
+            Err(e) => panic!("packetdump: unable to create channel: {}", e),
+        };
 
-    // Create a channel to receive on
-    let (_, mut rx) = match datalink::channel(&interface, config) {
-        Ok(Ethernet(tx, rx)) => (tx, rx),
-        Ok(_) => panic!("packetdump: unhandled channel type: {}"),
-        Err(e) => panic!("packetdump: unable to create channel: {}", e),
-    };
-
-    thread::spawn(move || {
-        loop {
-            let mut buf: [u8; 1600] = [0u8; 1600];
-            let mut fake_ethernet_frame = MutableEthernetPacket::new(&mut buf[..]).unwrap();
-            match rx.next() {
-                Ok(packet) => {
-                    if cfg!(target_os = "macos")
-                        && interface.is_up()
-                        && !interface.is_broadcast()
-                        && !interface.is_loopback()
-                        && interface.is_point_to_point()
-                    {
-                        // Maybe is TUN interface
-                        let version = Ipv4Packet::new(&packet).unwrap().get_version();
-                        if version == 4 {
-                            fake_ethernet_frame.set_destination(MacAddr(0, 0, 0, 0, 0, 0));
-                            fake_ethernet_frame.set_source(MacAddr(0, 0, 0, 0, 0, 0));
-                            fake_ethernet_frame.set_ethertype(EtherTypes::Ipv4);
-                            fake_ethernet_frame.set_payload(&packet);
-                            handle_ethernet_frame(&interface, &fake_ethernet_frame.to_immutable(), &tx);
-                            continue;
-                        } else if version == 6 {
-                            fake_ethernet_frame.set_destination(MacAddr(0, 0, 0, 0, 0, 0));
-                            fake_ethernet_frame.set_source(MacAddr(0, 0, 0, 0, 0, 0));
-                            fake_ethernet_frame.set_ethertype(EtherTypes::Ipv6);
-                            fake_ethernet_frame.set_payload(&packet);
-                            handle_ethernet_frame(&interface, &fake_ethernet_frame.to_immutable(), &tx);
-                            continue;
+        thread::spawn(move || {
+            loop {
+                let mut buf: [u8; 1600] = [0u8; 1600];
+                let mut fake_ethernet_frame = MutableEthernetPacket::new(&mut buf[..]).unwrap();
+                match rx.next() {
+                    Ok(packet) => {
+                        if cfg!(target_os = "macos")
+                            && interface.is_up()
+                            && !interface.is_broadcast()
+                            && !interface.is_loopback()
+                            && interface.is_point_to_point()
+                        {
+                            // Maybe is TUN interface
+                            let version = Ipv4Packet::new(&packet).unwrap().get_version();
+                            if version == 4 {
+                                fake_ethernet_frame.set_destination(MacAddr(0, 0, 0, 0, 0, 0));
+                                fake_ethernet_frame.set_source(MacAddr(0, 0, 0, 0, 0, 0));
+                                fake_ethernet_frame.set_ethertype(EtherTypes::Ipv4);
+                                fake_ethernet_frame.set_payload(&packet);
+                                handle_ethernet_frame(&interface, &fake_ethernet_frame.to_immutable(), &tx);
+                                continue;
+                            } else if version == 6 {
+                                fake_ethernet_frame.set_destination(MacAddr(0, 0, 0, 0, 0, 0));
+                                fake_ethernet_frame.set_source(MacAddr(0, 0, 0, 0, 0, 0));
+                                fake_ethernet_frame.set_ethertype(EtherTypes::Ipv6);
+                                fake_ethernet_frame.set_payload(&packet);
+                                handle_ethernet_frame(&interface, &fake_ethernet_frame.to_immutable(), &tx);
+                                continue;
+                            }
                         }
+                        handle_ethernet_frame(&interface, &EthernetPacket::new(packet).unwrap(), &tx);
                     }
-                    handle_ethernet_frame(&interface, &EthernetPacket::new(packet).unwrap(), &tx);
+                    Err(e) => panic!("packetdump: unable to receive packet: {}", e),
                 }
-                Err(e) => panic!("packetdump: unable to receive packet: {}", e),
             }
-        }
-    });
+        });
+    }
 }
 
-fn handle_ethernet_frame(interface: &NetworkInterface, ethernet: &EthernetPacket, tx: &Sender<UdpPacket>) {
+fn handle_ethernet_frame(interface: &NetworkInterface, ethernet: &EthernetPacket, tx: &Arc<Mutex<Sender<UdpPacket>>>) {
     let interface_name = &interface.name[..];
     match ethernet.get_ethertype() {
         EtherTypes::Ipv4 => handle_ipv4_packet(interface_name, ethernet, &tx),
@@ -102,7 +98,7 @@ fn handle_ethernet_frame(interface: &NetworkInterface, ethernet: &EthernetPacket
     }
 }
 
-fn handle_ipv4_packet(interface_name: &str, ethernet: &EthernetPacket, tx: &Sender<UdpPacket>) {
+fn handle_ipv4_packet(interface_name: &str, ethernet: &EthernetPacket, tx: &Arc<Mutex<Sender<UdpPacket>>>) {
     let header = Ipv4Packet::new(ethernet.payload());
     if let Some(header) = header {
         handle_transport_protocol(
@@ -116,7 +112,7 @@ fn handle_ipv4_packet(interface_name: &str, ethernet: &EthernetPacket, tx: &Send
     }
 }
 
-fn handle_ipv6_packet(interface_name: &str, ethernet: &EthernetPacket, tx: &Sender<UdpPacket>) {
+fn handle_ipv6_packet(interface_name: &str, ethernet: &EthernetPacket, tx: &Arc<Mutex<Sender<UdpPacket>>>) {
     let header = Ipv6Packet::new(ethernet.payload());
     if let Some(header) = header {
         handle_transport_protocol(
@@ -136,7 +132,7 @@ fn handle_transport_protocol(
     destination: IpAddr,
     protocol: IpNextHeaderProtocol,
     packet: &[u8],
-    tx: &Sender<UdpPacket>
+    tx: &Arc<Mutex<Sender<UdpPacket>>>
 ) {
     match protocol {
         IpNextHeaderProtocols::Udp => {
@@ -146,9 +142,9 @@ fn handle_transport_protocol(
     }
 }
 
-fn handle_udp_packet(interface_name: &str, source: IpAddr, destination: IpAddr, packet: &[u8], tx: &Sender<UdpPacket>) {
+fn handle_udp_packet(interface_name: &str, source: IpAddr, destination: IpAddr, packet: &[u8], tx: &Arc<Mutex<Sender<UdpPacket>>>) {
     let udp = udp::UdpPacket::new(packet);
-
+    let tx = tx.lock().unwrap();
     if let Some(udp) = udp {
         tx.send(UdpPacket{
             interface_name: String::from(interface_name),
