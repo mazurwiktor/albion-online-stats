@@ -50,7 +50,6 @@ fn get_instance_session(py: Python) -> PyResult<PyList> {
 
 fn initialize(_py: Python) -> PyResult<u32> {
     CombinedLogger::init(vec![
-        TermLogger::new(LevelFilter::Error, Config::default(), TerminalMode::Mixed).unwrap(),
         WriteLogger::new(
             LevelFilter::Trace,
             Config::default(),

@@ -115,7 +115,10 @@ class MyWidget(QWidget):
 
 
 if __name__ == "__main__":
-    libmeter.initialize()
+    try:
+        libmeter.initialize()
+    except:
+        pass
 
     WIDTH = 256
     HEIGHT = 200
