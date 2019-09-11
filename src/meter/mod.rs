@@ -15,6 +15,10 @@ pub struct DPS(f32);
 
 impl DPS {
     fn new(damage: f32, time: f32) -> Self {
+        if time == 0.0 {
+            return Self(0.0)
+        }
+
         Self(damage / time * 1000.0)
     }
 
