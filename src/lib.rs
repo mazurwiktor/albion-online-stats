@@ -122,8 +122,11 @@ fn register_message(meter: &mut meter::Meter, message: &game_protocol::Message) 
         game_protocol::Message::RegenerationHealthChanged(msg) => {
             match msg.regeneration_rate {
                 Some(_) => meter.register_combat_leave(msg.source).unwrap_or(()),
-                None => meter.register_combat_enter(msg.source).unwrap_or(()), // TODO: handle death
+                None => meter.register_combat_enter(msg.source).unwrap_or(()),
             }
+        },
+        game_protocol::Message::Died(msg) => {
+            meter.register_combat_leave(msg.source).unwrap_or(())
         }
         _ => {}
     }

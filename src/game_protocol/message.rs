@@ -206,13 +206,31 @@ impl Leave {
 }
 
 #[derive(Debug)]
+pub struct Died {
+    pub source: usize,
+    pub target: usize,
+    pub target_name: String
+}
+
+impl Died {
+    fn encode(val: Parameters) -> Option<Message> {
+        let source = deserialize_number!(val, 0, "Died::source")?;
+        let target = deserialize_number!(val, 1, "Died::target")?;
+        let target_name = deserialize_string!(val, 3, "Died::target_name")?;
+
+        Some(Message::Died(Died{source, target, target_name}))
+    }
+}
+
+#[derive(Debug)]
 pub enum Message {
     Leave(Leave),
     ChatSay(ChatSay),
     NewCharacter(NewCharacter),
     HealthUpdate(HealthUpdate),
     RegenerationHealthChanged(RegenerationHealthChanged),
-    CharacterStats(CharacterStats)
+    CharacterStats(CharacterStats),
+    Died(Died)
 }
 
 impl Packet {
@@ -223,6 +241,7 @@ impl Packet {
             24 => NewCharacter::encode(self.parameters),
             63 => ChatSay::encode(self.parameters),
             79 => RegenerationHealthChanged::encode(self.parameters),
+            149 => Died::encode(self.parameters),
             1001 => CharacterStats::encode(self.parameters),
             _ => None,
         }
