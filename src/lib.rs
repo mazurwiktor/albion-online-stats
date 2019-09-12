@@ -65,6 +65,14 @@ fn get_instance_session(py: Python) -> PyResult<PyList> {
     )
 }
 
+fn reset_instance_session(_py: Python) -> PyResult<u32> {
+    let meter = &mut METER.lock().unwrap();
+
+    meter.reset_instance_session();
+
+    Ok(0)
+}
+
 fn initialize(_py: Python) -> PyResult<u32> {
     CombinedLogger::init(vec![WriteLogger::new(
         LevelFilter::Trace,
@@ -124,6 +132,7 @@ fn register_message(meter: &mut meter::Meter, message: &game_protocol::Message) 
 py_module_initializer!(libmeter, initliblibmeter, PyInit_libmeter, |py, m| {
     m.add(py, "__doc__", "This module is implemented in Rust")?;
     m.add(py, "initialize", py_fn!(py, initialize()))?;
+    m.add(py, "reset_instance_session", py_fn!(py, reset_instance_session()))?;
     m.add(
         py,
         "get_instance_session",
@@ -291,4 +300,61 @@ mod tests {
             10.0
         );
     }
+
+    #[test]
+    fn test_new_player_damage_reset() {
+        let guard = Python::acquire_gil();
+        let py = guard.python();
+
+        helpers::register(Message::NewCharacter(message::NewCharacter::new()));
+
+        let instance_session = get_instance_session(py).unwrap();
+        let stat = instance_session.get_item(py, 0);
+        let dict = stat.cast_as::<PyDict>(py).unwrap();
+        assert_eq!(
+            dict.get_item(py, &"player")
+                .unwrap()
+                .cast_as::<PyUnicode>(py)
+                .unwrap()
+                .to_string_lossy(py),
+            "CH1"
+        );
+        assert_eq!(
+            dict.get_item(py, &"damage")
+                .unwrap()
+                .cast_as::<PyFloat>(py)
+                .unwrap()
+                .value(py),
+            0.0
+        );
+
+        helpers::register(Message::HealthUpdate(message::HealthUpdate::new()));
+
+        let instance_session = get_instance_session(py).unwrap();
+        let stat = instance_session.get_item(py, 0);
+        let dict = stat.cast_as::<PyDict>(py).unwrap();
+        assert_eq!(
+            dict.get_item(py, &"damage")
+                .unwrap()
+                .cast_as::<PyFloat>(py)
+                .unwrap()
+                .value(py),
+            10.0
+        );
+
+
+        reset_instance_session(py).unwrap();
+        let instance_session = get_instance_session(py).unwrap();
+        let stat = instance_session.get_item(py, 0);
+        let dict = stat.cast_as::<PyDict>(py).unwrap();
+        assert_eq!(
+            dict.get_item(py, &"damage")
+                .unwrap()
+                .cast_as::<PyFloat>(py)
+                .unwrap()
+                .value(py),
+            0.0
+        );
+    }
+
 }

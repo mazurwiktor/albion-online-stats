@@ -27,7 +27,7 @@ impl DPS {
     }
 }
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Hash, Eq, PartialEq, Clone)]
 struct PlayerName(String);
 
 pub struct Session {
@@ -46,6 +46,17 @@ impl Session {
     fn new() -> Self {
         Self {
             players: HashMap::new(),
+        }
+    }
+
+    fn from(session: &Self) -> Self {
+        let mut players = HashMap::new();
+        for (player_name, player) in &session.players {
+            players.insert(player_name.clone(), Player::new(player.id));
+        }
+
+        Self {
+            players
         }
     }
 
@@ -150,6 +161,14 @@ impl Meter {
     pub fn get_instance_session(&self) -> Option<Vec<PlayerStatistics>> {
         let last_session = self.instance_sessions.back()?;
         Some(last_session.stats())
+    }
+
+    pub fn reset_instance_session(&mut self) -> Option<()> {
+        let last_session = self.instance_sessions.back()?;
+        let new_session = Session::from(&last_session);
+        self.instance_sessions.push_back(new_session);
+
+        Some(())
     }
 }
 

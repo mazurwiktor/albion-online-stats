@@ -13,6 +13,7 @@ import clipboard
 
 from table import Table
 from engine import get_instance_session
+from engine import reset_instance_session
 
 class BottomButtons(QWidget):
     def __init__(self, table):
@@ -47,7 +48,7 @@ class BottomButtons(QWidget):
         clipboard.copy(clip)
 
     def reset(self):
-        self.table.fill([])
+        reset_instance_session()
 
     def close(self):
         sys.exit(0)

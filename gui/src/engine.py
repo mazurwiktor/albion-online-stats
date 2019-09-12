@@ -12,15 +12,18 @@ class Stat:
 
 
 def get_instance_session():
-    # session = libmeter.get_instance_session()
-    session = [
-        {'player': 'A', 'damage': 1234.02, 'time_in_combat': 12.0, 'dps': 12.4234},
-        {'player': 'B', 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
-        {'player': 'C', 'damage': 23.02, 'time_in_combat': 12.0, 'dps': 13},
-        {'player': 'D', 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
-    ]
+    session = libmeter.get_instance_session()
+    # session = [
+    #     {'player': 'A', 'damage': 1234.02, 'time_in_combat': 12.0, 'dps': 12.4234},
+    #     {'player': 'B', 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
+    #     {'player': 'C', 'damage': 23.02, 'time_in_combat': 12.0, 'dps': 13},
+    #     {'player': 'D', 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
+    # ]
 
     return [Stat(s['player'], s['damage'], s['time_in_combat'], s['dps']) for s in session]
+
+def reset_instance_session():
+    libmeter.reset_instance_session()
 
 def initialize():
     try:
