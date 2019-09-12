@@ -34,7 +34,7 @@ after_build:
 - ps: cp ${env:APPVEYOR_BUILD_FOLDER}\target\release\meter.dll libmeter.pyd
 - pyinstaller -F -w -i ..\..\assets\albion-stats-icon.ico -r libmeter.pyd meter.py
 - ps: deactivate
-- ps: mv dist\meter.exe ..\albion-online-stats.exe
+- ps: mv dist\meter.exe ..\..\albion-online-stats.exe
 - ps: ls
 - ps: ls ..\
 artifacts:
