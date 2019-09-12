@@ -1,4 +1,8 @@
+import os
+
 import libmeter
+
+TESTING_ENABLED = bool(os.getenv('TESTING'))
 
 class Stat:
     def __init__(self, name, damage, time_in_combat, dps):
@@ -12,13 +16,15 @@ class Stat:
 
 
 def get_instance_session():
-    session = libmeter.get_instance_session()
-    # session = [
-    #     {'player': 'A', 'damage': 1234.02, 'time_in_combat': 12.0, 'dps': 12.4234},
-    #     {'player': 'B', 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
-    #     {'player': 'C', 'damage': 23.02, 'time_in_combat': 12.0, 'dps': 13},
-    #     {'player': 'D', 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
-    # ]
+    if TESTING_ENABLED:
+        session = [
+            {'player': 'A', 'damage': 1234.02, 'time_in_combat': 12.0, 'dps': 12.4234},
+            {'player': 'B', 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
+            {'player': 'C', 'damage': 23.02, 'time_in_combat': 12.0, 'dps': 13},
+            {'player': 'D', 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
+        ]
+    else:
+        session = libmeter.get_instance_session()
 
     return [Stat(s['player'], s['damage'], s['time_in_combat'], s['dps']) for s in session]
 
@@ -26,6 +32,9 @@ def reset_instance_session():
     libmeter.reset_instance_session()
 
 def initialize():
+    if TESTING_ENABLED:
+        return
+
     try:
         libmeter.initialize()
     except:

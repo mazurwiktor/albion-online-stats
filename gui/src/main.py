@@ -40,9 +40,9 @@ class BottomButtons(QWidget):
         self.close_button.setObjectName('BottomButtons')
 
     def copy(self):
-        clip = "AO Damage Meter: \n"
+        clip = "Damage: Current instance\n"
         for i in range(self.table.rowCount()):
-            clip += '{}. \t Player: {} \t Damage: {} \t DPS: {}'.format(i+1, self.table.item(i, 0).text(
+            clip += '{}. {} {}-{}'.format(i+1, self.table.item(i, 0).text(
             ), self.table.item(i, 1).text(), self.table.item(i, 2).text())
             clip += "\n"
         clipboard.copy(clip)
