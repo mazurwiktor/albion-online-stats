@@ -6,7 +6,7 @@ script:
   - cargo test -- --test-threads 1
   - cargo build --release --verbose
 before_deploy:
-  - tar cvf albion-stats.tar gui/albion-stats gui/meter.py target/release/libmeter.so
+  - tar cvf albion-stats.tar --exclude='gui/src/__pycache__' gui/albion-stats gui/src target/release/libmeter.so
 deploy:
   provider: releases
   api_key:
