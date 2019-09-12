@@ -85,7 +85,8 @@ fn initialize(_py: Python) -> PyResult<u32> {
         let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = channel();
 
         packet_sniffer::receive(tx);
-
+        info!("Listening to network packets...");
+        
         loop {
             if let Ok(packet) = rx.recv() {
                 if packet.destination_port != 5056 && packet.source_port != 5056 {

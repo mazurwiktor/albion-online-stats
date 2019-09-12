@@ -15,6 +15,8 @@ use pnet::packet::udp;
 use pnet::packet::Packet;
 use pnet::util::MacAddr;
 
+use log::*;
+
 #[derive(Clone, Debug)]
 pub struct UdpPacket {
     pub interface_name: String,
@@ -35,6 +37,8 @@ pub fn receive(tx: Sender<UdpPacket>) {
         .into_iter()
         .filter(|i| !i.is_loopback());
     
+    debug!("Found interfaces: {:?}", interfaces);
+
     for interface in interfaces {
         let tx = shared_tx.clone();
         let config = pnet::datalink::Config{
@@ -46,8 +50,14 @@ pub fn receive(tx: Sender<UdpPacket>) {
         // Create a channel to receive on
         let (_, mut rx) = match datalink::channel(&interface, config) {
             Ok(Ethernet(tx, rx)) => (tx, rx),
-            Ok(_) => panic!("packetdump: unhandled channel type: {}"),
-            Err(e) => panic!("packetdump: unable to create channel: {}", e),
+            Ok(_) => {
+                warn!("packetdump: unhandled channel type");
+                continue;
+            },
+            Err(e) => { 
+                warn!("packetdump: unable to create channel: {}", e);
+                continue;
+            },
         };
 
         thread::spawn(move || {
