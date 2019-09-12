@@ -1,5 +1,4 @@
 import sys
-import os
 
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QApplication
@@ -8,6 +7,7 @@ import libmeter
 
 from main import MainWidget
 from engine import initialize
+from styling import style
 
 if __name__ == "__main__":
     initialize()
@@ -17,8 +17,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'style.css')) as css:
-        app.setStyleSheet(css.read())
+    app.setStyleSheet(style)
 
     geometry = app.screens()[0].size()
 
