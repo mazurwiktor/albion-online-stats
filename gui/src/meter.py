@@ -1,4 +1,5 @@
 import sys
+import os
 
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QApplication
@@ -10,18 +11,14 @@ from engine import initialize
 
 if __name__ == "__main__":
     initialize()
-    
+
     WIDTH = 256
     HEIGHT = 200
 
     app = QApplication(sys.argv)
 
-    app.setStyleSheet("""
-        QWidget{
-            font-size: 10px;
-        }
-
-    """)
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'style.css')) as css:
+        app.setStyleSheet(css.read())
 
     geometry = app.screens()[0].size()
 
