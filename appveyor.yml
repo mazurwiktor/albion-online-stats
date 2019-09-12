@@ -30,6 +30,7 @@ after_build:
 - python -m venv env
 - ps: .\env\Scripts\activate.ps1
 - pip install -r requirements.txt
+- ps: cd src
 - ps: cp ${env:APPVEYOR_BUILD_FOLDER}\target\release\meter.dll libmeter.pyd
 - pyinstaller -F -w -i ..\assets\albion-stats-icon.ico -r libmeter.pyd meter.py
 - ps: deactivate
