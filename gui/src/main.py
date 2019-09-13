@@ -12,8 +12,8 @@ from PySide2.QtWidgets import QLabel
 import clipboard
 
 from table import Table
-from engine import get_instance_session
-from engine import reset_instance_session
+from engine import get_zone_session
+from engine import new_zone_session
 
 class BottomButtons(QWidget):
     def __init__(self, table):
@@ -40,7 +40,7 @@ class BottomButtons(QWidget):
         self.close_button.setObjectName('BottomButtons')
 
     def copy(self):
-        clip = "Damage: Current instance\n"
+        clip = "Damage: Current zone\n"
         for i in range(self.table.rowCount()):
             clip += '{}. {} {}-{}'.format(i+1, self.table.item(i, 0).text(
             ), self.table.item(i, 1).text(), self.table.item(i, 2).text())
@@ -48,7 +48,7 @@ class BottomButtons(QWidget):
         clipboard.copy(clip)
 
     def reset(self):
-        reset_instance_session()
+        new_zone_session()
 
     def close(self):
         sys.exit(0)
@@ -59,7 +59,7 @@ class MainWidget(QWidget):
 
         self.mouse_pos = None
 
-        self.phoneLabel = QLabel("Damage: Current instance", self)
+        self.phoneLabel = QLabel("Damage: Current zone", self)
 
         self.table = Table()
         self.bottom_buttons = BottomButtons(self.table)
@@ -70,10 +70,10 @@ class MainWidget(QWidget):
         self.layout.addWidget(self.bottom_buttons)
         self.setLayout(self.layout)
 
-        self.table.fill(get_instance_session())
+        self.table.fill(get_zone_session())
 
         timer = QTimer(self)
-        timer.timeout.connect(lambda: self.table.fill(get_instance_session()))
+        timer.timeout.connect(lambda: self.table.fill(get_zone_session()))
         timer.start(500)
 
     def mousePressEvent(self, event):

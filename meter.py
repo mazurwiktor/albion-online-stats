@@ -26,8 +26,8 @@ class Stat:
         return self.name == other.name and self.damage == other.damage and self.time_in_combat == other.time_in_combat and self.dps == other.dps
 
 
-def get_instance_session():
-    session = libmeter.get_instance_session()
+def get_zone_session():
+    session = libmeter.get_zone_session()
     # session = [
     #     {'player': 'A', 'damage': 1234.02, 'time_in_combat': 12.0, 'dps': 12.4234},
     #     {'player': 'B', 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
@@ -94,12 +94,12 @@ class MyWidget(QWidget):
         self.layout.addWidget(self.refresh_button)
         self.setLayout(self.layout)
 
-        self.table.fill(get_instance_session())
+        self.table.fill(get_zone_session())
         self.copy_button.clicked.connect(self.copy)
         self.refresh_button.clicked.connect(self.clear)
 
         timer = QTimer(self)
-        timer.timeout.connect(lambda: self.table.fill(get_instance_session()))
+        timer.timeout.connect(lambda: self.table.fill(get_zone_session()))
         timer.start(5000)
 
     def copy(self):

@@ -20,16 +20,11 @@ use packet_sniffer::UdpPacket;
 mod game_protocol;
 mod meter;
 
+use meter::ZoneStats;
+use meter::PlayerEvents;
+
 lazy_static! {
     static ref METER: Mutex<meter::Meter> = Mutex::new(meter::Meter::new());
-}
-
-impl ToPyObject for meter::DPS {
-    type ObjectType = cpython::PyFloat;
-
-    fn to_py_object(&self, py: Python) -> Self::ObjectType {
-        self.value().to_py_object(py)
-    }
 }
 
 impl ToPyObject for meter::PlayerStatistics {
@@ -49,9 +44,9 @@ impl ToPyObject for meter::PlayerStatistics {
     }
 }
 
-fn get_instance_session(py: Python) -> PyResult<PyList> {
+fn get_zone_session(py: Python) -> PyResult<PyList> {
     let meter = &mut METER.lock().unwrap();
-    meter.get_instance_session().map_or_else(
+    meter.get_zone_session().map_or_else(
         || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
         |v| {
             Ok(PyList::new(
@@ -65,10 +60,10 @@ fn get_instance_session(py: Python) -> PyResult<PyList> {
     )
 }
 
-fn reset_instance_session(_py: Python) -> PyResult<u32> {
+fn new_zone_session(_py: Python) -> PyResult<u32> {
     let meter = &mut METER.lock().unwrap();
 
-    meter.reset_instance_session();
+    meter.new_zone_session();
 
     Ok(0)
 }
@@ -92,7 +87,8 @@ fn initialize(_py: Python) -> PyResult<u32> {
                 if packet.destination_port != 5056 && packet.source_port != 5056 {
                     continue;
                 }
-                register_messages(&game_protocol::decode(&packet.payload));
+                let meter = &mut METER.lock().unwrap();
+                register_messages(meter, &game_protocol::decode(&packet.payload));
             }
         }
     });
@@ -100,34 +96,33 @@ fn initialize(_py: Python) -> PyResult<u32> {
     Ok(0)
 }
 
-fn register_messages(messages: &Vec<game_protocol::Message>) {
-    let mut meter = &mut METER.lock().unwrap();
+fn register_messages(meter: &mut meter::Meter, messages: &Vec<game_protocol::Message>) {
     messages
         .iter()
-        .for_each(|message| register_message(&mut meter, &message));
+        .for_each(|message| register_message(meter, &message));
 }
 
-fn register_message(meter: &mut meter::Meter, message: &game_protocol::Message) {
+fn register_message(events: &mut PlayerEvents, message: &game_protocol::Message) {
     debug!("Found message {:?}", message);
     match message {
-        game_protocol::Message::Leave(msg) => meter.register_leave(msg.source).unwrap_or(()),
+        game_protocol::Message::Leave(msg) => events.register_leave(msg.source).unwrap_or(()),
         game_protocol::Message::NewCharacter(msg) => {
-            meter.register_player(&msg.character_name, msg.source)
+            events.register_player(&msg.character_name, msg.source)
         }
         game_protocol::Message::CharacterStats(msg) => {
-            meter.register_main_player(&msg.character_name, msg.source)
+            events.register_main_player(&msg.character_name, msg.source)
         }
-        game_protocol::Message::HealthUpdate(msg) => meter
+        game_protocol::Message::HealthUpdate(msg) => events
             .register_damage_dealt(msg.target, msg.value)
             .unwrap_or(()),
         game_protocol::Message::RegenerationHealthChanged(msg) => {
             match msg.regeneration_rate {
-                Some(_) => meter.register_combat_leave(msg.source).unwrap_or(()),
-                None => meter.register_combat_enter(msg.source).unwrap_or(()),
+                Some(_) => events.register_combat_leave(msg.source).unwrap_or(()),
+                None => events.register_combat_enter(msg.source).unwrap_or(()),
             }
         },
         game_protocol::Message::Died(msg) => {
-            meter.register_combat_leave(msg.source).unwrap_or(())
+            events.register_combat_leave(msg.source).unwrap_or(())
         }
         _ => {}
     }
@@ -136,11 +131,11 @@ fn register_message(meter: &mut meter::Meter, message: &game_protocol::Message) 
 py_module_initializer!(libmeter, initliblibmeter, PyInit_libmeter, |py, m| {
     m.add(py, "__doc__", "This module is implemented in Rust")?;
     m.add(py, "initialize", py_fn!(py, initialize()))?;
-    m.add(py, "reset_instance_session", py_fn!(py, reset_instance_session()))?;
+    m.add(py, "new_zone_session", py_fn!(py, new_zone_session()))?;
     m.add(
         py,
-        "get_instance_session",
-        py_fn!(py, get_instance_session()),
+        "get_zone_session",
+        py_fn!(py, get_zone_session()),
     )?;
     Ok(())
 });
@@ -158,6 +153,10 @@ mod tests {
 
         pub fn register(message: Message) {
             let meter = &mut METER.lock().unwrap();
+            r(meter, &message);
+        }
+
+        fn r(meter: &mut meter::Meter, message: &game_protocol::Message) {
             register_message(meter, &message);
         }
     }
@@ -204,7 +203,7 @@ mod tests {
     fn test_empty_session() {
         let guard = Python::acquire_gil();
         let py = guard.python();
-        assert_eq!(get_instance_session(py).unwrap().len(py), 0);
+        assert_eq!(get_zone_session(py).unwrap().len(py), 0);
     }
 
     #[test]
@@ -214,8 +213,8 @@ mod tests {
 
         helpers::register(Message::NewCharacter(message::NewCharacter::new()));
 
-        let instance_session = get_instance_session(py).unwrap();
-        assert_eq!(instance_session.len(py), 1);
+        let zone_session = get_zone_session(py).unwrap();
+        assert_eq!(zone_session.len(py), 1);
     }
 
     #[test]
@@ -225,8 +224,8 @@ mod tests {
 
         helpers::register(Message::NewCharacter(message::NewCharacter::new()));
 
-        let instance_session = get_instance_session(py).unwrap();
-        let stat = instance_session.get_item(py, 0);
+        let zone_session = get_zone_session(py).unwrap();
+        let stat = zone_session.get_item(py, 0);
         let dict = stat.cast_as::<PyDict>(py).unwrap();
         assert_eq!(dict.len(py), 4);
         assert_eq!(
@@ -270,8 +269,8 @@ mod tests {
 
         helpers::register(Message::NewCharacter(message::NewCharacter::new()));
 
-        let instance_session = get_instance_session(py).unwrap();
-        let stat = instance_session.get_item(py, 0);
+        let zone_session = get_zone_session(py).unwrap();
+        let stat = zone_session.get_item(py, 0);
         let dict = stat.cast_as::<PyDict>(py).unwrap();
         assert_eq!(
             dict.get_item(py, &"player")
@@ -292,8 +291,8 @@ mod tests {
 
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new()));
 
-        let instance_session = get_instance_session(py).unwrap();
-        let stat = instance_session.get_item(py, 0);
+        let zone_session = get_zone_session(py).unwrap();
+        let stat = zone_session.get_item(py, 0);
         let dict = stat.cast_as::<PyDict>(py).unwrap();
         assert_eq!(
             dict.get_item(py, &"damage")
@@ -312,8 +311,8 @@ mod tests {
 
         helpers::register(Message::NewCharacter(message::NewCharacter::new()));
 
-        let instance_session = get_instance_session(py).unwrap();
-        let stat = instance_session.get_item(py, 0);
+        let zone_session = get_zone_session(py).unwrap();
+        let stat = zone_session.get_item(py, 0);
         let dict = stat.cast_as::<PyDict>(py).unwrap();
         assert_eq!(
             dict.get_item(py, &"player")
@@ -334,8 +333,8 @@ mod tests {
 
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new()));
 
-        let instance_session = get_instance_session(py).unwrap();
-        let stat = instance_session.get_item(py, 0);
+        let zone_session = get_zone_session(py).unwrap();
+        let stat = zone_session.get_item(py, 0);
         let dict = stat.cast_as::<PyDict>(py).unwrap();
         assert_eq!(
             dict.get_item(py, &"damage")
@@ -347,9 +346,9 @@ mod tests {
         );
 
 
-        reset_instance_session(py).unwrap();
-        let instance_session = get_instance_session(py).unwrap();
-        let stat = instance_session.get_item(py, 0);
+        new_zone_session(py).unwrap();
+        let zone_session = get_zone_session(py).unwrap();
+        let stat = zone_session.get_item(py, 0);
         let dict = stat.cast_as::<PyDict>(py).unwrap();
         assert_eq!(
             dict.get_item(py, &"damage")

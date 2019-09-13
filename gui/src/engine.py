@@ -15,7 +15,7 @@ class Stat:
         return self.name == other.name and self.damage == other.damage and self.time_in_combat == other.time_in_combat and self.dps == other.dps
 
 
-def get_instance_session():
+def get_zone_session():
     if TESTING_ENABLED:
         session = [
             {'player': 'A', 'damage': 1234.02, 'time_in_combat': 12.0, 'dps': 12.4234},
@@ -24,12 +24,12 @@ def get_instance_session():
             {'player': 'D', 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
         ]
     else:
-        session = libmeter.get_instance_session()
+        session = libmeter.get_zone_session()
 
     return [Stat(s['player'], s['damage'], s['time_in_combat'], s['dps']) for s in session]
 
-def reset_instance_session():
-    libmeter.reset_instance_session()
+def new_zone_session():
+    libmeter.new_zone_session()
 
 def initialize():
     if TESTING_ENABLED:

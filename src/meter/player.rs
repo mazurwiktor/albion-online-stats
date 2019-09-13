@@ -2,6 +2,8 @@ use std::sync::{Arc, Mutex};
 
 use timer;
 
+use super::traits::DamageStats;
+
 #[derive(PartialEq)]
 enum CombatState
 {
@@ -65,50 +67,14 @@ impl Player
     pub fn leave_combat(&mut self) { 
         *self.combat_state.lock().unwrap() = CombatState::OutOfCombat;
     }
-
-    pub fn get_damage_dealt(&self) -> f32 { self.damage_dealt }
-
-    pub fn get_time_elapsed(&self) -> f32 {
-        *self.time_elapsed.lock().unwrap()
-    }
 }
 
-
-#[cfg(test)]
-mod test
-{
-    use super::*;
-    use std::thread;
+impl DamageStats for Player {
+    fn damage(&self) -> f32 {
+        self.damage_dealt
+    }
     
-    #[allow(unused)]
-    fn get_test_player() -> Player {
-        Player::new(1)
-    }
-
-    #[test]
-    fn test_player_initial_stats() {
-        let player = Player::new(1);
-
-        assert_eq!(player.get_damage_dealt(), 0.0);
-    }
-
-    #[test]
-    fn test_damage_when_in_combat() {
-        let mut player = get_test_player();
-
-        player.enter_combat();
-        player.register_damage_dealt(1000.0);
-        assert_eq!(player.get_damage_dealt(), 1000.0);
-    }
-
-    #[test]
-    fn test_damage_after_tenth_second() {
-        let mut player = get_test_player();
-
-        player.register_damage_dealt(1000.0);
-        player.enter_combat();
-
-        thread::sleep(std::time::Duration::from_millis(100));
-        assert_eq!(player.get_damage_dealt(), 1000.0);
+    fn time_in_combat(&self) -> f32 {
+        *self.time_elapsed.lock().unwrap()
     }
 }
