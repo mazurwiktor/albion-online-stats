@@ -12,6 +12,7 @@ use std::sync::Mutex;
 use std::thread;
 
 use cpython::{PyDict, PyList, PyObject, PyResult, Python, PythonObject, ToPyObject};
+use cpython::PyClone;
 use log::*;
 use simplelog::*;
 
@@ -30,17 +31,17 @@ lazy_static! {
 impl ToPyObject for meter::PlayerStatistics {
     type ObjectType = PyObject;
     fn to_py_object(&self, py: Python) -> Self::ObjectType {
-        let dict = PyDict::new(py);
+        let stats = PyDict::new(py);
 
-        dict.set_item(py, "player", self.player.to_py_object(py))
+        stats.set_item(py, "player", self.player.to_py_object(py))
             .unwrap();
-        dict.set_item(py, "damage", self.damage.to_py_object(py))
+        stats.set_item(py, "damage", self.damage.to_py_object(py))
             .unwrap();
-        dict.set_item(py, "time_in_combat", self.time_in_combat.to_py_object(py))
+        stats.set_item(py, "time_in_combat", self.time_in_combat.to_py_object(py))
             .unwrap();
-        dict.set_item(py, "dps", self.dps.to_py_object(py)).unwrap();
+        stats.set_item(py, "dps", self.dps.to_py_object(py)).unwrap();
 
-        dict.into_object()
+        stats.into_object()
     }
 }
 
@@ -151,6 +152,13 @@ mod tests {
     mod helpers {
         use super::*;
 
+        pub fn init() -> cpython::GILGuard {
+            let meter = &mut METER.lock().unwrap();
+            meter.reset();
+
+            Python::acquire_gil()
+        }
+
         pub fn register(message: Message) {
             let meter = &mut METER.lock().unwrap();
             r(meter, &message);
@@ -159,16 +167,31 @@ mod tests {
         fn r(meter: &mut meter::Meter, message: &game_protocol::Message) {
             register_message(meter, &message);
         }
+
+        pub fn get_player_in_zone_by_index(py: Python, index: usize) -> PyDict {
+            let zone_session = get_zone_session(py).unwrap();
+            let stat = zone_session.get_item(py, index);
+            let player = stat.cast_as::<PyDict>(py).unwrap().clone_ref(py);
+            player
+        }
+
+        pub fn get_string(py: Python, stats: &PyDict, key: &str) -> String {
+            stats.get_item(py, key).unwrap().cast_as::<PyUnicode>(py).unwrap().to_string_lossy(py).to_string()
+        }
+
+        pub fn get_float(py: Python, stats: &PyDict, key: &str) -> f64 {
+            stats.get_item(py, key).unwrap().cast_as::<PyFloat>(py).unwrap().value(py)
+        }   
     }
 
     trait Testing {
-        fn new() -> Self;
+        fn new(source: usize) -> Self;
     }
 
     impl Testing for message::NewCharacter {
-        fn new() -> Self {
+        fn new(source: usize) -> Self {
             Self {
-                source: 1,
+                source: source,
                 character_name: String::from("CH1"),
                 health: 10.0,
                 max_health: 10.0,
@@ -178,20 +201,33 @@ mod tests {
         }
     }
 
-    impl Testing for message::HealthUpdate {
-        fn new() -> Self {
+    impl Testing for message::CharacterStats {
+        fn new(source: usize) -> Self {
             Self {
-                source: 2,
-                target: 1,
+                source: source,
+                character_name: String::from("MAIN_CH1"),
+                health: 10.0,
+                max_health: 10.0,
+                energy: 1.0,
+                max_energy: 1.0,
+            }
+        }
+    }
+
+    impl Testing for message::HealthUpdate {
+        fn new(source: usize) -> Self {
+            Self {
+                source: 200,
+                target: source,
                 value: -10.0,
             }
         }
     }
 
     impl Testing for message::RegenerationHealthChanged {
-        fn new() -> Self {
+        fn new(source: usize) -> Self {
             Self {
-                source: 1,
+                source: source,
                 health: 10.0,
                 max_health: 10.0,
                 regeneration_rate: Some(1.0),
@@ -201,17 +237,18 @@ mod tests {
 
     #[test]
     fn test_empty_session() {
-        let guard = Python::acquire_gil();
+        let guard = helpers::init();
         let py = guard.python();
+
         assert_eq!(get_zone_session(py).unwrap().len(py), 0);
     }
 
     #[test]
     fn test_new_player_appears() {
-        let guard = Python::acquire_gil();
+        let guard = helpers::init();
         let py = guard.python();
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new()));
+        helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
 
         let zone_session = get_zone_session(py).unwrap();
         assert_eq!(zone_session.len(py), 1);
@@ -219,145 +256,79 @@ mod tests {
 
     #[test]
     fn test_new_player_stats() {
-        let guard = Python::acquire_gil();
+        let guard = helpers::init();
         let py = guard.python();
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new()));
+        helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
 
-        let zone_session = get_zone_session(py).unwrap();
-        let stat = zone_session.get_item(py, 0);
-        let dict = stat.cast_as::<PyDict>(py).unwrap();
-        assert_eq!(dict.len(py), 4);
-        assert_eq!(
-            dict.get_item(py, &"player")
-                .unwrap()
-                .cast_as::<PyUnicode>(py)
-                .unwrap()
-                .to_string_lossy(py),
-            "CH1"
-        );
-        assert_eq!(
-            dict.get_item(py, &"damage")
-                .unwrap()
-                .cast_as::<PyFloat>(py)
-                .unwrap()
-                .value(py),
-            0.0
-        );
-        assert_eq!(
-            dict.get_item(py, &"time_in_combat")
-                .unwrap()
-                .cast_as::<PyFloat>(py)
-                .unwrap()
-                .value(py),
-            0.0
-        );
-        assert_eq!(
-            dict.get_item(py, &"dps")
-                .unwrap()
-                .cast_as::<PyFloat>(py)
-                .unwrap()
-                .value(py),
-            0.0
-        );
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(stats.len(py), 4);
+        assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+        assert_eq!(helpers::get_float(py, &stats, "time_in_combat"), 0.0);
+        assert_eq!(helpers::get_float(py, &stats, "dps"), 0.0);
     }
 
     #[test]
     fn test_new_player_damage() {
-        let guard = Python::acquire_gil();
+        let guard = helpers::init();
         let py = guard.python();
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new()));
+        helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
 
-        let zone_session = get_zone_session(py).unwrap();
-        let stat = zone_session.get_item(py, 0);
-        let dict = stat.cast_as::<PyDict>(py).unwrap();
-        assert_eq!(
-            dict.get_item(py, &"player")
-                .unwrap()
-                .cast_as::<PyUnicode>(py)
-                .unwrap()
-                .to_string_lossy(py),
-            "CH1"
-        );
-        assert_eq!(
-            dict.get_item(py, &"damage")
-                .unwrap()
-                .cast_as::<PyFloat>(py)
-                .unwrap()
-                .value(py),
-            0.0
-        );
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new()));
+        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
 
-        let zone_session = get_zone_session(py).unwrap();
-        let stat = zone_session.get_item(py, 0);
-        let dict = stat.cast_as::<PyDict>(py).unwrap();
-        assert_eq!(
-            dict.get_item(py, &"damage")
-                .unwrap()
-                .cast_as::<PyFloat>(py)
-                .unwrap()
-                .value(py),
-            10.0
-        );
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
     }
 
     #[test]
     fn test_new_player_damage_reset() {
-        let guard = Python::acquire_gil();
+        let guard = helpers::init();
         let py = guard.python();
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new()));
+        helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
 
-        let zone_session = get_zone_session(py).unwrap();
-        let stat = zone_session.get_item(py, 0);
-        let dict = stat.cast_as::<PyDict>(py).unwrap();
-        assert_eq!(
-            dict.get_item(py, &"player")
-                .unwrap()
-                .cast_as::<PyUnicode>(py)
-                .unwrap()
-                .to_string_lossy(py),
-            "CH1"
-        );
-        assert_eq!(
-            dict.get_item(py, &"damage")
-                .unwrap()
-                .cast_as::<PyFloat>(py)
-                .unwrap()
-                .value(py),
-            0.0
-        );
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new()));
+        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
 
-        let zone_session = get_zone_session(py).unwrap();
-        let stat = zone_session.get_item(py, 0);
-        let dict = stat.cast_as::<PyDict>(py).unwrap();
-        assert_eq!(
-            dict.get_item(py, &"damage")
-                .unwrap()
-                .cast_as::<PyFloat>(py)
-                .unwrap()
-                .value(py),
-            10.0
-        );
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
 
 
         new_zone_session(py).unwrap();
-        let zone_session = get_zone_session(py).unwrap();
-        let stat = zone_session.get_item(py, 0);
-        let dict = stat.cast_as::<PyDict>(py).unwrap();
-        assert_eq!(
-            dict.get_item(py, &"damage")
-                .unwrap()
-                .cast_as::<PyFloat>(py)
-                .unwrap()
-                .value(py),
-            0.0
-        );
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
     }
 
+    #[test]
+    fn test_zone_detection() {
+        let guard = helpers::init();
+        let py = guard.python();
+
+        helpers::register(Message::CharacterStats(message::CharacterStats::new(1)));
+
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(helpers::get_string(py, &stats, "player"), "MAIN_CH1");
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+
+        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
+
+        helpers::register(Message::CharacterStats(message::CharacterStats::new(2)));
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+
+        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(2)));
+        let stats = helpers::get_player_in_zone_by_index(py, 0);
+        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
+    }
 }

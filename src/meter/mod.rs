@@ -76,6 +76,12 @@ impl Meter {
             main_player_id: None,
         }
     }
+
+    #[allow(dead_code)]
+    pub fn reset(&mut self) {
+        self.zone_sessions = VecDeque::new();
+        self.main_player_id = None;
+    }
 }
 
 
