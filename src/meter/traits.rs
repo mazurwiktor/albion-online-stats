@@ -1,5 +1,10 @@
 use super::types::PlayerStatistics;
-use super::Player;
+
+#[derive(Debug, PartialEq)]
+pub enum CombatState {
+    InCombat,
+    OutOfCombat,
+}
 
 pub trait DamageStats {
     fn damage(&self) -> f32;
@@ -15,8 +20,18 @@ pub trait DamageStats {
     }
 }
 
+pub trait DamageDealer {
+    fn register_damage_dealt(&mut self, damage_dealt: f32);
+
+    fn enter_combat(&mut self);
+
+    fn leave_combat(&mut self);
+
+    fn combat_state(&self) -> CombatState;
+}
+
 pub trait PlayerEvents {
-    fn get_player_in_zone(&mut self, player_id: usize) -> Option<&mut Player>;
+    fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut DamageDealer>>;
 
     fn register_main_player(&mut self, name: &str, id: usize);
 
@@ -25,32 +40,40 @@ pub trait PlayerEvents {
     fn register_player(&mut self, name: &str, id: usize);
 
     fn register_damage_dealt(&mut self, player_id: usize, damage: f32) -> Option<()> {
-        let player = self.get_player_in_zone(player_id)?;
-        if damage < 0.0 {
-            player.register_damage_dealt(f32::abs(damage));
+        for player in self.get_damage_dealers_in_zone(player_id)? {
+            if damage < 0.0 {
+                player.register_damage_dealt(f32::abs(damage));
+            }
         }
 
         Some(())
     }
 
     fn register_combat_enter(&mut self, player_id: usize) -> Option<()> {
-        let player = self.get_player_in_zone(player_id)?;
-
-        player.enter_combat();
+        for player in self.get_damage_dealers_in_zone(player_id)? {
+            player.enter_combat();
+        }
 
         Some(())
     }
 
     fn register_combat_leave(&mut self, player_id: usize) -> Option<()> {
-        let player = self.get_player_in_zone(player_id)?;
-
-        player.leave_combat();
+        for player in self.get_damage_dealers_in_zone(player_id)? {
+            player.leave_combat();
+        }
 
         Some(())
     }
 }
 
 pub trait ZoneStats {
+    fn reset(&mut self);
+
     fn get_zone_session(&self) -> Option<Vec<PlayerStatistics>>;
     fn new_zone_session(&mut self) -> Option<()>;
+
+    fn get_overall_session(&self) -> Option<Vec<PlayerStatistics>>;
+
+    fn get_last_fight_session(&self) -> Option<Vec<PlayerStatistics>>;
+    fn new_last_fight_session(&mut self) -> Option<()>;
 }

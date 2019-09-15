@@ -1,33 +1,33 @@
+use std::fmt;
 use std::sync::{Arc, Mutex};
 
 use timer;
 
+use super::traits::CombatState;
+use super::traits::DamageDealer;
 use super::traits::DamageStats;
 
-#[derive(PartialEq)]
-enum CombatState
-{
-    InCombat,
-    OutOfCombat
-}
-
-struct Time
-{
+struct Time {
     _guard: timer::Guard,
-    _timer: timer::Timer
+    _timer: timer::Timer,
 }
 
-pub struct Player
-{
+impl fmt::Debug for Time {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "")
+    }
+}
+
+#[derive(Debug)]
+pub struct Player {
     pub id: usize,
     damage_dealt: f32,
     time_elapsed: Arc<Mutex<f32>>,
     combat_state: Arc<Mutex<CombatState>>,
-    _time: Time
+    _time: Time,
 }
 
-impl Player
-{
+impl Player {
     pub fn new(id: usize) -> Self {
         let _timer = timer::Timer::new();
         let time_elapsed = Arc::new(Mutex::new(0.0));
@@ -39,20 +39,21 @@ impl Player
                 if *combat_state.lock().unwrap() == CombatState::InCombat {
                     *time_elapsed.lock().unwrap() += 10.0;
                 }
-                
             })
         };
 
         Self {
-            id, 
-            damage_dealt: 0.0, 
-            time_elapsed, 
+            id,
+            damage_dealt: 0.0,
+            time_elapsed,
             combat_state,
-            _time: Time{_timer, _guard}
+            _time: Time { _timer, _guard },
         }
     }
-    
-    pub fn register_damage_dealt(&mut self, damage_dealt: f32) {
+}
+
+impl DamageDealer for Player {
+    fn register_damage_dealt(&mut self, damage_dealt: f32) {
         if *self.combat_state.lock().unwrap() == CombatState::OutOfCombat {
             *self.time_elapsed.lock().unwrap() += 1000.0;
         }
@@ -60,12 +61,19 @@ impl Player
         self.damage_dealt += damage_dealt
     }
 
-    pub fn enter_combat(&mut self) { 
+    fn enter_combat(&mut self) {
         *self.combat_state.lock().unwrap() = CombatState::InCombat;
     }
 
-    pub fn leave_combat(&mut self) { 
+    fn leave_combat(&mut self) {
         *self.combat_state.lock().unwrap() = CombatState::OutOfCombat;
+    }
+
+    fn combat_state(&self) -> CombatState {
+        match *self.combat_state.lock().unwrap() {
+            CombatState::InCombat => CombatState::InCombat,
+            CombatState::OutOfCombat => CombatState::OutOfCombat,
+        }
     }
 }
 
@@ -73,7 +81,6 @@ impl DamageStats for Player {
     fn damage(&self) -> f32 {
         self.damage_dealt
     }
-    
     fn time_in_combat(&self) -> f32 {
         *self.time_elapsed.lock().unwrap()
     }
