@@ -53,16 +53,9 @@ impl ToPyObject for meter::PlayerStatistics {
 fn get_zone_session(py: Python) -> PyResult<PyList> {
     let meter = &mut METER.lock().unwrap();
     meter.get_zone_session().map_or_else(
+    // meter.get_last_fight_session().map_or_else(
         || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-        |v| {
-            Ok(PyList::new(
-                py,
-                v.iter()
-                    .map(|s| s.into_py_object(py))
-                    .collect::<Vec<PyObject>>()
-                    .as_slice(),
-            ))
-        },
+        |v| { Ok(v.into_py_object(py)) }
     )
 }
 
@@ -70,15 +63,7 @@ fn get_overall_session(py: Python) -> PyResult<PyList> {
     let meter = &mut METER.lock().unwrap();
     meter.get_overall_session().map_or_else(
         || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-        |v| {
-            Ok(PyList::new(
-                py,
-                v.iter()
-                    .map(|s| s.into_py_object(py))
-                    .collect::<Vec<PyObject>>()
-                    .as_slice(),
-            ))
-        },
+        |v| { Ok(v.into_py_object(py)) }
     )
 }
 
@@ -86,15 +71,7 @@ fn get_last_fight_session(py: Python) -> PyResult<PyList> {
     let meter = &mut METER.lock().unwrap();
     meter.get_last_fight_session().map_or_else(
         || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-        |v| {
-            Ok(PyList::new(
-                py,
-                v.iter()
-                    .map(|s| s.into_py_object(py))
-                    .collect::<Vec<PyObject>>()
-                    .as_slice(),
-            ))
-        },
+        |v| { Ok(v.into_py_object(py)) }
     )
 }
 
@@ -581,7 +558,7 @@ mod tests {
     #[test]
     fn test_last_fight_management() {
         // session should be started when first player attacks
-        // damage should be 0 when all players are out of combat
+        // damage should be 0 when all players were out of combat and some player attacks
 
         let guard = helpers::init();
         let py = guard.python();
@@ -615,85 +592,45 @@ mod tests {
         helpers::register(Message::RegenerationHealthChanged(
             message::RegenerationHealthChanged::enabled(1),
         ));
-        assert_eq!(
-            helpers::get_float(
-                py,
-                &helpers::get_player_last_fight_by_name(py, "1").unwrap(),
-                "damage"
-            ),
-            10.0
-        );
-        assert_eq!(
-            helpers::get_float(
-                py,
-                &helpers::get_player_last_fight_by_name(py, "2").unwrap(),
-                "damage"
-            ),
-            10.0
-        );
-        assert_eq!(
-            helpers::get_float(
-                py,
-                &helpers::get_player_last_fight_by_name(py, "3").unwrap(),
-                "damage"
-            ),
-            10.0
-        );
+
+        macro_rules! assert_named_player_dmg {
+                ($id:expr, $dmg:expr) => {
+                    assert_eq!(
+                        helpers::get_float(
+                            py,
+                            &helpers::get_player_last_fight_by_name(py, $id).unwrap(),
+                            "damage"
+                        ),
+                        $dmg
+                    );
+                }
+        }
+
+        assert_named_player_dmg!("1", 10.0);
+        assert_named_player_dmg!("2", 10.0);
+        assert_named_player_dmg!("3", 10.0);
 
         helpers::register(Message::RegenerationHealthChanged(
             message::RegenerationHealthChanged::enabled(2),
         ));
-        assert_eq!(
-            helpers::get_float(
-                py,
-                &helpers::get_player_last_fight_by_name(py, "1").unwrap(),
-                "damage"
-            ),
-            10.0
-        );
-        assert_eq!(
-            helpers::get_float(
-                py,
-                &helpers::get_player_last_fight_by_name(py, "2").unwrap(),
-                "damage"
-            ),
-            10.0
-        );
-        assert_eq!(
-            helpers::get_float(
-                py,
-                &helpers::get_player_last_fight_by_name(py, "3").unwrap(),
-                "damage"
-            ),
-            10.0
-        );
+
+        assert_named_player_dmg!("1", 10.0);
+        assert_named_player_dmg!("2", 10.0);
+        assert_named_player_dmg!("3", 10.0);
 
         helpers::register(Message::RegenerationHealthChanged(
             message::RegenerationHealthChanged::enabled(3),
         ));
-        assert_eq!(
-            helpers::get_float(
-                py,
-                &helpers::get_player_last_fight_by_name(py, "1").unwrap(),
-                "damage"
-            ),
-            0.0
-        );
-        assert_eq!(
-            helpers::get_float(
-                py,
-                &helpers::get_player_last_fight_by_name(py, "2").unwrap(),
-                "damage"
-            ),
-            0.0
-        );
-        assert_eq!(
-            helpers::get_float(
-                py,
-                &helpers::get_player_last_fight_by_name(py, "3").unwrap(),
-                "damage"
-            ),
-            0.0
-        );
+        assert_named_player_dmg!("1", 0.0);
+        assert_named_player_dmg!("2", 0.0);
+        assert_named_player_dmg!("3", 0.0);
+
+        // helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
+        // helpers::register(Message::RegenerationHealthChanged(
+        //     message::RegenerationHealthChanged::disabled(3),
+        // ));
+        // assert_named_player_dmg!("1", 10.0);
+        // assert_named_player_dmg!("2", 0.0);
+        // assert_named_player_dmg!("3", 0.0);
     }
 }
