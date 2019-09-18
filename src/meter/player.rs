@@ -55,7 +55,7 @@ impl Player {
 impl DamageDealer for Player {
     fn register_damage_dealt(&mut self, damage_dealt: f32) {
         if *self.combat_state.lock().unwrap() == CombatState::OutOfCombat {
-            *self.time_elapsed.lock().unwrap() += 1000.0;
+            return
         }
 
         self.damage_dealt += damage_dealt

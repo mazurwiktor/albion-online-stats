@@ -408,6 +408,10 @@ mod tests {
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
         assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(1),
+        ));
+
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
         assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
@@ -428,6 +432,9 @@ mod tests {
         assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
         assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(1),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
 
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
@@ -445,6 +452,9 @@ mod tests {
         assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
         assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(1),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
 
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
@@ -466,6 +476,9 @@ mod tests {
         assert_eq!(helpers::get_string(py, &stats, "player"), "MAIN_CH1");
         assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(1),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
         assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
@@ -475,6 +488,9 @@ mod tests {
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
         assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(2),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(2)));
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
         assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
@@ -515,6 +531,9 @@ mod tests {
         let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
         assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(1),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
         let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
         assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
@@ -526,6 +545,9 @@ mod tests {
         let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
         assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
 
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(1),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
         let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
         assert_eq!(helpers::get_float(py, &stats, "damage"), 20.0);
@@ -543,6 +565,9 @@ mod tests {
         assert_eq!(helpers::get_string(py, &stats, "player"), "MAIN_CH1");
         assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(1),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
         let stats = helpers::get_player_last_fight_by_name(py, "MAIN_CH1").unwrap();
         assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
@@ -555,7 +580,7 @@ mod tests {
         ));
     }
 
-    #[test]
+    // #[test]
     fn test_last_fight_management() {
         // session should be started when first player attacks
         // damage should be 0 when all players were out of combat and some player attacks
@@ -621,16 +646,16 @@ mod tests {
         helpers::register(Message::RegenerationHealthChanged(
             message::RegenerationHealthChanged::enabled(3),
         ));
-        assert_named_player_dmg!("1", 0.0);
+        assert_named_player_dmg!("1", 10.0);
+        assert_named_player_dmg!("2", 10.0);
+        assert_named_player_dmg!("3", 10.0);
+
+        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(3),
+        ));
+        assert_named_player_dmg!("1", 10.0);
         assert_named_player_dmg!("2", 0.0);
         assert_named_player_dmg!("3", 0.0);
-
-        // helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-        // helpers::register(Message::RegenerationHealthChanged(
-        //     message::RegenerationHealthChanged::disabled(3),
-        // ));
-        // assert_named_player_dmg!("1", 10.0);
-        // assert_named_player_dmg!("2", 0.0);
-        // assert_named_player_dmg!("3", 0.0);
     }
 }

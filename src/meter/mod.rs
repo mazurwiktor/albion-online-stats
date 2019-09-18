@@ -105,6 +105,18 @@ impl Meter {
         self.zone_sessions.push_back(Session::new());
         self.last_fight_session = Session::new();
     }
+    
+    #[allow(unused)]
+    fn combat_state(&self) -> CombatState {
+        if self.last_fight_session
+            .players()
+            .iter()
+            .any(|p| p.combat_state() == CombatState::InCombat) {
+                return CombatState::InCombat;
+            }
+
+            CombatState::OutOfCombat
+    }
 }
 
 impl PlayerEvents for Meter {
@@ -145,21 +157,6 @@ impl PlayerEvents for Meter {
         }
 
         self.add_player(name, id);
-    }
-    fn register_combat_leave(&mut self, player_id: usize) -> Option<()> {
-        for player in self.get_damage_dealers_in_zone(player_id)? {
-            player.leave_combat();
-        }
-
-        if self
-            .last_fight_session
-            .players()
-            .iter()
-            .all(|p| p.combat_state() == CombatState::OutOfCombat)
-        {
-            self.last_fight_session = Session::from(&self.last_fight_session);
-        }
-        Some(())
     }
 }
 
