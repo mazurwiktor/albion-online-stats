@@ -580,7 +580,7 @@ mod tests {
         ));
     }
 
-    // #[test]
+    #[test]
     fn test_last_fight_management() {
         // session should be started when first player attacks
         // damage should be 0 when all players were out of combat and some player attacks
@@ -591,6 +591,9 @@ mod tests {
         helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
             "1", 1,
         )));
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(1),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
         helpers::register(Message::RegenerationHealthChanged(
             message::RegenerationHealthChanged::disabled(1),
@@ -601,6 +604,9 @@ mod tests {
         helpers::register(Message::NewCharacter(message::NewCharacter::new_named(
             "2", 2,
         )));
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(2),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(2)));
         helpers::register(Message::RegenerationHealthChanged(
             message::RegenerationHealthChanged::disabled(2),
@@ -609,6 +615,9 @@ mod tests {
         helpers::register(Message::NewCharacter(message::NewCharacter::new_named(
             "3", 3,
         )));
+        helpers::register(Message::RegenerationHealthChanged(
+            message::RegenerationHealthChanged::disabled(3),
+        ));
         helpers::register(Message::HealthUpdate(message::HealthUpdate::new(3)));
         helpers::register(Message::RegenerationHealthChanged(
             message::RegenerationHealthChanged::disabled(3),
@@ -650,10 +659,10 @@ mod tests {
         assert_named_player_dmg!("2", 10.0);
         assert_named_player_dmg!("3", 10.0);
 
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
         helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(3),
+            message::RegenerationHealthChanged::disabled(1),
         ));
+        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
         assert_named_player_dmg!("1", 10.0);
         assert_named_player_dmg!("2", 0.0);
         assert_named_player_dmg!("3", 0.0);
