@@ -11,7 +11,6 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Mutex;
 use std::thread;
 
-use cpython::PyClone;
 use cpython::{PyDict, PyList, PyObject, PyResult, Python, PythonObject, ToPyObject};
 use log::*;
 use simplelog::*;
@@ -53,7 +52,6 @@ impl ToPyObject for meter::PlayerStatistics {
 fn get_zone_session(py: Python) -> PyResult<PyList> {
     let meter = &mut METER.lock().unwrap();
     meter.get_zone_session().map_or_else(
-    // meter.get_last_fight_session().map_or_else(
         || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
         |v| { Ok(v.into_py_object(py)) }
     )
@@ -177,7 +175,7 @@ py_module_initializer!(libmeter, initliblibmeter, PyInit_libmeter, |py, m| {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cpython::{PyFloat, PyUnicode};
+    use cpython::{PyFloat, PyUnicode, PyClone};
 
     use game_protocol::message;
     use game_protocol::Message;

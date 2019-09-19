@@ -12,6 +12,22 @@ struct Time {
     _timer: timer::Timer,
 }
 
+impl Time {
+    fn with(time_elapsed: Arc<Mutex<f32>>, combat_state: Arc<Mutex<CombatState>>) -> Time {
+        let _timer = timer::Timer::new();
+
+        let _guard = {
+            _timer.schedule_repeating(chrono::Duration::milliseconds(10), move || {
+                if *combat_state.lock().unwrap() == CombatState::InCombat {
+                    *time_elapsed.lock().unwrap() += 10.0;
+                }
+            })
+        };
+
+        Self { _timer, _guard }
+    }
+}
+
 impl fmt::Debug for Time {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "")
@@ -24,36 +40,32 @@ pub struct Player {
     damage_dealt: f32,
     time_elapsed: Arc<Mutex<f32>>,
     combat_state: Arc<Mutex<CombatState>>,
-    _time: Time,
+    _time: Option<Time>,
 }
+
 
 impl Player {
     pub fn new(id: usize) -> Self {
-        let _timer = timer::Timer::new();
         let time_elapsed = Arc::new(Mutex::new(0.0));
         let combat_state = Arc::new(Mutex::new(CombatState::OutOfCombat));
-        let _guard = {
-            let time_elapsed = time_elapsed.clone();
-            let combat_state = combat_state.clone();
-            _timer.schedule_repeating(chrono::Duration::milliseconds(10), move || {
-                if *combat_state.lock().unwrap() == CombatState::InCombat {
-                    *time_elapsed.lock().unwrap() += 10.0;
-                }
-            })
-        };
 
         Self {
             id,
             damage_dealt: 0.0,
             time_elapsed,
             combat_state,
-            _time: Time { _timer, _guard },
+            _time: None,
         }
     }
 }
 
 impl DamageDealer for Player {
     fn register_damage_dealt(&mut self, damage_dealt: f32) {
+        if self._time.is_none() {
+            let elapsed = self.time_elapsed.clone();
+            let state = self.combat_state.clone();
+            self._time = Some(Time::with(elapsed, state));
+        }
         if *self.combat_state.lock().unwrap() == CombatState::OutOfCombat {
             return
         }

@@ -2,7 +2,6 @@ extern crate chrono;
 extern crate timer;
 
 use std::collections::HashMap;
-use std::collections::VecDeque;
 
 use log::*;
 
@@ -22,8 +21,6 @@ pub struct PlayerName(String);
 pub struct Session {
     players: HashMap<PlayerName, Player>,
 }
-
-type PlayerStatisticsVec = Vec<PlayerStatistics>;
 
 impl Session {
     fn new() -> Self {
@@ -79,8 +76,28 @@ impl Session {
     }
 }
 
+fn merge_stats(a : &PlayerStatisticsVec, b : &PlayerStatisticsVec) -> PlayerStatisticsVec {
+    let merged = [&a[..], &b[..]].concat().iter().fold(
+        HashMap::<String, PlayerStatistics>::new(),
+        |mut acc, stat| {
+            acc.entry(stat.player.clone())
+                .and_modify(|s| {
+                    s.damage += stat.damage;
+                    s.time_in_combat += stat.time_in_combat;
+                    s.dps = s.dps();
+                })
+                .or_insert(stat.clone());
+            acc
+        },
+    );
+
+
+    return merged.iter().map(|(_, v)| v.clone()).collect()
+}
+
 pub struct Meter {
-    zone_sessions: VecDeque<Session>,
+    zone_history: PlayerStatisticsVec,
+    zone_session: Option<Session>,
     last_fight_session: Session,
     main_player_id: Option<usize>,
 }
@@ -88,21 +105,47 @@ pub struct Meter {
 impl Meter {
     pub fn new() -> Self {
         Self {
-            zone_sessions: VecDeque::new(),
+            zone_history: Vec::new(),
+            zone_session: None,
             last_fight_session: Session::new(),
             main_player_id: None,
         }
     }
 
+    fn zone_session_mut(&mut self) -> Option<&mut Session> {
+        match &mut self.zone_session {
+            Some(s) => Some(s),
+            None => None
+        }
+    }
+
+    fn zone_session(&self) -> Option<&Session> {
+        match &self.zone_session {
+            Some(s) => Some(s),
+            None => None
+        }
+    }
+
+    fn sessions_mut(&mut self) -> Option<(&mut Session, &mut Session)> {
+        match &mut self.zone_session {
+            Some(s) => Some((s, &mut self.last_fight_session)),
+            None => None
+        }
+    }
+
     fn add_player(&mut self, name: &str, id: usize) -> Option<()> {
-        let session = self.zone_sessions.back_mut()?;
+        let session = self.zone_session_mut()?;
         session.add_player(name, id);
         self.last_fight_session.add_player(name, id);
         Some(())
     }
 
     fn new_session(&mut self) {
-        self.zone_sessions.push_back(Session::new());
+        if let Some(zone) = self.zone_session() {
+            self.zone_history = merge_stats(&self.zone_history, &zone.stats());
+        }
+        
+        self.zone_session = Some(Session::new());
         self.last_fight_session = Session::new();
     }
 
@@ -121,11 +164,12 @@ impl Meter {
 
 impl PlayerEvents for Meter {
     fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut DamageDealer>> {
-        let session = self.zone_sessions.back_mut()?;
-        let zone_player = session.get_player_by_id(player_id)?;
+        let (zone, last_fight) = self.sessions_mut()?;
+        let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
+        let zone_player = zone.get_player_by_id(player_id)?;
         Some(vec![
             zone_player,
-            self.last_fight_session.get_player_by_id(player_id)?,
+            las_fight_session_player,
         ])
     }
 
@@ -133,7 +177,7 @@ impl PlayerEvents for Meter {
         debug!("Main player {} registerd with id {}", name, id);
         self.main_player_id = Some(id);
 
-        if self.zone_sessions.back().is_none() {
+        if self.zone_session.is_none() {
             self.new_session();
         }
         self.add_player(name, id);
@@ -143,7 +187,7 @@ impl PlayerEvents for Meter {
         let main_player_id = self.main_player_id?;
         if id == main_player_id {
             debug!("New session, main player left the zone");
-            self.zone_sessions.back_mut()?.cleanup_players();
+            self.zone_session_mut()?.cleanup_players();
             self.new_session();
         }
 
@@ -151,7 +195,7 @@ impl PlayerEvents for Meter {
     }
 
     fn register_player(&mut self, name: &str, id: usize) {
-        if self.zone_sessions.is_empty() {
+        if self.zone_session.is_none() {
             debug!("New session");
             self.new_session();
         }
@@ -174,38 +218,28 @@ impl PlayerEvents for Meter {
 
 impl ZoneStats for Meter {
     fn get_zone_session(&self) -> Option<Vec<PlayerStatistics>> {
-        let last_session = self.zone_sessions.back()?;
+        let last_session = self.zone_session()?;
         Some(last_session.stats())
     }
 
     fn new_zone_session(&mut self) -> Option<()> {
-        let last_session = self.zone_sessions.back()?;
-        let new_session = Session::from(&last_session);
-        self.zone_sessions.push_back(new_session);
+        let last_session = self.zone_session_mut()?;
+        self.zone_session = Some(Session::from(&last_session));
 
         Some(())
     }
 
     fn get_overall_session(&self) -> Option<PlayerStatisticsVec> {
-        let all_stats = self.zone_sessions.iter().flat_map(|s| s.stats()).fold(
-            HashMap::<String, PlayerStatistics>::new(),
-            |mut acc, stat| {
-                acc.entry(stat.player.clone())
-                    .and_modify(|s| {
-                        s.damage += stat.damage;
-                        s.time_in_combat += stat.time_in_combat;
-                        s.dps = s.dps();
-                    })
-                    .or_insert(stat);
-                acc
-            },
-        );
+        if let Some(zone) = self.zone_session() {
+            return Some(merge_stats(&self.zone_history, &zone.stats()));
+        }
 
-        Some(all_stats.iter().map(|(_, v)| v.clone()).collect())
+        None
     }
 
     fn reset(&mut self) {
-        self.zone_sessions = VecDeque::new();
+        self.zone_history = vec![];
+        self.zone_session = None;
         self.last_fight_session = Session::new();
         self.main_player_id = None;
     }

@@ -8,6 +8,8 @@ pub struct PlayerStatistics {
     pub dps: f32,
 }
 
+pub type PlayerStatisticsVec = Vec<PlayerStatistics>;
+
 impl DamageStats for PlayerStatistics {
     fn damage(&self) -> f32 {
         self.damage
