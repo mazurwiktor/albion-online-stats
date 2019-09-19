@@ -1,3 +1,4 @@
 pyside2~=5.13
 pyinstaller
 clipboard
+toml~=0.10

@@ -8,17 +8,22 @@ from PySide2.QtWidgets import QPushButton
 from PySide2.QtWidgets import QVBoxLayout
 from PySide2.QtWidgets import QWidget
 from PySide2.QtWidgets import QLabel
+from PySide2.QtWidgets import QComboBox
 
 import clipboard
 
 from table import Table
-from engine import get_zone_session
-from engine import new_zone_session
+import engine
+
+class Mode:
+    CURRENT_ZONE = 'Damage: Current zone'
+    OVERALL = 'Damage: Overall'
+    LAST_FIGHT = 'Damage: Last fight'
 
 class BottomButtons(QWidget):
-    def __init__(self, table):
+    def __init__(self, table, mode):
         QWidget.__init__(self)
-
+        self.mode = mode
         self.table = table
         self.layout = QHBoxLayout()
 
@@ -40,7 +45,7 @@ class BottomButtons(QWidget):
         self.close_button.setObjectName('BottomButtons')
 
     def copy(self):
-        clip = "Damage: Current zone\n"
+        clip = "{}\n".format(self.mode())
         for i in range(self.table.rowCount()):
             clip += '{}. {} {}-{}'.format(i+1, self.table.item(i, 0).text(
             ), self.table.item(i, 1).text(), self.table.item(i, 2).text())
@@ -48,7 +53,14 @@ class BottomButtons(QWidget):
         clipboard.copy(clip)
 
     def reset(self):
-        new_zone_session()
+        reset = {
+            Mode.CURRENT_ZONE: engine.new_zone_session,
+            Mode.LAST_FIGHT: engine.new_last_fight_session,
+            Mode.OVERALL: engine.reset_sessions
+        }
+
+        reset[self.mode()]()
+
 
     def close(self):
         sys.exit(0)
@@ -58,22 +70,25 @@ class MainWidget(QWidget):
         QWidget.__init__(self)
 
         self.mouse_pos = None
-
-        self.phoneLabel = QLabel("Damage: Current zone", self)
-
+        self.mode = QComboBox()
+        self.mode.minimumContentsLength()
         self.table = Table()
-        self.bottom_buttons = BottomButtons(self.table)
+        self.bottom_buttons = BottomButtons(self.table, lambda : self.mode.currentText())
 
         self.layout = QVBoxLayout()
-        self.layout.addWidget(self.phoneLabel)
+        self.layout.addWidget(self.mode)
         self.layout.addWidget(self.table)
         self.layout.addWidget(self.bottom_buttons)
         self.setLayout(self.layout)
 
-        self.table.fill(get_zone_session())
+        self.mode.addItem(Mode.CURRENT_ZONE)
+        self.mode.addItem(Mode.OVERALL)
+        self.mode.addItem(Mode.LAST_FIGHT)
+
+        self.table.fill(self.session())
 
         timer = QTimer(self)
-        timer.timeout.connect(lambda: self.table.fill(get_zone_session()))
+        timer.timeout.connect(lambda: self.table.fill(self.session()))
         timer.start(500)
 
     def mousePressEvent(self, event):
@@ -85,3 +100,13 @@ class MainWidget(QWidget):
             newpos = self.pos() + diff
 
             self.move(newpos)
+    
+    def session(self):
+        sessions = {
+            Mode.CURRENT_ZONE: engine.get_zone_session,
+            Mode.LAST_FIGHT: engine.get_last_fight_session,
+            Mode.OVERALL: engine.get_overall_session
+        }
+
+        return sessions[self.mode.currentText()]()
+

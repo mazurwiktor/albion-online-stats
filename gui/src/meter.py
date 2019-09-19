@@ -8,12 +8,17 @@ import libmeter
 from main import MainWidget
 from engine import initialize
 from styling import style
+from config import config
+
 
 if __name__ == "__main__":
     initialize()
 
-    WIDTH = 256
-    HEIGHT = 200
+    conf = config()
+    window_config = conf['window']
+
+    WIDTH = window_config['width']
+    HEIGHT = window_config['height']
 
     app = QApplication(sys.argv)
 
@@ -22,7 +27,7 @@ if __name__ == "__main__":
     geometry = app.screens()[0].size()
 
     widget = MainWidget()
-    widget.setWindowOpacity(0.5)
+    widget.setWindowOpacity(window_config['opacity'])
     widget.resize(WIDTH, HEIGHT)
     widget.move(0, geometry.height() - HEIGHT - 280)
 

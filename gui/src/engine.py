@@ -4,6 +4,7 @@ import libmeter
 
 TESTING_ENABLED = bool(os.getenv('TESTING'))
 
+
 class Stat:
     def __init__(self, name, damage, time_in_combat, dps):
         self.name = name
@@ -15,10 +16,15 @@ class Stat:
         return self.name == other.name and self.damage == other.damage and self.time_in_combat == other.time_in_combat and self.dps == other.dps
 
 
+def stats(session):
+    return [Stat(s['player'], s['damage'], s['time_in_combat'], s['dps']) for s in session]
+
+
 def get_zone_session():
     if TESTING_ENABLED:
         session = [
-            {'player': 'A', 'damage': 1234.02, 'time_in_combat': 12.0, 'dps': 12.4234},
+            {'player': 'A', 'damage': 1234.02,
+                'time_in_combat': 12.0, 'dps': 12.4234},
             {'player': 'B', 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
             {'player': 'C', 'damage': 23.02, 'time_in_combat': 12.0, 'dps': 13},
             {'player': 'D', 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
@@ -26,10 +32,41 @@ def get_zone_session():
     else:
         session = libmeter.get_zone_session()
 
-    return [Stat(s['player'], s['damage'], s['time_in_combat'], s['dps']) for s in session]
+    return stats(session)
+
+
+def get_overall_session():
+    if TESTING_ENABLED:
+        session = [
+            {'player': 'overall', 'damage': 1234.02,
+                'time_in_combat': 12.0, 'dps': 12.4234},
+        ]
+    else:
+        session = libmeter.get_overall_session()
+
+    return stats(session)
+
+
+def get_last_fight_session():
+    if TESTING_ENABLED:
+        session = [
+            {'player': 'last fight', 'damage': 1234.02,
+                'time_in_combat': 12.0, 'dps': 12.4234},
+        ]
+    else:
+        session = libmeter.get_last_fight_session()
+
+    return stats(session)
+
 
 def new_zone_session():
     libmeter.new_zone_session()
+
+def new_last_fight_session():
+    libmeter.new_last_fight_session()
+
+def reset_sessions():
+    libmeter.reset_sessions()
 
 def initialize():
     if TESTING_ENABLED:

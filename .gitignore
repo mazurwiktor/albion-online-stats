@@ -5,3 +5,4 @@ damage-meter.log
 *.so
 .vscode
 __pycache__
+albion-online-stats.cfg
