@@ -20,20 +20,20 @@ static MSG_TYPE_EVENT: u8 = 4;
 use super::message::Message;
 use super::packet::Packet;
 
-pub fn decode(payload: &[u8]) -> Vec<Message>
+pub fn decode(payload: &[u8]) -> Option<Vec<Message>>
 {
     let mut messages = vec![];
 
     let mut cursor = Cursor::new(payload);
     cursor.advance(3);
     
-    let cmd_cnt = photon_protocol::deserialize_byte(&mut cursor).unwrap();
+    let cmd_cnt = photon_protocol::deserialize_byte(&mut cursor)?;
     cursor.advance(8);
 
     for _ in 0..cmd_cnt {
-        let cmd_type = photon_protocol::deserialize_byte(&mut cursor).unwrap();
+        let cmd_type = photon_protocol::deserialize_byte(&mut cursor)?;
         cursor.advance(3);
-        let cmd_length = photon_protocol::deserialize_integer(&mut cursor).unwrap();
+        let cmd_length = photon_protocol::deserialize_integer(&mut cursor)?;
         cursor.advance(4);
 
         if cmd_type == LOG_OUT {
@@ -53,7 +53,7 @@ pub fn decode(payload: &[u8]) -> Vec<Message>
         }
     }
 
-    messages
+    Some(messages)
 }
 
 fn on_message(cursor: &mut Cursor<&[u8]>, msg_len: u32)  -> Option<Message> {
@@ -62,7 +62,7 @@ fn on_message(cursor: &mut Cursor<&[u8]>, msg_len: u32)  -> Option<Message> {
     let init = cursor.bytes().len();
     cursor.advance(SIGNIFIER_BYTE_LENGTH);
 
-    let msg_type = photon_protocol::deserialize_byte(cursor).unwrap();
+    let msg_type = photon_protocol::deserialize_byte(cursor)?;
     let operation_length = msg_len - CMD_HEADER_LENGTH - 2;
 
     let mut payload = Cursor::new(&cursor.bytes()[0..operation_length as usize]);

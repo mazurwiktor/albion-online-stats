@@ -116,7 +116,9 @@ fn initialize(_py: Python) -> PyResult<u32> {
                     continue;
                 }
                 let meter = &mut METER.lock().unwrap();
-                register_messages(meter, &game_protocol::decode(&packet.payload));
+                if let Some(messages) = game_protocol::decode(&packet.payload) {
+                    register_messages(meter, &messages);
+                }
             }
         }
     });
