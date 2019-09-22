@@ -27,13 +27,13 @@ pub fn decode(payload: &[u8]) -> Vec<Message>
     let mut cursor = Cursor::new(payload);
     cursor.advance(3);
     
-    let cmd_cnt = protocol16::deserialize_byte(&mut cursor).unwrap();
+    let cmd_cnt = photon_protocol::deserialize_byte(&mut cursor).unwrap();
     cursor.advance(8);
 
     for _ in 0..cmd_cnt {
-        let cmd_type = protocol16::deserialize_byte(&mut cursor).unwrap();
+        let cmd_type = photon_protocol::deserialize_byte(&mut cursor).unwrap();
         cursor.advance(3);
-        let cmd_length = protocol16::deserialize_integer(&mut cursor).unwrap();
+        let cmd_length = photon_protocol::deserialize_integer(&mut cursor).unwrap();
         cursor.advance(4);
 
         if cmd_type == LOG_OUT {
@@ -62,15 +62,15 @@ fn on_message(cursor: &mut Cursor<&[u8]>, msg_len: u32)  -> Option<Message> {
     let init = cursor.bytes().len();
     cursor.advance(SIGNIFIER_BYTE_LENGTH);
 
-    let msg_type = protocol16::deserialize_byte(cursor).unwrap();
+    let msg_type = photon_protocol::deserialize_byte(cursor).unwrap();
     let operation_length = msg_len - CMD_HEADER_LENGTH - 2;
 
     let mut payload = Cursor::new(&cursor.bytes()[0..operation_length as usize]);
 
     if msg_type == MSG_TYPE_EVENT {
-        if let Some(event_data) = protocol16::deserialize_event_data(&mut payload) {
+        if let Some(event_data) = photon_protocol::deserialize_event_data(&mut payload) {
             if event_data.code != 2 && event_data.parameters.get(&252u8).is_some() {
-                if let protocol16::Value::Short(code) = event_data.parameters.get(&252u8)? {
+                if let photon_protocol::Value::Short(code) = event_data.parameters.get(&252u8)? {
                     let packet = Packet{code: *code as usize, parameters: event_data.parameters};
                     debug!("EVENT: [{}] {:?}", packet.code, packet);
                     message = packet.decode();
@@ -78,7 +78,7 @@ fn on_message(cursor: &mut Cursor<&[u8]>, msg_len: u32)  -> Option<Message> {
             }
         }
     } else if msg_type == MSG_TYPE_REQUEST {
-        if let Some(request) = protocol16::deserialize_operation_request(&mut payload) {
+        if let Some(request) = photon_protocol::deserialize_operation_request(&mut payload) {
             let code = request.code as usize + REQUEST_CONSTANT;
             let packet = Packet{code, parameters: request.parameters};
             debug!("REQUEST: [{}] {:?}", packet.code, packet);
@@ -86,7 +86,7 @@ fn on_message(cursor: &mut Cursor<&[u8]>, msg_len: u32)  -> Option<Message> {
             message = packet.decode();
         }
     } else if msg_type == MSG_TYPE_RESPONSE {
-        if let Some(response) = protocol16::deserialize_operation_response(&mut payload) {
+        if let Some(response) = photon_protocol::deserialize_operation_response(&mut payload) {
             let code = response.code as usize + RESPONSE_CONSTANT;
             let packet = Packet{code, parameters: response.parameters};
             debug!("RESPONSE: [{}] {:?}", packet.code, packet);

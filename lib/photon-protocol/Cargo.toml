@@ -1,5 +1,5 @@
 [package]
-name = "protocol16"
+name = "photon_protocol"
 version = "0.1.0"
 authors = ["Wiktor Mazur <wiktormazur1@gmail.com>"]
 edition = "2018"

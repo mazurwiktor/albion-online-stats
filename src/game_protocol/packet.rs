@@ -1,4 +1,4 @@
-use protocol16::Parameters;
+use photon_protocol::Parameters;
 
 #[derive(Debug)]
 pub struct Packet {

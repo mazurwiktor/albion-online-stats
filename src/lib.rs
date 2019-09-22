@@ -4,7 +4,7 @@ extern crate cpython;
 extern crate lazy_static;
 extern crate bytes;
 extern crate packet_sniffer;
-extern crate protocol16;
+extern crate photon_protocol;
 
 use std::fs::File;
 use std::sync::mpsc::{channel, Receiver, Sender};
