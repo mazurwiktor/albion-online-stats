@@ -15,10 +15,18 @@ opacity = 0.5
 version = '%s'
 """ % (CFG_VERSION)
 
+_script_path = None
+
+
+def set_script_path(path):
+    global _script_path
+    _script_path = path
+
 
 def config():
+    global _script_path
     conf_file = os.path.join(os.path.dirname(
-        os.path.realpath(__file__)), 'albion-online-stats.cfg')
+        _script_path), 'albion-online-stats.cfg')
 
     try:
         with open(conf_file, "r") as cfg_file:

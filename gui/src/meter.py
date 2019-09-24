@@ -5,15 +5,17 @@ from PySide2.QtWidgets import QApplication
 
 import libmeter
 
+from config import set_script_path
+set_script_path(sys.argv[0])  # pyinstaller creates tmpdir for python files, thus this is the way to get executable path
+
+from config import config
 from main import MainWidget
 from engine import initialize
 from styling import style
-from config import config
 
 
 if __name__ == "__main__":
     initialize()
-
     conf = config()
     window_config = conf['window']
 
