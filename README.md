@@ -21,9 +21,15 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 
 # Usage of built release
 
+## Installation
+
 1. On windows https://www.winpcap.org/ is required to be able to listen to network interface
-2. Download latest release from https://github.com/mazurwiktor/albion-online-stats/releases/latest (.exe for windows .tgz for linux and mac)
-3. Enyoy :)
+2. Download latest release from https://github.com/mazurwiktor/albion-online-stats/releases/latest (.exe for windows .tar for linux and mac)
+3. Enjoy :)
+
+## Configuration
+
+After first execution the app is going to create default configuration file named `albion-online-stats.cfg`. Feel free to edit it according to your needs. 
 
 # Getting started
 
