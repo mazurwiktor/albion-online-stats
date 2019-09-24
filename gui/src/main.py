@@ -15,10 +15,12 @@ import clipboard
 from table import Table
 import engine
 
+
 class Mode:
     CURRENT_ZONE = 'Damage: Current zone'
     OVERALL = 'Damage: Overall'
     LAST_FIGHT = 'Damage: Last fight'
+
 
 class BottomButtons(QWidget):
     def __init__(self, table, mode):
@@ -61,29 +63,34 @@ class BottomButtons(QWidget):
 
         reset[self.mode()]()
 
-
     def close(self):
         sys.exit(0)
+
+
+class ModeWidget(QComboBox):
+    def __init__(self):
+        QComboBox.__init__(self)
+
+        self.addItem(Mode.CURRENT_ZONE)
+        self.addItem(Mode.OVERALL)
+        self.addItem(Mode.LAST_FIGHT)
+
 
 class MainWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
         self.mouse_pos = None
-        self.mode = QComboBox()
-        self.mode.minimumContentsLength()
+        self.mode = ModeWidget()
         self.table = Table()
-        self.bottom_buttons = BottomButtons(self.table, lambda : self.mode.currentText())
+        self.bottom_buttons = BottomButtons(
+            self.table, lambda: self.mode.currentText())
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.mode)
         self.layout.addWidget(self.table)
         self.layout.addWidget(self.bottom_buttons)
         self.setLayout(self.layout)
-
-        self.mode.addItem(Mode.CURRENT_ZONE)
-        self.mode.addItem(Mode.OVERALL)
-        self.mode.addItem(Mode.LAST_FIGHT)
 
         self.table.fill(self.session())
 
@@ -95,12 +102,17 @@ class MainWidget(QWidget):
         self.mouse_pos = event.pos()
 
     def mouseMoveEvent(self, event):
+        if self.mode.geometry().contains(event.pos()):
+            return
+        if not self.mouse_pos:
+            return
+
         if event.buttons() & Qt.LeftButton:
             diff = event.pos() - self.mouse_pos
             newpos = self.pos() + diff
 
             self.move(newpos)
-    
+
     def session(self):
         sessions = {
             Mode.CURRENT_ZONE: engine.get_zone_session,
@@ -109,4 +121,3 @@ class MainWidget(QWidget):
         }
 
         return sessions[self.mode.currentText()]()
-
