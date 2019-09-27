@@ -6,9 +6,6 @@ from PySide2.QtWidgets import QMessageBox
 
 import libmeter
 
-from config import set_script_path
-set_script_path(sys.argv[0])  # pyinstaller creates tmpdir for python files, thus this is the way to get executable path
-
 from config import config
 from main import MainWidget
 from engine import initialize
@@ -42,7 +39,7 @@ if __name__ == "__main__":
 
     current_version, latest_version = (current_version(), latest_version())
 
-    if current_version != latest_version:
+    if latest_version and current_version != latest_version:
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Warning)
         msg.setWindowTitle("Update available!")

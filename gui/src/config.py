@@ -1,7 +1,8 @@
 import os
+import sys
 import toml
 
-CFG_VERSION = '0.1'
+CFG_VERSION = '0.2'
 
 default = """
 [window]
@@ -10,21 +11,25 @@ height = 200
 font-size = '10px'
 opacity = 0.5
 
+[app]
+skip_non_party_players = true
+
 [config]
 # do not change
 version = '%s'
 """ % (CFG_VERSION)
 
-_script_path = None
 
-
-def set_script_path(path):
-    global _script_path
-    _script_path = path
-
+_script_path = sys.argv[0]  # pyinstaller creates tmpdir for python files, thus this is the way to get executable path
+_config = None
 
 def config():
     global _script_path
+    global _config
+
+    if _config:
+        return _config
+
     conf_file = os.path.join(os.path.dirname(
         _script_path), 'albion-online-stats.cfg')
 

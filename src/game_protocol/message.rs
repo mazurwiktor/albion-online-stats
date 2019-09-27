@@ -39,6 +39,32 @@ macro_rules! deserialize_string {
     };
 }
 
+macro_rules! deserialize_string_vec {
+    ($val:expr, $index:expr, $name:expr) => {
+        if let Some(p) = $val.get(&$index) {
+            match p {
+                Value::Array(arr) => {
+                    let mut ret = vec![];
+                    for v in arr {
+                        if let Value::String(s) = v {
+                            ret.push(s.clone());
+                        }
+                    }
+
+                    Some(ret)
+                },
+                _ => {
+                    error!("Failed to deserialize {}", $name);
+                    None
+                } 
+            }
+        } else {
+            None
+        }
+    };
+}
+
+
 macro_rules! deserialize_float {
     ($val:expr, $index:expr, $name:expr) => {
         if let Some(p) = $val.get(&$index) {
@@ -223,6 +249,50 @@ impl Died {
 }
 
 #[derive(Debug)]
+pub struct PartyNew {
+    pub source: usize,
+    pub players: Vec<String>,
+}
+
+impl PartyNew {
+    fn encode(val: Parameters) -> Option<Message> {
+        let source = deserialize_number!(val, 0, "PartyNew::source")?;
+        let players = deserialize_string_vec!(val, 5, "PartyNew::players")?;
+
+        Some(Message::PartyNew(PartyNew{source, players}))
+    }
+}
+
+#[derive(Debug)]
+pub struct PartyJoin {
+    pub source: usize,
+    pub target_name: String
+}
+
+impl PartyJoin {
+    fn encode(val: Parameters) -> Option<Message> {
+        let source = deserialize_number!(val, 0, "PartyJoin::source")?;
+        let target_name = deserialize_string!(val, 2, "PartyJoin::target_name")?;
+
+        Some(Message::PartyJoin(PartyJoin{source, target_name}))
+    }
+}
+
+#[derive(Debug)]
+pub struct PartyDisbanded {
+    pub source: usize,
+}
+
+impl PartyDisbanded {
+    fn encode(val: Parameters) -> Option<Message> {
+        let source = deserialize_number!(val, 1, "PartyDisbanded::source")?;
+
+        Some(Message::PartyDisbanded(PartyDisbanded{source}))
+    }
+}
+
+
+#[derive(Debug)]
 pub enum Message {
     Leave(Leave),
     ChatSay(ChatSay),
@@ -230,7 +300,10 @@ pub enum Message {
     HealthUpdate(HealthUpdate),
     RegenerationHealthChanged(RegenerationHealthChanged),
     CharacterStats(CharacterStats),
-    Died(Died)
+    Died(Died),
+    PartyNew(PartyNew),
+    PartyJoin(PartyJoin),
+    PartyDisbanded(PartyDisbanded)
 }
 
 impl Packet {
@@ -242,6 +315,9 @@ impl Packet {
             63 => ChatSay::encode(self.parameters),
             79 => RegenerationHealthChanged::encode(self.parameters),
             149 => Died::encode(self.parameters),
+            210 => PartyNew::encode(self.parameters),
+            112 => PartyJoin::encode(self.parameters),
+            211 => PartyDisbanded::encode(self.parameters),
             1001 => CharacterStats::encode(self.parameters),
             _ => None,
         }

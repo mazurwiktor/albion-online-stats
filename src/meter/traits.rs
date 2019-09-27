@@ -1,4 +1,4 @@
-use super::types::PlayerStatistics;
+use super::types::PlayerStatisticsVec;
 
 #[derive(Debug, PartialEq)]
 pub enum CombatState {
@@ -69,11 +69,17 @@ pub trait PlayerEvents {
 pub trait ZoneStats {
     fn reset(&mut self);
 
-    fn get_zone_session(&self) -> Option<Vec<PlayerStatistics>>;
+    fn get_zone_session(&self) -> Option<PlayerStatisticsVec>;
     fn new_zone_session(&mut self) -> Option<()>;
 
-    fn get_overall_session(&self) -> Option<Vec<PlayerStatistics>>;
+    fn get_overall_session(&self) -> Option<PlayerStatisticsVec>;
 
-    fn get_last_fight_session(&self) -> Option<Vec<PlayerStatistics>>;
+    fn get_last_fight_session(&self) -> Option<PlayerStatisticsVec>;
     fn new_last_fight_session(&mut self) -> Option<()>;
+}
+
+pub trait PartyEvents {
+    fn register_new_party(&mut self, player_names: &std::vec::Vec<std::string::String>, id: usize) -> Option<()>;
+    fn register_new_member(&mut self, player_name: &str) -> Option<()>;
+    fn register_party_disbanded(&mut self) -> Option<()>;
 }
