@@ -1,11 +1,18 @@
 use std::fmt;
 use std::sync::{Arc, Mutex};
 
+#[cfg(test)]
+use fake_clock::FakeClock as Instant;
+#[cfg(not(test))]
+use std::time::Instant;
+
 use timer;
 
 use super::traits::CombatState;
 use super::traits::DamageDealer;
 use super::traits::DamageStats;
+use super::traits::FameStats;
+use super::traits::FameGatherer;
 
 struct Time {
     _guard: timer::Guard,
@@ -41,6 +48,8 @@ pub struct Player {
     time_elapsed: Arc<Mutex<f32>>,
     combat_state: Arc<Mutex<CombatState>>,
     _time: Option<Time>,
+    time_started: Instant,
+    fame: f32
 }
 
 
@@ -55,6 +64,8 @@ impl Player {
             time_elapsed,
             combat_state,
             _time: None,
+            time_started: Instant::now(),
+            fame: 0.0
         }
     }
 }
@@ -97,3 +108,44 @@ impl DamageStats for Player {
         *self.time_elapsed.lock().unwrap()
     }
 }
+
+impl FameGatherer for Player {
+    fn register_fame_gain(&mut self, fame: f32) {
+        self.fame += fame;
+    }
+}
+
+impl FameStats for Player {
+    fn fame(&self) -> f32 {
+        self.fame
+    }
+
+    fn time_started(&self) -> Instant {
+        self.time_started
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn sleep(time: u64) {
+        use fake_clock::FakeClock;
+        FakeClock::advance_time(time);
+    }
+
+    #[test]
+    fn test_player_fame_stats() {
+        let mut player = Player::new(1);
+
+        sleep(1000 * 60);
+        player.register_fame_gain(100.0);
+        assert_eq!(player.fame_per_minute(), 100);
+        assert_eq!(player.fame_per_hour(), 5999);
+
+        sleep(1000 * 60 * 60 - 1000 * 60);
+
+        assert_eq!(player.fame_per_hour(), 100);
+    }
+}
+

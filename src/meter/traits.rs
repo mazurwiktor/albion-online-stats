@@ -1,3 +1,8 @@
+#[cfg(test)]
+use fake_clock::FakeClock as Instant;
+#[cfg(not(test))]
+use std::time::Instant;
+
 use super::types::PlayerStatisticsVec;
 
 #[derive(Debug, PartialEq)]
@@ -20,6 +25,26 @@ pub trait DamageStats {
     }
 }
 
+pub trait FameStats {
+    fn fame(&self) -> f32;
+    fn time_started(&self) -> Instant;
+    fn time_in_game(&self) -> std::time::Duration {
+        Instant::now() - self.time_started()
+    }
+    fn fame_per_minute(&self) -> u32 {
+        let minutes_in_game = self.time_in_game().as_secs() as f32 / 60.0;
+        (self.fame() / minutes_in_game) as u32
+    }
+    fn fame_per_hour(&self) -> u32 {
+        let hours_in_game = self.time_in_game().as_secs() as f32 / 60.0 / 60.0;
+        (self.fame() / hours_in_game) as u32
+    }
+}
+
+pub trait FameGatherer {
+    fn register_fame_gain(&mut self, fame: f32);
+}
+
 pub trait DamageDealer {
     fn register_damage_dealt(&mut self, damage_dealt: f32);
 
@@ -31,13 +56,23 @@ pub trait DamageDealer {
 }
 
 pub trait PlayerEvents {
-    fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut DamageDealer>>;
+    fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn DamageDealer>>;
+
+    fn get_fame_gatherers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn FameGatherer>>;
 
     fn register_main_player(&mut self, name: &str, id: usize);
 
     fn register_leave(&mut self, id: usize) -> Option<()>;
 
     fn register_player(&mut self, name: &str, id: usize);
+
+    fn register_fame_gain(&mut self, player_id: usize, fame: f32) -> Option<()> {
+        for player in self.get_fame_gatherers_in_zone(player_id)? {
+            player.register_fame_gain(fame);
+        }
+
+        Some(())
+    }
 
     fn register_damage_dealt(&mut self, player_id: usize, damage: f32) -> Option<()> {
         for player in self.get_damage_dealers_in_zone(player_id)? {

@@ -48,6 +48,10 @@ impl Session {
                     damage: player.damage(),
                     time_in_combat: player.time_in_combat(),
                     dps: player.dps(),
+                    seconds_in_game: player.time_in_game().as_secs() as f32,
+                    fame: player.fame(),
+                    fame_per_minute: player.fame_per_minute(),
+                    fame_per_hour: player.fame_per_hour(),
                 })
                 .collect(),
         )
@@ -177,6 +181,18 @@ impl Meter {
 impl PlayerEvents for Meter {
     fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut DamageDealer>> {
         let (zone, last_fight) = self.sessions_mut()?;
+        let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
+        let zone_player = zone.get_player_by_id(player_id)?;
+        Some(vec![zone_player, las_fight_session_player])
+    }
+
+    fn get_fame_gatherers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn FameGatherer>> {
+        let main_player_id = self.main_player_id?;
+        let (zone, last_fight) = self.sessions_mut()?;
+        if player_id != main_player_id {
+            return None;
+        }
+
         let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
         let zone_player = zone.get_player_by_id(player_id)?;
         Some(vec![zone_player, las_fight_session_player])

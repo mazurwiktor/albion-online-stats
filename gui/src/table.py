@@ -8,8 +8,8 @@ class Table(QTableWidget):
 
         self.session = None
 
-        self.setColumnCount(3)
-        self.setHorizontalHeaderLabels(["Player", "Damage", "DPS"])
+        self.setColumnCount(4)
+        self.setHorizontalHeaderLabels(["Player", "Damage", "DPS", "%"])
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
     def fill(self, new_session):
@@ -20,7 +20,6 @@ class Table(QTableWidget):
 
         session = sorted(new_session, key=lambda s: float(
             s.damage), reverse=True)
-        session = [s for s in session if float(s.damage) > 0]
 
         self._align_rows(len(session))
 
@@ -28,6 +27,7 @@ class Table(QTableWidget):
             self.setItem(idx, 0, QTableWidgetItem(stats.name))
             self.setItem(idx, 1, QTableWidgetItem(stats.damage))
             self.setItem(idx, 2, QTableWidgetItem(stats.dps))
+            self.setItem(idx, 3, QTableWidgetItem(stats.precentage))
 
     def _align_rows(self, new_row_count):
         row_count = self.rowCount()

@@ -22,3 +22,4 @@ timer = "0.1"
 chrono = "0.4"
 log = { version = "0.4", features = ["std"] }
 lazy_static = "1.2"
+fake_clock = "0.3.0"

@@ -17,9 +17,9 @@ import engine
 
 
 class Mode:
-    CURRENT_ZONE = 'Damage: Current zone'
-    OVERALL = 'Damage: Overall'
-    LAST_FIGHT = 'Damage: Last fight'
+    CURRENT_ZONE = 'Statistics: Current zone'
+    OVERALL = 'Statistics: Overall'
+    LAST_FIGHT = 'Statistics: Last fight'
 
 
 class BottomButtons(QWidget):
@@ -49,8 +49,8 @@ class BottomButtons(QWidget):
     def copy(self):
         clip = "{}\n".format(self.mode())
         for i in range(self.table.rowCount()):
-            clip += '{}. {} {}-{}'.format(i+1, self.table.item(i, 0).text(
-            ), self.table.item(i, 1).text(), self.table.item(i, 2).text())
+            clip += '{}. {} {}-{}-{}%'.format(i+1, self.table.item(i, 0).text(
+            ), self.table.item(i, 1).text(), self.table.item(i, 2).text(), self.table.item(i, 3).text())
             clip += "\n"
         clipboard.copy(clip)
 
@@ -83,20 +83,27 @@ class MainWidget(QWidget):
         self.mouse_pos = None
         self.mode = ModeWidget()
         self.table = Table()
+        self.fame_label = QLabel()
         self.bottom_buttons = BottomButtons(
             self.table, lambda: self.mode.currentText())
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.mode)
+        self.layout.addWidget(self.fame_label)
         self.layout.addWidget(self.table)
         self.layout.addWidget(self.bottom_buttons)
         self.setLayout(self.layout)
 
-        self.table.fill(self.session())
+        self.refresh()
 
         timer = QTimer(self)
-        timer.timeout.connect(lambda: self.table.fill(self.session()))
+        timer.timeout.connect(self.refresh)
         timer.start(500)
+
+    def refresh(self):
+        damage_session, fame_stat = self.session()
+        self.table.fill(damage_session)
+        self.fame_label.setText("Fame <b>{}</b>, Fame per minute <b>{}</b>".format(fame_stat.fame, fame_stat.fame_per_minute))
 
     def mousePressEvent(self, event):
         self.mouse_pos = event.pos()

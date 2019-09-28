@@ -143,6 +143,9 @@ fn register_message(events: &mut meter::Meter, message: &game_protocol::Message)
         game_protocol::Message::PartyDisbanded(_) => {
             events.register_party_disbanded().unwrap_or(())
         }
+        game_protocol::Message::FameUpdate(msg) => {
+            events.register_fame_gain(msg.source, msg.fame).unwrap_or(())
+        }
         _ => {}
     }
 }
@@ -150,6 +153,8 @@ fn register_message(events: &mut meter::Meter, message: &game_protocol::Message)
 #[cfg(test)]
 mod tests {
     use super::*;
+    use fake_clock::FakeClock as Instant;
+
     use cpython::{PyClone, PyDict, PyFloat, PyUnicode};
 
     use game_protocol::message;
@@ -165,6 +170,11 @@ mod tests {
             super::configure(meter, Default::default());
 
             Python::acquire_gil()
+        }
+
+        pub fn sleep(time: u64) {
+            use fake_clock::FakeClock;
+            FakeClock::advance_time(time);
         }
 
         pub fn register(message: Message) {
@@ -256,6 +266,15 @@ mod tests {
                 .unwrap()
                 .value(py)
         }
+
+        pub fn get_number(py: Python, stats: &PyDict, key: &str) -> u32 {
+            stats
+                .get_item(py, key)
+                .unwrap()
+                .extract(py)
+                .unwrap()
+        }
+
     }
 
     trait Testing {
@@ -325,6 +344,15 @@ mod tests {
                 source: 200,
                 target: source,
                 value: -10.0,
+            }
+        }
+    }
+
+    impl Testing for message::FameUpdate {
+        fn new(source: usize) -> Self {
+            Self {
+                source: source,
+                fame: 100.0,
             }
         }
     }
@@ -400,11 +428,15 @@ mod tests {
         helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
 
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(stats.len(py), 4);
+        assert_eq!(stats.len(py), 8);
         assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
         assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
         assert_eq!(helpers::get_float(py, &stats, "time_in_combat"), 0.0);
         assert_eq!(helpers::get_float(py, &stats, "dps"), 0.0);
+        assert_eq!(helpers::get_float(py, &stats, "seconds_in_game"), 0.0);
+        assert_eq!(helpers::get_float(py, &stats, "fame"), 0.0);
+        assert_eq!(helpers::get_number(py, &stats, "fame_per_minute"), 0);
+        assert_eq!(helpers::get_number(py, &stats, "fame_per_hour"), 0);
     }
 
     #[test]
@@ -718,5 +750,25 @@ mod tests {
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "other_player").is_none());
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_none());
+    }
+
+    #[test]
+    fn test_fame_statistics() {
+        let guard = helpers::init();
+        let py = guard.python();
+
+        helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
+            "MAIN_CH1", 1,
+        )));
+        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
+        assert_eq!(helpers::get_number(py, &stats, "fame_per_minute"), 0);
+
+        helpers::sleep(1000 * 60);
+        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
+        assert_eq!(helpers::get_number(py, &stats, "fame_per_minute"), 0);
+
+        helpers::register(Message::FameUpdate(message::FameUpdate::new(1)));
+        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
+        assert_eq!(helpers::get_number(py, &stats, "fame_per_minute"), 100);
     }
 }

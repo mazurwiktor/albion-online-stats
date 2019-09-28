@@ -291,9 +291,26 @@ impl PartyDisbanded {
     }
 }
 
+#[derive(Debug)]
+pub struct FameUpdate {
+    pub source: usize,
+    pub fame: f32
+}
+
+impl FameUpdate {
+    fn encode(val: Parameters) -> Option<Message> {
+        let source = deserialize_number!(val, 0, "FameUpdate::source")?;
+        let raw_fame = deserialize_number!(val, 2, "FameUpdate::fame")?;
+        let fame = raw_fame as f32 / 10000.0;
+
+        Some(Message::FameUpdate(FameUpdate{source, fame}))
+    }
+}
+
 
 #[derive(Debug)]
 pub enum Message {
+    FameUpdate(FameUpdate),
     Leave(Leave),
     ChatSay(ChatSay),
     NewCharacter(NewCharacter),
@@ -318,6 +335,7 @@ impl Packet {
             210 => PartyNew::encode(self.parameters),
             112 => PartyJoin::encode(self.parameters),
             211 => PartyDisbanded::encode(self.parameters),
+            71 => FameUpdate::encode(self.parameters),
             1001 => CharacterStats::encode(self.parameters),
             _ => None,
         }

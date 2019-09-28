@@ -7,7 +7,7 @@ CFG_VERSION = '0.2'
 default = """
 [window]
 width = 300
-height = 200
+height = 230
 font-size = '10px'
 opacity = 0.5
 

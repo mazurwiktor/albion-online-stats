@@ -1,5 +1,10 @@
 use std::collections::HashMap;
 
+#[cfg(test)]
+use fake_clock::FakeClock as Instant;
+#[cfg(not(test))]
+use std::time::Instant;
+
 use cpython::PythonObject;
 use cpython::ToPyObject;
 use cpython::Python;
@@ -8,6 +13,7 @@ use cpython::PyDict;
 use cpython::PyList;
 
 use super::traits::DamageStats;
+use super::traits::FameStats;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Party {
@@ -38,6 +44,10 @@ pub struct PlayerStatistics {
     pub damage: f32,
     pub time_in_combat: f32,
     pub dps: f32,
+    pub seconds_in_game: f32,
+    pub fame: f32,
+    pub fame_per_minute: u32,
+    pub fame_per_hour: u32
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -67,6 +77,10 @@ impl PlayerStatisticsVec {
                         s.damage += stat.damage;
                         s.time_in_combat += stat.time_in_combat;
                         s.dps = s.dps();
+                        s.seconds_in_game += stat.seconds_in_game;
+                        s.fame += stat.fame;
+                        s.fame_per_minute = s.fame_per_minute();
+                        s.fame_per_hour = s.fame_per_hour();
                     })
                     .or_insert(stat.clone());
                 acc
@@ -88,6 +102,19 @@ impl DamageStats for PlayerStatistics {
     }
 }
 
+impl FameStats for PlayerStatistics {
+    fn fame(&self) -> f32 {
+        self.fame
+    }
+
+    fn time_started(&self) -> Instant {
+        Instant::now()
+    }
+
+    fn time_in_game(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(self.seconds_in_game as u64)
+    }
+}
 
 impl ToPyObject for PlayerStatistics {
     type ObjectType = PyObject;
@@ -105,6 +132,18 @@ impl ToPyObject for PlayerStatistics {
             .unwrap();
         stats
             .set_item(py, "dps", self.dps.to_py_object(py))
+            .unwrap();
+        stats
+            .set_item(py, "seconds_in_game", self.seconds_in_game.to_py_object(py))
+            .unwrap();
+        stats
+            .set_item(py, "fame", self.fame.to_py_object(py))
+            .unwrap();
+        stats
+            .set_item(py, "fame_per_minute", self.fame_per_minute.to_py_object(py))
+            .unwrap();
+        stats
+            .set_item(py, "fame_per_hour", self.fame_per_hour.to_py_object(py))
             .unwrap();
 
         stats.into_object()
