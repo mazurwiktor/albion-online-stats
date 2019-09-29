@@ -153,7 +153,6 @@ fn register_message(events: &mut meter::Meter, message: &game_protocol::Message)
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fake_clock::FakeClock as Instant;
 
     use cpython::{PyClone, PyDict, PyFloat, PyUnicode};
 
