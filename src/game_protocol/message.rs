@@ -333,7 +333,7 @@ impl Packet {
             79 => RegenerationHealthChanged::encode(self.parameters),
             149 => Died::encode(self.parameters),
             210 => PartyNew::encode(self.parameters),
-            112 => PartyJoin::encode(self.parameters),
+            212 => PartyJoin::encode(self.parameters),
             211 => PartyDisbanded::encode(self.parameters),
             71 => FameUpdate::encode(self.parameters),
             1001 => CharacterStats::encode(self.parameters),
