@@ -20,7 +20,7 @@ class DamageStat:
 
 class FameStat:
     def __init__(self, fame, fame_per_minute):
-        self.fame = fame
+        self.fame = '{0:.2f}'.format(fame)
         self.fame_per_minute = fame_per_minute
 
 
@@ -28,7 +28,7 @@ def stats(session):
     with_damage = [s for s in session if s['damage'] != 0.0]
     extended_session = with_precentage(with_damage)
     statistics = [DamageStat(s['player'], s['damage'], s['time_in_combat'], s['dps'], s['dmg_precentage']) for s in extended_session]
-    stats_with_fame = [p for p in extended_session if 'fame' in p and p['fame'] != 0.0]
+    stats_with_fame = [p for p in session if 'fame' in p and p['fame'] != 0.0]
 
     if len(stats_with_fame) > 0:
         stat_with_fame = stats_with_fame[0]
