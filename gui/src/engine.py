@@ -88,6 +88,12 @@ def get_last_fight_session():
 
     return stats(session)
 
+def get_party_members():
+    if TESTING_ENABLED:
+        return ['a', 'b', 'c']
+    else:
+        return libmeter.get_players_in_party()
+   
 
 def new_zone_session():
     libmeter.new_zone_session()

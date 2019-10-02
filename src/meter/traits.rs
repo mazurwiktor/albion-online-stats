@@ -104,6 +104,8 @@ pub trait PlayerEvents {
 pub trait ZoneStats {
     fn reset(&mut self);
 
+    fn get_players_in_party(&self) -> Option<Vec<String>>;
+
     fn get_zone_session(&self) -> Option<PlayerStatisticsVec>;
     fn new_zone_session(&mut self) -> Option<()>;
 

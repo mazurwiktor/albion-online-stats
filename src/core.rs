@@ -72,6 +72,15 @@ pub fn new_last_fight_session(_py: Python) -> PyResult<u32> {
     Ok(0)
 }
 
+pub fn get_players_in_party(py: Python) -> PyResult<PyList> {
+    let meter = &mut METER.lock().unwrap();
+
+    meter.get_players_in_party().map_or_else(
+        || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
+        |v| Ok(v.into_py_object(py)),
+    )
+}
+
 pub fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
     CombinedLogger::init(vec![WriteLogger::new(
         LevelFilter::Trace,
@@ -245,6 +254,11 @@ mod tests {
                 }
             }
             None
+        }
+
+        pub fn get_players_in_party() -> Vec<String> {
+            let meter = &mut METER.lock().unwrap();
+                meter.get_players_in_party().unwrap_or(vec![])
         }
 
         pub fn get_string(py: Python, stats: &PyDict, key: &str) -> String {
@@ -708,7 +722,7 @@ mod tests {
     }
 
     #[test]
-    fn test_party_member_filter() {
+    fn test_party_members() {
         let guard = helpers::init();
         let py = guard.python();
 
@@ -733,6 +747,8 @@ mod tests {
             1,
         )));
 
+
+        assert_eq!(helpers::get_players_in_party().len(), 2);
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "other_player").is_some());
 
@@ -742,6 +758,7 @@ mod tests {
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_none());
 
         helpers::register(Message::PartyJoin(message::PartyJoin::new_named(&"yet_another_other_player", 1)));
+        assert_eq!(helpers::get_players_in_party().len(), 3);
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_some());
 
         helpers::register(Message::PartyDisbanded(message::PartyDisbanded::new(1)));
@@ -749,6 +766,7 @@ mod tests {
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "other_player").is_none());
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_none());
+        assert_eq!(helpers::get_players_in_party().len(), 0);
     }
 
     #[test]

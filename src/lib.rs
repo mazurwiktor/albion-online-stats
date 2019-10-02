@@ -16,7 +16,7 @@ use crate::core::initialize;
 use crate::core::new_last_fight_session;
 use crate::core::new_zone_session;
 use crate::core::reset_sessions;
-
+use crate::core::get_players_in_party;
 
 py_module_initializer!(libmeter, initliblibmeter, PyInit_libmeter, |py, m| {
     m.add(py, "__doc__", "This module is implemented in Rust")?;
@@ -35,5 +35,6 @@ py_module_initializer!(libmeter, initliblibmeter, PyInit_libmeter, |py, m| {
         py_fn!(py, new_last_fight_session()),
     )?;
     m.add(py, "get_zone_session", py_fn!(py, get_zone_session()))?;
+    m.add(py, "get_players_in_party", py_fn!(py, get_players_in_party()))?;
     Ok(())
 });

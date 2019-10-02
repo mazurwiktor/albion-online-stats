@@ -103,7 +103,8 @@ class MainWidget(QWidget):
     def refresh(self):
         damage_session, fame_stat = self.session()
         self.table.fill(damage_session)
-        self.fame_label.setText("Fame <b>{}</b>, Fame per minute <b>{}</b>".format(fame_stat.fame, fame_stat.fame_per_minute))
+        self.fame_label.setText("Fame <b>{}</b> | Fame per minute <b>{}</b> | Party members <b>{}</b>".format(
+            fame_stat.fame, fame_stat.fame_per_minute, len(engine.get_party_members())))
 
     def mousePressEvent(self, event):
         self.mouse_pos = event.pos()

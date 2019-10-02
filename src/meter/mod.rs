@@ -280,6 +280,14 @@ impl ZoneStats for Meter {
         self.last_fight_session = Session::from(&self.last_fight_session);
         Some(())
     }
+
+    fn get_players_in_party(&self) -> Option<Vec<String>> {
+        if let Some(party) = &self.party {
+            let members = party.clone().members;
+            return Some(members.into_iter().collect())
+        }
+        None       
+    }
 }
 
 impl traits::PartyEvents for Meter {
