@@ -10,4 +10,7 @@ style = """
     QListView { 
         min-height: 100px;
     }
+    QPushButton {
+        max-width: 60px;
+    }
 """ % (font_size)

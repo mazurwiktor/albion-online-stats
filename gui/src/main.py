@@ -13,8 +13,8 @@ from PySide2.QtWidgets import QComboBox
 import clipboard
 
 from table import Table
+import about
 import engine
-
 
 class Mode:
     CURRENT_ZONE = 'Statistics: Current zone'
@@ -28,22 +28,26 @@ class BottomButtons(QWidget):
         self.mode = mode
         self.table = table
         self.layout = QHBoxLayout()
+        self.about = about.About()
 
         self.copy_button = QPushButton("&Copy", self)
         self.reset_button = QPushButton("&Reset", self)
         self.close_button = QPushButton("&Close", self)
-
+        self.about_button = QPushButton("&About", self)
         self.layout.addWidget(self.copy_button)
         self.layout.addWidget(self.reset_button)
+        self.layout.addWidget(self.about_button)
         self.layout.addWidget(self.close_button)
         self.setLayout(self.layout)
 
         self.copy_button.clicked.connect(self.copy)
         self.reset_button.clicked.connect(self.reset)
         self.close_button.clicked.connect(self.close)
+        self.about_button.clicked.connect(self.about.show)
 
         self.copy_button.setObjectName('BottomButtons')
         self.reset_button.setObjectName('BottomButtons')
+        self.about_button.setObjectName('BottomButtons')
         self.close_button.setObjectName('BottomButtons')
 
     def copy(self):
@@ -65,7 +69,6 @@ class BottomButtons(QWidget):
 
     def close(self):
         sys.exit(0)
-
 
 class ModeWidget(QComboBox):
     def __init__(self):

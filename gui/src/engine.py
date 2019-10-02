@@ -53,11 +53,11 @@ def with_precentage(session):
 def get_zone_session():
     if TESTING_ENABLED:
         session = [
-            {'player': 'A', 'damage': 1234.02,
+            {'player': 'A'*20, 'damage': 1234.02,
                 'time_in_combat': 12.0, 'dps': 12.4234, 'fame': 20.0, 'fame_per_minute': 30},
-            {'player': 'B', 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
-            {'player': 'C', 'damage': 23.02, 'time_in_combat': 12.0, 'dps': 13},
-            {'player': 'D', 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
+            {'player': 'B'*20, 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
+            {'player': 'C'*20, 'damage': 23.02, 'time_in_combat': 12.0, 'dps': 13},
+            {'player': 'D'*20, 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
         ]
     else:
         session = libmeter.get_zone_session()

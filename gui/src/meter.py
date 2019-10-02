@@ -44,7 +44,7 @@ if __name__ == "__main__":
         msg.setIcon(QMessageBox.Warning)
         msg.setWindowTitle("Update available!")
         msg.setText("Another version of app is avaliable.")
-        msg.setInformativeText("You are using app in version {}, new version {} available <a href='{}'>here</a><".format(
+        msg.setInformativeText("You are using app in version {}, new version {} available <a href='{}'>here</a>".format(
             current_version, latest_version, latest_url))
         msg.setStandardButtons(QMessageBox.Ok)
         msg.show()
