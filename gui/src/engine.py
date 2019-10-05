@@ -6,6 +6,13 @@ from config import config
 TESTING_ENABLED = bool(os.getenv('TESTING'))
 
 
+class StatType:
+    Unknown = 0
+    LastFight = 1
+    Zone = 2
+    Overall = 3
+
+
 class DamageStat:
     def __init__(self, name, damage, time_in_combat, dps, precentage):
         self.name = name
@@ -50,7 +57,7 @@ def with_precentage(session):
 
     return session
 
-def get_zone_session():
+def zone_stats():
     if TESTING_ENABLED:
         session = [
             {'player': 'A'*20, 'damage': 1234.02,
@@ -60,31 +67,31 @@ def get_zone_session():
             {'player': 'D'*20, 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
         ]
     else:
-        session = libmeter.get_zone_session()
+        session = libmeter.stats(StatType.Zone)
 
     return stats(session)
 
 
-def get_overall_session():
+def overall_stats():
     if TESTING_ENABLED:
         session = [
             {'player': 'overall', 'damage': 1234.02,
                 'time_in_combat': 12.0, 'dps': 12.4234},
         ]
     else:
-        session = libmeter.get_overall_session()
+        session = libmeter.stats(StatType.Overall)
 
     return stats(session)
 
 
-def get_last_fight_session():
+def last_fight_stats():
     if TESTING_ENABLED:
         session = [
             {'player': 'last fight', 'damage': 1234.02,
                 'time_in_combat': 12.0, 'dps': 12.4234},
         ]
     else:
-        session = libmeter.get_last_fight_session()
+        session = libmeter.stats(StatType.LastFight)
 
     return stats(session)
 
@@ -95,14 +102,14 @@ def get_party_members():
         return libmeter.get_players_in_party()
    
 
-def new_zone_session():
-    libmeter.new_zone_session()
+def reset_zone_stats():
+    libmeter.reset_zone_stats()
 
-def new_last_fight_session():
-    libmeter.new_last_fight_session()
+def reset_last_fight_stats():
+    libmeter.reset_last_fight_stats()
 
-def reset_sessions():
-    libmeter.reset_sessions()
+def reset_stats():
+    libmeter.reset_stats()
 
 def initialize():
     if TESTING_ENABLED:

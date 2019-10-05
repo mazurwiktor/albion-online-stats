@@ -199,7 +199,7 @@ impl PlayerEvents for Meter {
     }
 
     fn register_main_player(&mut self, name: &str, id: usize) {
-        debug!("Main player {} registerd with id {}", name, id);
+        info!("Main player {} registered with id {}", name, id);
         self.main_player_id = Some(id);
 
         if self.zone_session.is_none() {
@@ -211,7 +211,7 @@ impl PlayerEvents for Meter {
     fn register_leave(&mut self, id: usize) -> Option<()> {
         let main_player_id = self.main_player_id?;
         if id == main_player_id {
-            debug!("New session, main player left the zone");
+            info!("Main player ({}) left the zone, Creating new zone session.", id);
             self.zone_session_mut()?.cleanup_players();
             self.new_session();
         }
@@ -221,7 +221,7 @@ impl PlayerEvents for Meter {
 
     fn register_player(&mut self, name: &str, id: usize) {
         if self.zone_session.is_none() {
-            debug!("New session");
+            info!("New player ({}) registered without session, creating new session", name);
             self.new_session();
         }
 
@@ -240,20 +240,34 @@ impl PlayerEvents for Meter {
     }
 }
 
+impl LastFightStats for Meter {
+    fn last_fight_stats(&self) -> Option<PlayerStatisticsVec> {
+        let last_session = &self.last_fight_session;
+        Some(last_session.stats(|p| self.stats_filter(p)))
+    }
+
+    fn reset_last_fight_stats(&mut self) -> Option<()> {
+        self.last_fight_session = Session::from(&self.last_fight_session);
+        Some(())
+    }
+}
+
 impl ZoneStats for Meter {
-    fn get_zone_session(&self) -> Option<PlayerStatisticsVec> {
+    fn zone_stats(&self) -> Option<PlayerStatisticsVec> {
         let last_session = self.zone_session()?;
         Some(last_session.stats(|p| self.stats_filter(p)))
     }
 
-    fn new_zone_session(&mut self) -> Option<()> {
+    fn reset_zone_stats(&mut self) -> Option<()> {
         let last_session = self.zone_session_mut()?;
         self.zone_session = Some(Session::from(&last_session));
 
         Some(())
     }
+}
 
-    fn get_overall_session(&self) -> Option<PlayerStatisticsVec> {
+impl OverallStats for Meter {
+    fn overall_stats(&self) -> Option<PlayerStatisticsVec> {
         if let Some(zone) = self.zone_session() {
             return Some(PlayerStatisticsVec::merged(
                 &self.zone_history,
@@ -263,21 +277,15 @@ impl ZoneStats for Meter {
 
         None
     }
+}
 
-    fn reset(&mut self) {
+impl GameStats for Meter {
+    fn reset_stats(&mut self) -> Option<()> {
         self.zone_history = PlayerStatisticsVec::new();
         self.zone_session = None;
         self.last_fight_session = Session::new();
         self.main_player_id = None;
-    }
 
-    fn get_last_fight_session(&self) -> Option<PlayerStatisticsVec> {
-        let last_session = &self.last_fight_session;
-        Some(last_session.stats(|p| self.stats_filter(p)))
-    }
-
-    fn new_last_fight_session(&mut self) -> Option<()> {
-        self.last_fight_session = Session::from(&self.last_fight_session);
         Some(())
     }
 
@@ -318,8 +326,8 @@ impl traits::PartyEvents for Meter {
 fn test_meter() {
     let mut meter = Meter::new();
 
-    assert_eq!(meter.get_zone_session(), None);
+    assert_eq!(meter.zone_stats(), None);
 
     meter.register_main_player("name", 0);
-    assert!(meter.get_zone_session().is_some());
+    assert!(meter.zone_stats().is_some());
 }

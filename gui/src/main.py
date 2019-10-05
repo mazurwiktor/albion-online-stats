@@ -60,9 +60,9 @@ class BottomButtons(QWidget):
 
     def reset(self):
         reset = {
-            Mode.CURRENT_ZONE: engine.new_zone_session,
-            Mode.LAST_FIGHT: engine.new_last_fight_session,
-            Mode.OVERALL: engine.reset_sessions
+            Mode.CURRENT_ZONE: engine.reset_zone_stats,
+            Mode.LAST_FIGHT: engine.reset_last_fight_stats,
+            Mode.OVERALL: engine.reset_stats
         }
 
         reset[self.mode()]()
@@ -126,9 +126,9 @@ class MainWidget(QWidget):
 
     def session(self):
         sessions = {
-            Mode.CURRENT_ZONE: engine.get_zone_session,
-            Mode.LAST_FIGHT: engine.get_last_fight_session,
-            Mode.OVERALL: engine.get_overall_session
+            Mode.CURRENT_ZONE: engine.zone_stats,
+            Mode.LAST_FIGHT: engine.last_fight_stats,
+            Mode.OVERALL: engine.overall_stats
         }
 
         return sessions[self.mode.currentText()]()

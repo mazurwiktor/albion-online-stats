@@ -9,10 +9,12 @@ use std::time::Instant;
 
 use cpython::PythonObject;
 use cpython::ToPyObject;
+use cpython::FromPyObject;
 use cpython::Python;
 use cpython::PyObject;
 use cpython::PyDict;
 use cpython::PyList;
+use cpython::PyResult;
 
 use super::traits::DamageStats;
 use super::traits::FameStats;
@@ -55,6 +57,14 @@ pub struct PlayerStatistics {
 #[derive(Debug, PartialEq, Clone)]
 pub struct PlayerStatisticsVec {
     _vec: Vec<PlayerStatistics>
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum StatType {
+    LastFight,
+    Zone,
+    Overall,
+    Unknown
 }
 
 impl PlayerStatisticsVec {
@@ -161,5 +171,21 @@ impl ToPyObject for PlayerStatisticsVec {
 
     fn to_py_object(&self, py: Python) -> Self::ObjectType {
         self._vec.clone().into_py_object(py)
+    }
+}
+
+impl <'source> FromPyObject<'source> for StatType {
+    fn extract(py: Python, obj: &'source PyObject) -> PyResult<Self> {
+        match obj.extract(py) {
+            Ok(n) => {
+                match n {
+                    1 => Ok(StatType::LastFight),
+                    2 => Ok(StatType::Zone),
+                    3 => Ok(StatType::Overall),
+                    _ => Ok(StatType::Unknown)
+                }
+            },
+            Err(e) => Err(e)
+        }
     }
 }

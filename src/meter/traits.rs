@@ -101,18 +101,23 @@ pub trait PlayerEvents {
     }
 }
 
+pub trait LastFightStats {
+    fn last_fight_stats(&self) -> Option<PlayerStatisticsVec>;
+    fn reset_last_fight_stats(&mut self) -> Option<()>;
+}
+
 pub trait ZoneStats {
-    fn reset(&mut self);
+    fn zone_stats(&self) -> Option<PlayerStatisticsVec>;
+    fn reset_zone_stats(&mut self) -> Option<()>;
+}
 
+pub trait OverallStats {
+    fn overall_stats(&self) -> Option<PlayerStatisticsVec>;
+}
+
+pub trait GameStats {
     fn get_players_in_party(&self) -> Option<Vec<String>>;
-
-    fn get_zone_session(&self) -> Option<PlayerStatisticsVec>;
-    fn new_zone_session(&mut self) -> Option<()>;
-
-    fn get_overall_session(&self) -> Option<PlayerStatisticsVec>;
-
-    fn get_last_fight_session(&self) -> Option<PlayerStatisticsVec>;
-    fn new_last_fight_session(&mut self) -> Option<()>;
+    fn reset_stats(&mut self) -> Option<()>;
 }
 
 pub trait PartyEvents {

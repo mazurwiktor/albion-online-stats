@@ -37,7 +37,7 @@ pub fn receive(tx: Sender<UdpPacket>) {
         .into_iter()
         .filter(|i| !i.is_loopback());
     
-    debug!("Found interfaces: {:?}", interfaces);
+    info!("Found interfaces: {:?}", interfaces);
 
     for interface in interfaces {
         let tx = shared_tx.clone();

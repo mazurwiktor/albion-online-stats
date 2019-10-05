@@ -16,59 +16,55 @@ use packet_sniffer::UdpPacket;
 
 use crate::game_protocol;
 use crate::meter;
+use meter::GameStats;
+use meter::LastFightStats;
+use meter::OverallStats;
 use meter::PartyEvents;
 use meter::PlayerEvents;
 use meter::ZoneStats;
+
+pub use meter::StatType;
 
 lazy_static! {
     static ref METER: Mutex<meter::Meter> = Mutex::new(meter::Meter::new());
 }
 
-pub fn get_zone_session(py: Python) -> PyResult<PyList> {
+pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyList> {
     let meter = &mut METER.lock().unwrap();
-    meter.get_zone_session().map_or_else(
-        || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-        |v| Ok(v.into_py_object(py)),
-    )
+    match stat_type {
+        StatType::Zone => meter.zone_stats().map_or_else(
+            || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
+            |v| Ok(v.into_py_object(py)),
+        ),
+        StatType::LastFight => meter.last_fight_stats().map_or_else(
+            || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
+            |v| Ok(v.into_py_object(py)),
+        ),
+        StatType::Overall => meter.overall_stats().map_or_else(
+            || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
+            |v| Ok(v.into_py_object(py)),
+        ),
+        _ => {
+            error!("Unexpected stats requested.");
+            Ok(PyList::new(py, Vec::<PyObject>::new().as_slice()))
+        }
+    }
 }
 
-pub fn get_overall_session(py: Python) -> PyResult<PyList> {
+pub fn reset(_py: Python, stat_type: StatType) -> PyResult<u32> {
     let meter = &mut METER.lock().unwrap();
-    meter.get_overall_session().map_or_else(
-        || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-        |v| Ok(v.into_py_object(py)),
-    )
-}
-
-pub fn get_last_fight_session(py: Python) -> PyResult<PyList> {
-    let meter = &mut METER.lock().unwrap();
-    meter.get_last_fight_session().map_or_else(
-        || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-        |v| Ok(v.into_py_object(py)),
-    )
-}
-
-pub fn new_zone_session(_py: Python) -> PyResult<u32> {
-    let meter = &mut METER.lock().unwrap();
-
-    meter.new_zone_session();
-
-    Ok(0)
-}
-
-pub fn reset_sessions(_py: Python) -> PyResult<u32> {
-    let meter = &mut METER.lock().unwrap();
-
-    meter.reset();
-
-    Ok(0)
-}
-
-pub fn new_last_fight_session(_py: Python) -> PyResult<u32> {
-    let meter = &mut METER.lock().unwrap();
-
-    meter.new_last_fight_session();
-
+    match stat_type {
+        StatType::Zone => {
+            meter.reset_zone_stats();
+        }
+        StatType::LastFight => {
+            meter.reset_last_fight_stats();
+        }
+        StatType::Overall => {
+            meter.reset_stats();
+        }
+        _ => error!("Unexpected stat to reset."),
+    }
     Ok(0)
 }
 
@@ -83,16 +79,19 @@ pub fn get_players_in_party(py: Python) -> PyResult<PyList> {
 
 pub fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
     CombinedLogger::init(vec![WriteLogger::new(
-        LevelFilter::Trace,
+        LevelFilter::Info,
         Config::default(),
         File::create("damage-meter.log").unwrap(),
     )])
     .unwrap();
 
-    configure(&mut METER.lock().unwrap(), meter::MeterConfig {
-        skip_non_party_members,
-        ..Default::default()
-    });
+    configure(
+        &mut METER.lock().unwrap(),
+        meter::MeterConfig {
+            skip_non_party_members,
+            ..Default::default()
+        },
+    );
 
     thread::spawn(move || {
         let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = channel();
@@ -126,7 +125,7 @@ fn register_messages(meter: &mut meter::Meter, messages: &Vec<game_protocol::Mes
 }
 
 fn register_message(events: &mut meter::Meter, message: &game_protocol::Message) {
-    debug!("Found message {:?}", message);
+    info!("Found message {:?}", message);
     match message {
         game_protocol::Message::Leave(msg) => events.register_leave(msg.source).unwrap_or(()),
         game_protocol::Message::NewCharacter(msg) => {
@@ -152,9 +151,9 @@ fn register_message(events: &mut meter::Meter, message: &game_protocol::Message)
         game_protocol::Message::PartyDisbanded(_) => {
             events.register_party_disbanded().unwrap_or(())
         }
-        game_protocol::Message::FameUpdate(msg) => {
-            events.register_fame_gain(msg.source, msg.fame).unwrap_or(())
-        }
+        game_protocol::Message::FameUpdate(msg) => events
+            .register_fame_gain(msg.source, msg.fame)
+            .unwrap_or(()),
         _ => {}
     }
 }
@@ -173,7 +172,7 @@ mod tests {
 
         pub fn init() -> cpython::GILGuard {
             let meter = &mut METER.lock().unwrap();
-            meter.reset();
+            meter.reset_stats();
 
             super::configure(meter, Default::default());
 
@@ -200,14 +199,14 @@ mod tests {
         }
 
         pub fn get_damage_dealer_in_zone_by_index(py: Python, index: usize) -> PyDict {
-            let zone_session = get_zone_session(py).unwrap();
+            let zone_session = stats(py, StatType::Zone).unwrap();
             let stat = zone_session.get_item(py, index);
             let player = stat.cast_as::<PyDict>(py).unwrap().clone_ref(py);
             player
         }
 
         pub fn get_damage_dealer_in_zone_by_name(py: Python, name: &str) -> Option<PyDict> {
-            let zone_session_len = get_zone_session(py).unwrap().len(py);
+            let zone_session_len = stats(py, StatType::Zone).unwrap().len(py);
 
             for idx in 0..zone_session_len {
                 let player = get_damage_dealer_in_zone_by_index(py, idx);
@@ -219,14 +218,14 @@ mod tests {
         }
 
         pub fn get_player_overall_index(py: Python, index: usize) -> PyDict {
-            let zone_session = get_overall_session(py).unwrap();
+            let zone_session = stats(py, StatType::Overall).unwrap();
             let stat = zone_session.get_item(py, index);
             let player = stat.cast_as::<PyDict>(py).unwrap().clone_ref(py);
             player
         }
 
         pub fn get_player_overall_by_name(py: Python, name: &str) -> Option<PyDict> {
-            let zone_session_len = get_overall_session(py).unwrap().len(py);
+            let zone_session_len = stats(py, StatType::Overall).unwrap().len(py);
 
             for idx in 0..zone_session_len {
                 let player = get_player_overall_index(py, idx);
@@ -238,14 +237,14 @@ mod tests {
         }
 
         pub fn get_player_last_fight_index(py: Python, index: usize) -> PyDict {
-            let zone_session = get_last_fight_session(py).unwrap();
+            let zone_session = stats(py, StatType::LastFight).unwrap();
             let stat = zone_session.get_item(py, index);
             let player = stat.cast_as::<PyDict>(py).unwrap().clone_ref(py);
             player
         }
 
         pub fn get_player_last_fight_by_name(py: Python, name: &str) -> Option<PyDict> {
-            let zone_session_len = get_last_fight_session(py).unwrap().len(py);
+            let zone_session_len = stats(py, StatType::LastFight).unwrap().len(py);
 
             for idx in 0..zone_session_len {
                 let player = get_player_last_fight_index(py, idx);
@@ -258,7 +257,7 @@ mod tests {
 
         pub fn get_players_in_party() -> Vec<String> {
             let meter = &mut METER.lock().unwrap();
-                meter.get_players_in_party().unwrap_or(vec![])
+            meter.get_players_in_party().unwrap_or(vec![])
         }
 
         pub fn get_string(py: Python, stats: &PyDict, key: &str) -> String {
@@ -281,11 +280,7 @@ mod tests {
         }
 
         pub fn get_number(py: Python, stats: &PyDict, key: &str) -> u32 {
-            stats
-                .get_item(py, key)
-                .unwrap()
-                .extract(py)
-                .unwrap()
+            stats.get_item(py, key).unwrap().extract(py).unwrap()
         }
 
     }
@@ -419,7 +414,7 @@ mod tests {
         let guard = helpers::init();
         let py = guard.python();
 
-        assert_eq!(get_zone_session(py).unwrap().len(py), 0);
+        assert_eq!(stats(py, StatType::Zone).unwrap().len(py), 0);
     }
 
     #[test]
@@ -429,7 +424,7 @@ mod tests {
 
         helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
 
-        let zone_session = get_zone_session(py).unwrap();
+        let zone_session = stats(py, StatType::Zone).unwrap();
         assert_eq!(zone_session.len(py), 1);
     }
 
@@ -513,7 +508,7 @@ mod tests {
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
         assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
 
-        new_zone_session(py).unwrap();
+        reset(py, StatType::Zone).unwrap();
         let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
         assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
     }
@@ -732,12 +727,14 @@ mod tests {
         });
 
         helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
-            "main_player", 1,
+            "main_player",
+            1,
         )));
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
 
         helpers::register(Message::NewCharacter(message::NewCharacter::new_named(
-            "other_player", 2,
+            "other_player",
+            2,
         )));
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "other_player").is_none());
@@ -747,25 +744,34 @@ mod tests {
             1,
         )));
 
-
         assert_eq!(helpers::get_players_in_party().len(), 2);
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "other_player").is_some());
 
         helpers::register(Message::NewCharacter(message::NewCharacter::new_named(
-            "yet_another_other_player", 2,
+            "yet_another_other_player",
+            2,
         )));
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_none());
+        assert!(
+            helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_none()
+        );
 
-        helpers::register(Message::PartyJoin(message::PartyJoin::new_named(&"yet_another_other_player", 1)));
+        helpers::register(Message::PartyJoin(message::PartyJoin::new_named(
+            &"yet_another_other_player",
+            1,
+        )));
         assert_eq!(helpers::get_players_in_party().len(), 3);
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_some());
+        assert!(
+            helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_some()
+        );
 
         helpers::register(Message::PartyDisbanded(message::PartyDisbanded::new(1)));
 
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
         assert!(helpers::get_damage_dealer_in_zone_by_name(py, "other_player").is_none());
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_none());
+        assert!(
+            helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_none()
+        );
         assert_eq!(helpers::get_players_in_party().len(), 0);
     }
 
