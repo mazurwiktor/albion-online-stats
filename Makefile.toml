@@ -1,0 +1,21 @@
+[tasks.test]
+command = "cargo"
+args = ["test", "--", "--test-threads", "1"]
+dependencies = ["build"]
+
+[tasks.build]
+command = "cargo"
+args = ["build", "--release"]
+dependencies = ["format"]
+
+[tasks.copy-windows]
+command = "cp"
+args = ["target/release/meter.dll", "gui/src/libmeter.pyd"]
+
+[tasks.copy-linux]
+command = "cp"
+args = ["target/release/libmeter.so", "gui/src"]
+
+[tasks.post-build]
+linux_alias = "copy-linux"
+windows_alias = "copy-windows"

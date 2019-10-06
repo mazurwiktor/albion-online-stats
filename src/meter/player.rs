@@ -11,8 +11,8 @@ use timer;
 use super::traits::CombatState;
 use super::traits::DamageDealer;
 use super::traits::DamageStats;
-use super::traits::FameStats;
 use super::traits::FameGatherer;
+use super::traits::FameStats;
 
 struct Time {
     _guard: timer::Guard,
@@ -49,9 +49,8 @@ pub struct Player {
     combat_state: Arc<Mutex<CombatState>>,
     _time: Option<Time>,
     time_started: Instant,
-    fame: f32
+    fame: f32,
 }
-
 
 impl Player {
     pub fn new(id: usize) -> Self {
@@ -65,7 +64,7 @@ impl Player {
             combat_state,
             _time: None,
             time_started: Instant::now(),
-            fame: 0.0
+            fame: 0.0,
         }
     }
 }
@@ -78,7 +77,7 @@ impl DamageDealer for Player {
             self._time = Some(Time::with(elapsed, state));
         }
         if *self.combat_state.lock().unwrap() == CombatState::OutOfCombat {
-            return
+            return;
         }
 
         self.damage_dealt += damage_dealt
@@ -148,4 +147,3 @@ mod test {
         assert_eq!(player.fame_per_hour(), 100);
     }
 }
-
