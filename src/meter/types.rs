@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::HashMap;
 use std::iter::FromIterator;
 
 #[cfg(test)]
@@ -7,14 +7,14 @@ use fake_clock::FakeClock as Instant;
 #[cfg(not(test))]
 use std::time::Instant;
 
-use cpython::FromPyObject;
-use cpython::PyDict;
-use cpython::PyList;
-use cpython::PyObject;
-use cpython::PyResult;
-use cpython::Python;
 use cpython::PythonObject;
 use cpython::ToPyObject;
+use cpython::FromPyObject;
+use cpython::Python;
+use cpython::PyObject;
+use cpython::PyDict;
+use cpython::PyList;
+use cpython::PyResult;
 
 use super::traits::DamageStats;
 use super::traits::FameStats;
@@ -22,7 +22,7 @@ use super::traits::FameStats;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Party {
     pub id: usize,
-    pub members: HashSet<String>,
+    pub members: HashSet<String>
 }
 
 impl Party {
@@ -51,12 +51,12 @@ pub struct PlayerStatistics {
     pub seconds_in_game: f32,
     pub fame: f32,
     pub fame_per_minute: u32,
-    pub fame_per_hour: u32,
+    pub fame_per_hour: u32
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct PlayerStatisticsVec {
-    _vec: Vec<PlayerStatistics>,
+    _vec: Vec<PlayerStatistics>
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -64,17 +64,19 @@ pub enum StatType {
     LastFight,
     Zone,
     Overall,
-    Unknown,
+    Unknown
 }
 
 impl PlayerStatisticsVec {
     pub fn new() -> Self {
-        Self { _vec: vec![] }
+        Self {
+            _vec: vec![]
+        }
     }
 
     pub fn from(player_statistics_vec: Vec<PlayerStatistics>) -> Self {
         Self {
-            _vec: player_statistics_vec,
+            _vec: player_statistics_vec
         }
     }
 
@@ -98,7 +100,7 @@ impl PlayerStatisticsVec {
         );
 
         Self {
-            _vec: merged.iter().map(|(_, v)| v.clone()).collect(),
+            _vec: merged.iter().map(|(_, v)| v.clone()).collect()
         }
     }
 }
@@ -172,16 +174,18 @@ impl ToPyObject for PlayerStatisticsVec {
     }
 }
 
-impl<'source> FromPyObject<'source> for StatType {
+impl <'source> FromPyObject<'source> for StatType {
     fn extract(py: Python, obj: &'source PyObject) -> PyResult<Self> {
         match obj.extract(py) {
-            Ok(n) => match n {
-                1 => Ok(StatType::LastFight),
-                2 => Ok(StatType::Zone),
-                3 => Ok(StatType::Overall),
-                _ => Ok(StatType::Unknown),
+            Ok(n) => {
+                match n {
+                    1 => Ok(StatType::LastFight),
+                    2 => Ok(StatType::Zone),
+                    3 => Ok(StatType::Overall),
+                    _ => Ok(StatType::Unknown)
+                }
             },
-            Err(e) => Err(e),
+            Err(e) => Err(e)
         }
     }
 }

@@ -37,7 +37,6 @@ After first execution the app is going to create default configuration file name
 
 - Rust installed (https://www.rust-lang.org/tools/install)
 - Python installed 
-- cargo make installed https://github.com/sagiegurari/cargo-make#installation
 - *Windows only prerequisites*  https://github.com/libpnet/libpnet#windows
 
 ## All platforms
@@ -52,7 +51,21 @@ After first execution the app is going to create default configuration file name
     ```
 
 
-3. Run GUI
+3. Copy library to GUI directory 
+
+    3.1 on Linux
+
+    ```shell
+        cp target/release/libmeter.so gui/
+    ```
+
+    3.1 on Windows
+
+    ```shell
+        cp target/release/meter.dll gui/libmeter.pyd
+    ```
+
+4. Run GUI
 
     3.1 on Linux
 

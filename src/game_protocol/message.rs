@@ -14,7 +14,7 @@ macro_rules! deserialize_number {
                 _ => {
                     error!("Failed to deserialize {}", $name);
                     None
-                }
+                } 
             }
         } else {
             error!("Index {} not found in {}", $index, $name);
@@ -31,7 +31,7 @@ macro_rules! deserialize_string {
                 _ => {
                     error!("Failed to deserialize {}", $name);
                     None
-                }
+                } 
             }
         } else {
             None
@@ -52,17 +52,18 @@ macro_rules! deserialize_string_vec {
                     }
 
                     Some(ret)
-                }
+                },
                 _ => {
                     error!("Failed to deserialize {}", $name);
                     None
-                }
+                } 
             }
         } else {
             None
         }
     };
 }
+
 
 macro_rules! deserialize_float {
     ($val:expr, $index:expr, $name:expr) => {
@@ -72,13 +73,14 @@ macro_rules! deserialize_float {
                 _ => {
                     error!("Failed to deserialize {}", $name);
                     None
-                }
+                } 
             }
         } else {
             None
         }
     };
 }
+
 
 #[derive(Debug)]
 pub struct ChatSay {
@@ -167,8 +169,7 @@ impl RegenerationHealthChanged {
         let source = deserialize_number!(val, 0, "RegenerationHealthChanged::source")?;
         let health = deserialize_float!(val, 2, "RegenerationHealthChanged::health")?;
         let max_health = deserialize_float!(val, 3, "RegenerationHealthChanged::max_health")?;
-        let regeneration_rate =
-            deserialize_float!(val, 4, "RegenerationHealthChanged::regeneration_rate");
+        let regeneration_rate = deserialize_float!(val, 4, "RegenerationHealthChanged::regeneration_rate");
 
         Some(Message::RegenerationHealthChanged(Self {
             source,
@@ -205,6 +206,7 @@ impl CharacterStats {
         let energy = deserialize_float!(val, 15, "CharacterStats::energy")?;
         let max_energy = deserialize_float!(val, 16, "CharacterStats::max_energy")?;
 
+
         Some(Message::CharacterStats(Self {
             source,
             character_name,
@@ -218,14 +220,14 @@ impl CharacterStats {
 
 #[derive(Debug)]
 pub struct Leave {
-    pub source: usize,
+    pub source: usize
 }
 
 impl Leave {
     fn encode(val: Parameters) -> Option<Message> {
         let source = deserialize_number!(val, 0, "Leave::source")?;
 
-        Some(Message::Leave(Leave { source }))
+        Some(Message::Leave(Leave{source}))
     }
 }
 
@@ -233,7 +235,7 @@ impl Leave {
 pub struct Died {
     pub source: usize,
     pub target: usize,
-    pub target_name: String,
+    pub target_name: String
 }
 
 impl Died {
@@ -242,11 +244,7 @@ impl Died {
         let target = deserialize_number!(val, 1, "Died::target")?;
         let target_name = deserialize_string!(val, 3, "Died::target_name")?;
 
-        Some(Message::Died(Died {
-            source,
-            target,
-            target_name,
-        }))
+        Some(Message::Died(Died{source, target, target_name}))
     }
 }
 
@@ -261,14 +259,14 @@ impl PartyNew {
         let source = deserialize_number!(val, 0, "PartyNew::source")?;
         let players = deserialize_string_vec!(val, 5, "PartyNew::players")?;
 
-        Some(Message::PartyNew(PartyNew { source, players }))
+        Some(Message::PartyNew(PartyNew{source, players}))
     }
 }
 
 #[derive(Debug)]
 pub struct PartyJoin {
     pub source: usize,
-    pub target_name: String,
+    pub target_name: String
 }
 
 impl PartyJoin {
@@ -276,10 +274,7 @@ impl PartyJoin {
         let source = deserialize_number!(val, 0, "PartyJoin::source")?;
         let target_name = deserialize_string!(val, 2, "PartyJoin::target_name")?;
 
-        Some(Message::PartyJoin(PartyJoin {
-            source,
-            target_name,
-        }))
+        Some(Message::PartyJoin(PartyJoin{source, target_name}))
     }
 }
 
@@ -292,14 +287,14 @@ impl PartyDisbanded {
     fn encode(val: Parameters) -> Option<Message> {
         let source = deserialize_number!(val, 1, "PartyDisbanded::source")?;
 
-        Some(Message::PartyDisbanded(PartyDisbanded { source }))
+        Some(Message::PartyDisbanded(PartyDisbanded{source}))
     }
 }
 
 #[derive(Debug)]
 pub struct FameUpdate {
     pub source: usize,
-    pub fame: f32,
+    pub fame: f32
 }
 
 impl FameUpdate {
@@ -308,9 +303,10 @@ impl FameUpdate {
         let raw_fame = deserialize_number!(val, 2, "FameUpdate::fame")?;
         let fame = raw_fame as f32 / 10000.0;
 
-        Some(Message::FameUpdate(FameUpdate { source, fame }))
+        Some(Message::FameUpdate(FameUpdate{source, fame}))
     }
 }
+
 
 #[derive(Debug)]
 pub enum Message {
@@ -324,7 +320,7 @@ pub enum Message {
     Died(Died),
     PartyNew(PartyNew),
     PartyJoin(PartyJoin),
-    PartyDisbanded(PartyDisbanded),
+    PartyDisbanded(PartyDisbanded)
 }
 
 impl Packet {

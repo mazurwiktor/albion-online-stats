@@ -56,15 +56,9 @@ pub trait DamageDealer {
 }
 
 pub trait PlayerEvents {
-    fn get_damage_dealers_in_zone(
-        &mut self,
-        player_id: usize,
-    ) -> Option<Vec<&mut dyn DamageDealer>>;
+    fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn DamageDealer>>;
 
-    fn get_fame_gatherers_in_zone(
-        &mut self,
-        player_id: usize,
-    ) -> Option<Vec<&mut dyn FameGatherer>>;
+    fn get_fame_gatherers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn FameGatherer>>;
 
     fn register_main_player(&mut self, name: &str, id: usize);
 
@@ -127,11 +121,7 @@ pub trait GameStats {
 }
 
 pub trait PartyEvents {
-    fn register_new_party(
-        &mut self,
-        player_names: &std::vec::Vec<std::string::String>,
-        id: usize,
-    ) -> Option<()>;
+    fn register_new_party(&mut self, player_names: &std::vec::Vec<std::string::String>, id: usize) -> Option<()>;
     fn register_new_member(&mut self, player_name: &str) -> Option<()>;
     fn register_party_disbanded(&mut self) -> Option<()>;
 }
