@@ -103,13 +103,13 @@ def get_party_members():
    
 
 def reset_zone_stats():
-    libmeter.reset_zone_stats()
+    libmeter.reset(StatType.Zone)
 
 def reset_last_fight_stats():
-    libmeter.reset_last_fight_stats()
+    libmeter.reset(StatType.LastFight)
 
 def reset_stats():
-    libmeter.reset_stats()
+    libmeter.reset(StatType.Overall)
 
 def initialize():
     if TESTING_ENABLED:
