@@ -7,15 +7,6 @@ use fake_clock::FakeClock as Instant;
 #[cfg(not(test))]
 use std::time::Instant;
 
-use cpython::PythonObject;
-use cpython::ToPyObject;
-use cpython::FromPyObject;
-use cpython::Python;
-use cpython::PyObject;
-use cpython::PyDict;
-use cpython::PyList;
-use cpython::PyResult;
-
 use super::traits::DamageStats;
 use super::traits::FameStats;
 
@@ -80,6 +71,10 @@ impl PlayerStatisticsVec {
         }
     }
 
+    pub fn value(&self) -> Vec<PlayerStatistics> {
+        self._vec.clone()
+    }
+
     pub fn merged(a: &Self, b: &Self) -> Self {
         let merged = [&a._vec[..], &b._vec[..]].concat().iter().fold(
             HashMap::<String, PlayerStatistics>::new(),
@@ -128,64 +123,3 @@ impl FameStats for PlayerStatistics {
     }
 }
 
-impl ToPyObject for PlayerStatistics {
-    type ObjectType = PyObject;
-    fn to_py_object(&self, py: Python) -> Self::ObjectType {
-        let stats = PyDict::new(py);
-
-        stats
-            .set_item(py, "player", self.player.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "damage", self.damage.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "time_in_combat", self.time_in_combat.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "dps", self.dps.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "seconds_in_game", self.seconds_in_game.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "fame", self.fame.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "fame_per_minute", self.fame_per_minute.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "fame_per_hour", self.fame_per_hour.to_py_object(py))
-            .unwrap();
-
-        stats.into_object()
-    }
-}
-
-impl ToPyObject for PlayerStatisticsVec {
-    type ObjectType = PyList;
-
-    fn into_py_object(self, py: Python) -> Self::ObjectType {
-        self._vec.into_py_object(py)
-    }
-
-    fn to_py_object(&self, py: Python) -> Self::ObjectType {
-        self._vec.clone().into_py_object(py)
-    }
-}
-
-impl <'source> FromPyObject<'source> for StatType {
-    fn extract(py: Python, obj: &'source PyObject) -> PyResult<Self> {
-        match obj.extract(py) {
-            Ok(n) => {
-                match n {
-                    1 => Ok(StatType::LastFight),
-                    2 => Ok(StatType::Zone),
-                    3 => Ok(StatType::Overall),
-                    _ => Ok(StatType::Unknown)
-                }
-            },
-            Err(e) => Err(e)
-        }
-    }
-}

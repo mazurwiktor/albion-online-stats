@@ -179,7 +179,7 @@ impl Meter {
 }
 
 impl PlayerEvents for Meter {
-    fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut DamageDealer>> {
+    fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn DamageDealer>> {
         let (zone, last_fight) = self.sessions_mut()?;
         let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
         let zone_player = zone.get_player_by_id(player_id)?;

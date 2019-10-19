@@ -1,13 +1,7 @@
 use std::fs::File;
 use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::thread;
-
-use cpython::PyList;
-use cpython::PyObject;
-use cpython::PyResult;
-use cpython::Python;
-use cpython::ToPyObject;
 
 use log::*;
 use simplelog::*;
@@ -16,12 +10,15 @@ use packet_sniffer::UdpPacket;
 
 use crate::game_protocol;
 use crate::meter;
-use meter::GameStats;
-use meter::LastFightStats;
-use meter::OverallStats;
-use meter::PartyEvents;
-use meter::PlayerEvents;
-use meter::ZoneStats;
+pub use meter::GameStats;
+pub use meter::LastFightStats;
+pub use meter::OverallStats;
+pub use meter::PartyEvents;
+pub use meter::PlayerEvents;
+pub use meter::ZoneStats;
+pub use meter::MeterConfig;
+pub use meter::PlayerStatistics;
+pub use meter::PlayerStatisticsVec;
 
 pub use meter::StatType;
 
@@ -29,30 +26,25 @@ lazy_static! {
     static ref METER: Mutex<meter::Meter> = Mutex::new(meter::Meter::new());
 }
 
-pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyList> {
-    let meter = &mut METER.lock().unwrap();
+pub fn stats(meter: &meter::Meter, stat_type: StatType) -> Vec<meter::PlayerStatistics> {
     match stat_type {
-        StatType::Zone => meter.zone_stats().map_or_else(
-            || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-            |v| Ok(v.into_py_object(py)),
-        ),
-        StatType::LastFight => meter.last_fight_stats().map_or_else(
-            || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-            |v| Ok(v.into_py_object(py)),
-        ),
-        StatType::Overall => meter.overall_stats().map_or_else(
-            || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-            |v| Ok(v.into_py_object(py)),
-        ),
-        _ => {
-            error!("Unexpected stats requested.");
-            Ok(PyList::new(py, Vec::<PyObject>::new().as_slice()))
-        }
+        StatType::Zone => meter
+            .zone_stats()
+            .unwrap_or(meter::PlayerStatisticsVec::new())
+            .value(),
+        StatType::LastFight => meter
+            .last_fight_stats()
+            .unwrap_or(meter::PlayerStatisticsVec::new())
+            .value(),
+        StatType::Overall => meter
+            .overall_stats()
+            .unwrap_or(meter::PlayerStatisticsVec::new())
+            .value(),
+        _ => vec![],
     }
 }
 
-pub fn reset(_py: Python, stat_type: StatType) -> PyResult<u32> {
-    let meter = &mut METER.lock().unwrap();
+pub fn reset(meter: &mut meter::Meter, stat_type: StatType) {
     match stat_type {
         StatType::Zone => {
             meter.reset_zone_stats();
@@ -65,19 +57,13 @@ pub fn reset(_py: Python, stat_type: StatType) -> PyResult<u32> {
         }
         _ => error!("Unexpected stat to reset."),
     }
-    Ok(0)
 }
 
-pub fn get_players_in_party(py: Python) -> PyResult<PyList> {
-    let meter = &mut METER.lock().unwrap();
-
-    meter.get_players_in_party().map_or_else(
-        || Ok(PyList::new(py, Vec::<PyObject>::new().as_slice())),
-        |v| Ok(v.into_py_object(py)),
-    )
+pub fn get_players_in_party(meter: &meter::Meter) -> Vec<String> {
+    meter.get_players_in_party().unwrap_or(vec![])
 }
 
-pub fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
+pub fn initialize() -> Arc<Mutex<meter::Meter>> {
     CombinedLogger::init(vec![WriteLogger::new(
         LevelFilter::Info,
         Config::default(),
@@ -85,14 +71,10 @@ pub fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
     )])
     .unwrap();
 
-    configure(
-        &mut METER.lock().unwrap(),
-        meter::MeterConfig {
-            skip_non_party_members,
-            ..Default::default()
-        },
-    );
+    let meter = meter::Meter::new();
 
+    let meter = Arc::new(Mutex::new(meter));
+    let cloned_meter = meter.clone();
     thread::spawn(move || {
         let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = channel();
 
@@ -103,7 +85,7 @@ pub fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
                 if packet.destination_port != 5056 && packet.source_port != 5056 {
                     continue;
                 }
-                let meter = &mut METER.lock().unwrap();
+                let meter = &mut cloned_meter.lock().unwrap();
                 if let Some(messages) = game_protocol::decode(&packet.payload) {
                     register_messages(meter, &messages);
                 }
@@ -111,11 +93,7 @@ pub fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
         }
     });
 
-    Ok(0)
-}
-
-fn configure(meter: &mut meter::Meter, config: meter::MeterConfig) {
-    meter.configure(config);
+    meter
 }
 
 fn register_messages(meter: &mut meter::Meter, messages: &Vec<game_protocol::Message>) {
@@ -162,127 +140,20 @@ fn register_message(events: &mut meter::Meter, message: &game_protocol::Message)
 mod tests {
     use super::*;
 
-    use cpython::{PyClone, PyDict, PyFloat, PyUnicode};
-
     use game_protocol::message;
     use game_protocol::Message;
 
     mod helpers {
         use super::*;
 
-        pub fn init() -> cpython::GILGuard {
-            let meter = &mut METER.lock().unwrap();
-            meter.reset_stats();
-
-            super::configure(meter, Default::default());
-
-            Python::acquire_gil()
+        pub fn init_() -> meter::Meter {
+            meter::Meter::new()
         }
 
         pub fn sleep(time: u64) {
             use fake_clock::FakeClock;
             FakeClock::advance_time(time);
         }
-
-        pub fn register(message: Message) {
-            let meter = &mut METER.lock().unwrap();
-            r(meter, &message);
-        }
-
-        fn r(meter: &mut meter::Meter, message: &game_protocol::Message) {
-            register_message(meter, &message);
-        }
-
-        pub fn configure(cfg: meter::MeterConfig) {
-            let meter = &mut METER.lock().unwrap();
-            super::configure(meter, cfg);
-        }
-
-        pub fn get_damage_dealer_in_zone_by_index(py: Python, index: usize) -> PyDict {
-            let zone_session = stats(py, StatType::Zone).unwrap();
-            let stat = zone_session.get_item(py, index);
-            let player = stat.cast_as::<PyDict>(py).unwrap().clone_ref(py);
-            player
-        }
-
-        pub fn get_damage_dealer_in_zone_by_name(py: Python, name: &str) -> Option<PyDict> {
-            let zone_session_len = stats(py, StatType::Zone).unwrap().len(py);
-
-            for idx in 0..zone_session_len {
-                let player = get_damage_dealer_in_zone_by_index(py, idx);
-                if get_string(py, &player, "player") == name {
-                    return Some(player);
-                }
-            }
-            None
-        }
-
-        pub fn get_player_overall_index(py: Python, index: usize) -> PyDict {
-            let zone_session = stats(py, StatType::Overall).unwrap();
-            let stat = zone_session.get_item(py, index);
-            let player = stat.cast_as::<PyDict>(py).unwrap().clone_ref(py);
-            player
-        }
-
-        pub fn get_player_overall_by_name(py: Python, name: &str) -> Option<PyDict> {
-            let zone_session_len = stats(py, StatType::Overall).unwrap().len(py);
-
-            for idx in 0..zone_session_len {
-                let player = get_player_overall_index(py, idx);
-                if get_string(py, &player, "player") == name {
-                    return Some(player);
-                }
-            }
-            None
-        }
-
-        pub fn get_player_last_fight_index(py: Python, index: usize) -> PyDict {
-            let zone_session = stats(py, StatType::LastFight).unwrap();
-            let stat = zone_session.get_item(py, index);
-            let player = stat.cast_as::<PyDict>(py).unwrap().clone_ref(py);
-            player
-        }
-
-        pub fn get_player_last_fight_by_name(py: Python, name: &str) -> Option<PyDict> {
-            let zone_session_len = stats(py, StatType::LastFight).unwrap().len(py);
-
-            for idx in 0..zone_session_len {
-                let player = get_player_last_fight_index(py, idx);
-                if get_string(py, &player, "player") == name {
-                    return Some(player);
-                }
-            }
-            None
-        }
-
-        pub fn get_players_in_party() -> Vec<String> {
-            let meter = &mut METER.lock().unwrap();
-            meter.get_players_in_party().unwrap_or(vec![])
-        }
-
-        pub fn get_string(py: Python, stats: &PyDict, key: &str) -> String {
-            stats
-                .get_item(py, key)
-                .unwrap()
-                .cast_as::<PyUnicode>(py)
-                .unwrap()
-                .to_string_lossy(py)
-                .to_string()
-        }
-
-        pub fn get_float(py: Python, stats: &PyDict, key: &str) -> f64 {
-            stats
-                .get_item(py, key)
-                .unwrap()
-                .cast_as::<PyFloat>(py)
-                .unwrap()
-                .value(py)
-        }
-
-        pub fn get_number(py: Python, stats: &PyDict, key: &str) -> u32 {
-            stats.get_item(py, key).unwrap().extract(py).unwrap()
-        }
-
     }
 
     trait Testing {
@@ -411,221 +282,269 @@ mod tests {
 
     #[test]
     fn test_empty_session() {
-        let guard = helpers::init();
-        let py = guard.python();
-
-        assert_eq!(stats(py, StatType::Zone).unwrap().len(py), 0);
+        let meter = helpers::init_();
+        assert_eq!(stats(&meter, StatType::Zone).len(), 0);
     }
 
     #[test]
     fn test_new_player_appears() {
-        let guard = helpers::init();
-        let py = guard.python();
-
-        helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
-
-        let zone_session = stats(py, StatType::Zone).unwrap();
-        assert_eq!(zone_session.len(py), 1);
+        let mut meter = helpers::init_();
+        register_message(
+            &mut meter,
+            &Message::NewCharacter(message::NewCharacter::new(1)),
+        );
+        assert_eq!(stats(&meter, StatType::Zone).len(), 1);
     }
 
     #[test]
     fn test_new_player_stats() {
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        register_message(
+            &mut meter,
+            &Message::NewCharacter(message::NewCharacter::new(1)),
+        );
+        assert_eq!(stats(&meter, StatType::Zone).len(), 1);
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
-
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(stats.len(py), 8);
-        assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
-        assert_eq!(helpers::get_float(py, &stats, "time_in_combat"), 0.0);
-        assert_eq!(helpers::get_float(py, &stats, "dps"), 0.0);
-        assert_eq!(helpers::get_float(py, &stats, "seconds_in_game"), 0.0);
-        assert_eq!(helpers::get_float(py, &stats, "fame"), 0.0);
-        assert_eq!(helpers::get_number(py, &stats, "fame_per_minute"), 0);
-        assert_eq!(helpers::get_number(py, &stats, "fame_per_hour"), 0);
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].player, "CH1");
+        assert_eq!(zone_stats[0].damage, 0.0);
+        assert_eq!(zone_stats[0].time_in_combat, 0.0);
+        assert_eq!(zone_stats[0].dps, 0.0);
+        assert_eq!(zone_stats[0].seconds_in_game, 0.0);
+        assert_eq!(zone_stats[0].fame, 0.0);
+        assert_eq!(zone_stats[0].fame_per_minute, 0);
+        assert_eq!(zone_stats[0].fame_per_hour, 0);
     }
 
     #[test]
     fn test_damage_aggregation() {
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        register_message(
+            &mut meter,
+            &Message::NewCharacter(message::NewCharacter::new(1)),
+        );
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 0.0);
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
+        register_message(
+            &mut meter,
+            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(1)),
+        );
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 0.0);
 
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
+        register_message(
+            &mut meter,
+            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+        );
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 10.0);
 
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 20.0);
+        register_message(
+            &mut meter,
+            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+        );
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 20.0);
     }
 
     #[test]
     fn test_new_player_damage() {
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        register_message(
+            &mut meter,
+            &Message::NewCharacter(message::NewCharacter::new(1)),
+        );
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 0.0);
+        assert_eq!(zone_stats[0].player, "CH1");
 
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
-
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
+        register_message(
+            &mut meter,
+            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(1)),
+        );
+        register_message(
+            &mut meter,
+            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+        );
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 10.0);
     }
 
     #[test]
     fn test_new_player_damage_reset() {
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        register_message(
+            &mut meter,
+            &Message::NewCharacter(message::NewCharacter::new(1)),
+        );
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new(1)));
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 0.0);
+        assert_eq!(zone_stats[0].player, "CH1");
 
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+        register_message(
+            &mut meter,
+            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(1)),
+        );
+        register_message(
+            &mut meter,
+            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+        );
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 10.0);
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
-
-        reset(py, StatType::Zone).unwrap();
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+        reset(&mut meter, StatType::Zone);
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 0.0);
     }
 
     #[test]
     fn test_zone_detection() {
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        register_message(
+            &mut meter,
+            &Message::CharacterStats(message::CharacterStats::new(1)),
+        );
 
-        helpers::register(Message::CharacterStats(message::CharacterStats::new(1)));
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 0.0);
+        assert_eq!(zone_stats[0].player, "MAIN_CH1");
 
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_string(py, &stats, "player"), "MAIN_CH1");
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+        register_message(
+            &mut meter,
+            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(1)),
+        );
+        register_message(
+            &mut meter,
+            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+        );
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 10.0);
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
+        register_message(&mut meter, &Message::Leave(message::Leave::new(1)));
+        register_message(
+            &mut meter,
+            &Message::CharacterStats(message::CharacterStats::new(2)),
+        );
 
-        helpers::register(Message::Leave(message::Leave::new(1)));
-        helpers::register(Message::CharacterStats(message::CharacterStats::new(2)));
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 0.0);
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(2),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(2)));
-        let stats = helpers::get_damage_dealer_in_zone_by_index(py, 0);
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
+        register_message(
+            &mut meter,
+            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(2)),
+        );
+        register_message(
+            &mut meter,
+            &Message::HealthUpdate(message::HealthUpdate::new(2)),
+        );
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert_eq!(zone_stats[0].damage, 10.0);
+    }
+
+    macro_rules! main_character_enters {
+        ($meter:expr, $name:expr, $id:expr) => {
+            register_message(
+                &mut $meter,
+                &Message::CharacterStats(message::CharacterStats::new_named($name, $id)),
+            );
+        };
+    }
+
+    macro_rules! character_enters {
+        ($meter:expr, $name:expr, $id:expr) => {
+            register_message(
+                &mut $meter,
+                &Message::NewCharacter(message::NewCharacter::new_named($name, $id)),
+            );
+        };
+    }
+
+    macro_rules! attack {
+        ($meter:expr, $id:expr) => {
+            register_message(
+                &mut $meter,
+                &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled($id)),
+            );
+            register_message(
+                &mut $meter,
+                &Message::HealthUpdate(message::HealthUpdate::new($id)),
+            );
+        };
+    }
+
+    macro_rules! combat_leave {
+        ($meter:expr, $id:expr) => {
+            register_message(
+                &mut $meter,
+                &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::enabled($id)),
+            );
+        };
     }
 
     #[test]
     fn test_two_players_in_the_zone() {
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        main_character_enters!(meter, "MAIN_CH1", 1);
 
-        helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
-            "MAIN_CH1", 1,
-        )));
-        let stats = helpers::get_damage_dealer_in_zone_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_string(py, &stats, "player"), "MAIN_CH1");
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new_named(
-            "CH1", 2,
-        )));
-        let stats = helpers::get_damage_dealer_in_zone_by_name(py, "CH1").unwrap();
-        assert_eq!(helpers::get_string(py, &stats, "player"), "CH1");
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
+        character_enters!(meter, "CH1", 1);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
 
-        helpers::register(Message::Leave(message::Leave::new(1)));
-        let stats = helpers::get_damage_dealer_in_zone_by_name(py, "CH1");
-        assert!(stats.is_none());
+        register_message(&mut meter, &Message::Leave(message::Leave::new(1)));
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_none());
     }
 
     #[test]
     fn test_overall_damage() {
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        main_character_enters!(meter, "MAIN_CH1", 1);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
 
-        helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
-            "MAIN_CH1", 1,
-        )));
-        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
+        attack!(meter, 1);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
 
-        helpers::register(Message::Leave(message::Leave::new(1)));
-        helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
-            "MAIN_CH1", 1,
-        )));
-        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
+        character_enters!(meter, "CH1", 2);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 20.0);
+        attack!(meter, 1);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 20.0);
     }
 
     #[test]
     fn test_last_fight_damage() {
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        main_character_enters!(meter, "MAIN_CH1", 1);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
 
-        helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
-            "MAIN_CH1", 1,
-        )));
-        let stats = helpers::get_player_last_fight_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_string(py, &stats, "player"), "MAIN_CH1");
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 0.0);
-
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-        let stats = helpers::get_player_last_fight_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_float(py, &stats, "damage"), 10.0);
-
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::enabled(1),
-        ));
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
+        attack!(meter, 1);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
     }
 
     #[test]
@@ -633,165 +552,151 @@ mod tests {
         // session should be started when first player attacks
         // damage should be 0 when all players were out of combat and some player attacks
 
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        main_character_enters!(meter, "MAIN_CH1", 1);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
 
-        helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
-            "1", 1,
-        )));
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
+        attack!(meter, 1);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
 
-        assert!(helpers::get_player_last_fight_by_name(py, "1").is_some());
+        character_enters!(meter, "CH1", 2);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new_named(
-            "2", 2,
-        )));
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(2),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(2)));
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(2),
-        ));
+        attack!(meter, 2);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new_named(
-            "3", 3,
-        )));
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(3),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(3)));
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(3),
-        ));
+        character_enters!(meter, "CH2", 3);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::enabled(1),
-        ));
+        attack!(meter, 3);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
 
-        macro_rules! assert_named_player_dmg {
-            ($id:expr, $dmg:expr) => {
-                assert_eq!(
-                    helpers::get_float(
-                        py,
-                        &helpers::get_player_last_fight_by_name(py, $id).unwrap(),
-                        "damage"
-                    ),
-                    $dmg
-                );
-            };
-        }
+        combat_leave!(meter, 1);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
 
-        assert_named_player_dmg!("1", 10.0);
-        assert_named_player_dmg!("2", 10.0);
-        assert_named_player_dmg!("3", 10.0);
+        combat_leave!(meter, 2);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::enabled(2),
-        ));
+        combat_leave!(meter, 3);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
 
-        assert_named_player_dmg!("1", 10.0);
-        assert_named_player_dmg!("2", 10.0);
-        assert_named_player_dmg!("3", 10.0);
+        attack!(meter, 1);
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::enabled(3),
-        ));
-        assert_named_player_dmg!("1", 10.0);
-        assert_named_player_dmg!("2", 10.0);
-        assert_named_player_dmg!("3", 10.0);
+        combat_leave!(meter, 3);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
+        assert_eq!(player_stats.damage, 0.0);
+    }
 
-        helpers::register(Message::RegenerationHealthChanged(
-            message::RegenerationHealthChanged::disabled(1),
-        ));
-        helpers::register(Message::HealthUpdate(message::HealthUpdate::new(1)));
-        assert_named_player_dmg!("1", 10.0);
-        assert_named_player_dmg!("2", 0.0);
-        assert_named_player_dmg!("3", 0.0);
+    macro_rules! new_party {
+        ($meter:expr, $members:expr, $party_id:expr) => {
+            register_message(
+                &mut $meter,
+                &Message::PartyNew(message::PartyNew::new_list_of_named($members, $party_id))
+            );
+        };
+    }
+
+    macro_rules! new_party_member {
+        ($meter:expr, $player:expr, $party_id:expr) => {
+            register_message(
+                &mut $meter,
+                &Message::PartyJoin(message::PartyJoin::new_named($player, $party_id))
+            );
+        };
     }
 
     #[test]
     fn test_party_members() {
-        let guard = helpers::init();
-        let py = guard.python();
-
-        helpers::configure(meter::MeterConfig {
+        let mut meter = helpers::init_();
+        meter.configure(meter::MeterConfig {
             skip_non_party_members: true,
             ..Default::default()
         });
 
-        helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
-            "main_player",
-            1,
-        )));
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
+        main_character_enters!(meter, "MAIN_CH1", 1);
+        character_enters!(meter, "CH1", 2);
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new_named(
-            "other_player",
-            2,
-        )));
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "other_player").is_none());
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
+        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_none());
 
-        helpers::register(Message::PartyNew(message::PartyNew::new_list_of_named(
-            &["main_player", "other_player"],
-            1,
-        )));
 
-        assert_eq!(helpers::get_players_in_party().len(), 2);
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "other_player").is_some());
+        new_party!(meter, &["MAIN_CH1", "CH1"], 1);
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
+        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_some());
 
-        helpers::register(Message::NewCharacter(message::NewCharacter::new_named(
-            "yet_another_other_player",
-            2,
-        )));
-        assert!(
-            helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_none()
-        );
+        character_enters!(meter, "CH2", 3);
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
+        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_some());
+        assert!(zone_stats.iter().find(|s| s.player == "CH2").is_none());
 
-        helpers::register(Message::PartyJoin(message::PartyJoin::new_named(
-            &"yet_another_other_player",
-            1,
-        )));
-        assert_eq!(helpers::get_players_in_party().len(), 3);
-        assert!(
-            helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_some()
-        );
+        new_party_member!(meter, "CH2", 1);
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
+        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_some());
+        assert!(zone_stats.iter().find(|s| s.player == "CH2").is_some());
 
-        helpers::register(Message::PartyDisbanded(message::PartyDisbanded::new(1)));
-
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "main_player").is_some());
-        assert!(helpers::get_damage_dealer_in_zone_by_name(py, "other_player").is_none());
-        assert!(
-            helpers::get_damage_dealer_in_zone_by_name(py, "yet_another_other_player").is_none()
-        );
-        assert_eq!(helpers::get_players_in_party().len(), 0);
+        register_message(&mut meter, &Message::PartyDisbanded(message::PartyDisbanded::new(1)));
+        let zone_stats = stats(&meter, StatType::Zone);
+        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
+        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_none());
+        assert!(zone_stats.iter().find(|s| s.player == "CH2").is_none());
     }
 
     #[test]
     fn test_fame_statistics() {
-        let guard = helpers::init();
-        let py = guard.python();
+        let mut meter = helpers::init_();
+        main_character_enters!(meter, "MAIN_CH1", 1);
 
-        helpers::register(Message::CharacterStats(message::CharacterStats::new_named(
-            "MAIN_CH1", 1,
-        )));
-        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_number(py, &stats, "fame_per_minute"), 0);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.fame_per_minute, 0);
 
         helpers::sleep(1000 * 60);
-        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_number(py, &stats, "fame_per_minute"), 0);
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.fame_per_minute, 0);
 
-        helpers::register(Message::FameUpdate(message::FameUpdate::new(1)));
-        let stats = helpers::get_player_overall_by_name(py, "MAIN_CH1").unwrap();
-        assert_eq!(helpers::get_number(py, &stats, "fame_per_minute"), 100);
+        register_message(&mut meter, &Message::FameUpdate(message::FameUpdate::new(1)));
+        let zone_stats = stats(&meter, StatType::Zone);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.fame_per_minute, 100);
     }
 }
