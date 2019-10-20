@@ -1,18 +1,21 @@
 import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath('__file__')))
 
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QApplication
 from PySide2.QtWidgets import QMessageBox
 
-import libmeter
+from .config import config
+from .main import MainWidget
+from .engine import initialize
+from .styling import style
+from .version import current_version as get_current_version
+from .version import latest_version as get_latest_version
+from .version import latest_url
 
-from config import config
-from main import MainWidget
-from engine import initialize
-from styling import style
-from version import current_version, latest_version, latest_url
-
-if __name__ == "__main__":
+def run():
     initialize()
     conf = config()
     window_config = conf['window']
@@ -37,7 +40,7 @@ if __name__ == "__main__":
     widget.setWindowFlag(Qt.FramelessWindowHint)
     widget.show()
 
-    current_version, latest_version = (current_version(), latest_version())
+    current_version, latest_version = (get_current_version(), get_latest_version())
 
     if latest_version and current_version != latest_version:
         msg = QMessageBox()

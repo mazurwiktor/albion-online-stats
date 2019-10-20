@@ -6,15 +6,18 @@ environment:
       RUST_CHANNEL: beta
       WPD_LIB_PATH: "C:/dl/wpdpack/WpdPack/Lib/x64/Packet.lib"
       PYTHON: "C:\\Python36-x64"
+      PYTHON_LIB: "C:\\Python36-x64\\libs\\python36.lib"
       PYTHON_ARCH: "64"
       VCVARS: "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\bin\\amd64\\vcvars64.bat"
 install:
+ - ps: ls C:\\Python36-x64
  - SET PATH=%PYTHON%;%path%
  - ps: mkdir C:/dl
  - curl -o "C:/dl/wpd.zip" "https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip"
  - ps: Add-Type -AssemblyName system.io.compression.filesystem
  - ps: "[io.compression.zipfile]::ExtractToDirectory(\"C:/dl/wpd.zip\", \"C:/dl/wpdpack\")"
  - ps: cp ${env:WPD_LIB_PATH} "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\amd64"
+ - ps: cp ${env:PYTHON_LIB} "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\amd64"
  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:RUST_CHANNEL}-${env:TARGET}.exe"
  - rust-%RUST_CHANNEL%-%TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files (x86)\Rust"
  - CALL "%VCVARS%"
@@ -22,21 +25,20 @@ install:
  - choco install winpcap
  - rustc -V
  - cargo -V
-test: false
+test: true
+test_script:
+  - ps: cd backend
+  - cargo test
+  - ps: cd ..
 build_script:
-  - cargo build --release --verbose
+  - python -m venv env
+  - ps: .\env\Scripts\activate.ps1
+  - pip install -v -r frontend\requirements.txt
+  - pyinstaller -F -w -i assets\albion-stats-icon.ico frontend\aostats.py
+  - ps: deactivate
 after_build:
-- ps: cd ${env:APPVEYOR_BUILD_FOLDER}/gui
-- python -m venv env
-- ps: .\env\Scripts\activate.ps1
-- pip install -r requirements.txt
-- ps: cd src
-- ps: cp ${env:APPVEYOR_BUILD_FOLDER}\target\release\meter.dll libmeter.pyd
-- pyinstaller -F -w -i ..\..\assets\albion-stats-icon.ico meter.py
-- ps: deactivate
-- ps: mv dist\meter.exe ..\..\albion-online-stats.exe
+- ps: mv dist\aostats.exe albion-online-stats.exe
 - ps: ls
-- ps: ls ..\
 artifacts:
   path: albion-online-stats.exe
   name: binary

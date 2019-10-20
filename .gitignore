@@ -4,5 +4,14 @@ lib/**/target
 damage-meter.log
 *.so
 .vscode
+
+
+# Python
+*.spec
+env
+**/build
+**/dist
+**/*.egg-info
+*.egg
 __pycache__
 albion-online-stats.cfg

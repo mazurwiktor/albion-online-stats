@@ -1,6 +1,7 @@
 <p align="center">
     <img src="assets/albion-stats-icon.png" width="100"> 
 </p>
+<img src="https://ci.appveyor.com/api/projects/status/github/albion-online-stats" alt="Project Badge">
 
 Albion Online Stats
 ===================
@@ -21,6 +22,8 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 
 # Usage of built release
 
+> **Note** this section does not require any coding knowledge. Those simple two steps are required to use this software :)
+
 ## Installation
 
 1. On windows make sure that WinPcap is installed in your system. [Npcap 0.9983 installer for Windows Vista/2008, 7/2008R2, 8/2012, 8.1/2012R2, 10/2016 (x86 and x64)](https://nmap.org/npcap/dist/npcap-0.9983.exe)
@@ -39,45 +42,39 @@ After first execution the app is going to create default configuration file name
 - Python installed 
 - *Windows only prerequisites*  https://github.com/libpnet/libpnet#windows
 
+
 ## All platforms
 1. Clone repository:
     ```shell 
     git clone https://github.com/mazurwiktor/albion-online-stats.git
     ```
-2. Build rust library
+2. [optional] Create and activate python virtualenv
 
     ```shell
-    cargo build --release
+    python -m venv env
+    [linux/mac] . env/bin/activate
+    [windows] .\env\Scripts\activate.ps1
+    ```
+
+3. Install requirements (backend will be compiled during requirements installation)
+
+    ```shell
+    pip install -v -r frontend/requirements.txt
+    ```
+
+4. Run the application
+    ```shell
+    [sudo on linux] python frontend/aostats.py
+    ```
+
+## GUI testing
+- Seting TESTING variable runs frontend without backend dependency
+
+    ```shell
+    TESTING=true python frontend/aostats.py
     ```
 
 
-3. Copy library to GUI directory 
-
-    3.1 on Linux
-
-    ```shell
-        cp target/release/libmeter.so gui/
-    ```
-
-    3.1 on Windows
-
-    ```shell
-        cp target/release/meter.dll gui/libmeter.pyd
-    ```
-
-4. Run GUI
-
-    3.1 on Linux
-
-    ```shell
-        sudo python gui/meter.py
-    ```
-
-    3.1 on Windows
-
-    ```shell
-        python gui/meter.py
-    ```
 
 
 # License

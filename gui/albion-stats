@@ -1,3 +1,0 @@
-#/bin/bash
-
-python $(dirname "$0")/src/meter.py

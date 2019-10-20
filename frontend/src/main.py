@@ -12,9 +12,9 @@ from PySide2.QtWidgets import QComboBox
 
 import clipboard
 
-from table import Table
-import about
-import engine
+from .table import Table
+from . import about
+from . import engine
 
 class Mode:
     CURRENT_ZONE = 'Statistics: Current zone'

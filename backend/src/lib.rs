@@ -160,8 +160,7 @@ fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
     Ok(0)
 }
 
-
-py_module_initializer!(libmeter, initliblibmeter, PyInit_libmeter, |py, m| {
+py_module_initializer!(libaostats, initlibaostats, PyInit_libaostats, |py, m| {
     m.add(py, "__doc__", "This module is implemented in Rust")?;
     m.add(py, "initialize", py_fn!(py, initialize(skip_non_party_members: bool)))?;
     m.add(py, "stats", py_fn!(py, stats(stat_type: StatType)))?;

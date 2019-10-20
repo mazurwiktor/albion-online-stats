@@ -1,7 +1,8 @@
 import os
 
-import libmeter
-from config import config
+import aostats
+
+from .config import config
 
 TESTING_ENABLED = bool(os.getenv('TESTING'))
 
@@ -67,7 +68,7 @@ def zone_stats():
             {'player': 'D'*20, 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
         ]
     else:
-        session = libmeter.stats(StatType.Zone)
+        session = aostats.stats(StatType.Zone)
 
     return stats(session)
 
@@ -79,7 +80,7 @@ def overall_stats():
                 'time_in_combat': 12.0, 'dps': 12.4234},
         ]
     else:
-        session = libmeter.stats(StatType.Overall)
+        session = aostats.stats(StatType.Overall)
 
     return stats(session)
 
@@ -91,7 +92,7 @@ def last_fight_stats():
                 'time_in_combat': 12.0, 'dps': 12.4234},
         ]
     else:
-        session = libmeter.stats(StatType.LastFight)
+        session = aostats.stats(StatType.LastFight)
 
     return stats(session)
 
@@ -99,23 +100,23 @@ def get_party_members():
     if TESTING_ENABLED:
         return ['a', 'b', 'c']
     else:
-        return libmeter.get_players_in_party()
+        return aostats.get_players_in_party()
    
 
 def reset_zone_stats():
-    libmeter.reset(StatType.Zone)
+    aostats.reset(StatType.Zone)
 
 def reset_last_fight_stats():
-    libmeter.reset(StatType.LastFight)
+    aostats.reset(StatType.LastFight)
 
 def reset_stats():
-    libmeter.reset(StatType.Overall)
+    aostats.reset(StatType.Overall)
 
 def initialize():
     if TESTING_ENABLED:
         return
     cfg = config()
     try:
-        libmeter.initialize(cfg['app']['skip_non_party_players'])
+        aostats.initialize(cfg['app']['skip_non_party_players'])
     except:
         pass

@@ -3,3 +3,4 @@ pyinstaller
 clipboard
 toml~=0.10
 requests~=2.22
+./backend

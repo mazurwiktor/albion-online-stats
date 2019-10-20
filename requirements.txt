@@ -1,3 +1,0 @@
-pyside2~=5.13
-pyinstaller
-clipboard
