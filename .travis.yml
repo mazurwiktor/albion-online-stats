@@ -3,10 +3,12 @@ language: rust
 rust:
   - stable
 script:
+  - cd backend
   - cargo test -- --test-threads 1
   - cargo build --release --verbose
+  - cd ..
 before_deploy:
-  - tar cvf albion-stats.tar --exclude='gui/src/__pycache__' gui/albion-stats gui/src target/release/libmeter.so
+  - tar cvf albion-stats.tar --exclude='gui/src/__pycache__' frontend backend/target/release/liblibaostats.so
 deploy:
   provider: releases
   api_key:

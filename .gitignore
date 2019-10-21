@@ -1,3 +1,4 @@
+backend/target
 /target
 **/*.rs.bk
 lib/**/target

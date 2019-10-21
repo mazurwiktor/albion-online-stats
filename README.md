@@ -1,7 +1,10 @@
 <p align="center">
     <img src="assets/albion-stats-icon.png" width="100"> 
 </p>
-<img src="https://ci.appveyor.com/api/projects/status/github/albion-online-stats" alt="Project Badge">
+
+Linux and OS X Build Status: [![Linux and OS X Build Status](https://api.travis-ci.org/mazurwiktor/albion-online-stats.svg)](https://travis-ci.org/mazurwiktor/albion-online-stats)
+
+Windows Build Status: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/jx445p7q0eow95sk/branch/master?svg=true)](https://ci.appveyor.com/project/mazurwiktor/albion-online-stats)
 
 Albion Online Stats
 ===================
