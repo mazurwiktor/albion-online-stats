@@ -12,7 +12,7 @@ font-size = '10px'
 opacity = 0.5
 
 [app]
-skip_non_party_players = true
+skip_non_party_players = false
 
 [config]
 # do not change

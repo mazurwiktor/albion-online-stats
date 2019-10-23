@@ -12,7 +12,7 @@ from PySide2.QtWidgets import QComboBox
 
 import clipboard
 
-from .table import Table
+from .dmg_list import DmgList
 from . import about
 from . import engine
 
@@ -52,10 +52,16 @@ class BottomButtons(QWidget):
 
     def copy(self):
         clip = "{}\n".format(self.mode())
-        for i in range(self.table.rowCount()):
-            clip += '{}. {} {}-{}-{}%'.format(i+1, self.table.item(i, 0).text(
-            ), self.table.item(i, 1).text(), self.table.item(i, 2).text(), self.table.item(i, 3).text())
+        model = self.table.model
+        items = sorted(
+            [model.item(i) for i in range(model.rowCount())], 
+            key=lambda i: i.damage, 
+            reverse=True)
+        for index, i in enumerate(items):
+            clip += '{}. {}-{}%'.format(index+1, i.name, i.percentage)
             clip += "\n"
+        clip += "(AOStats https://git.io/JeBD1)"
+        print(clip)
         clipboard.copy(clip)
 
     def reset(self):
@@ -85,7 +91,7 @@ class MainWidget(QWidget):
 
         self.mouse_pos = None
         self.mode = ModeWidget()
-        self.table = Table()
+        self.table = DmgList()
         self.fame_label = QLabel()
         self.bottom_buttons = BottomButtons(
             self.table, lambda: self.mode.currentText())
@@ -105,7 +111,7 @@ class MainWidget(QWidget):
 
     def refresh(self):
         damage_session, fame_stat = self.session()
-        self.table.fill(damage_session)
+        self.table.update(damage_session)
         self.fame_label.setText("Fame <b>{}</b> | Fame per minute <b>{}</b> | Party members <b>{}</b>".format(
             fame_stat.fame, fame_stat.fame_per_minute, len(engine.get_party_members())))
 

@@ -6,11 +6,17 @@ font_size = cfg['window']['font-size']
 style = """
     QWidget {
         font-size: %s;
+        background-color: black;
+        color: white;
     }
     QListView { 
         min-height: 100px;
     }
     QPushButton {
         max-width: 60px;
+    }
+
+    QListView::item:selected:active {
+        background-color: black;
     }
 """ % (font_size)

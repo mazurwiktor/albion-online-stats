@@ -282,9 +282,9 @@ impl OverallStats for Meter {
 impl GameStats for Meter {
     fn reset_stats(&mut self) -> Option<()> {
         self.zone_history = PlayerStatisticsVec::new();
-        self.zone_session = None;
+        let last_session = self.zone_session_mut()?;
+        self.zone_session = Some(Session::from(&last_session));
         self.last_fight_session = Session::new();
-        self.main_player_id = None;
 
         Some(())
     }

@@ -15,12 +15,16 @@ class StatType:
 
 
 class DamageStat:
-    def __init__(self, name, damage, time_in_combat, dps, precentage):
+    def __init__(self, name, damage, time_in_combat, dps, percentage, best_damage):
         self.name = name
-        self.damage = '{0:.2f}'.format(damage)
-        self.time_in_combat = '{0:.2f}'.format(time_in_combat)
-        self.dps = '{0:.2f}'.format(dps)
-        self.precentage = '{0:.2f}'.format(precentage)
+        self.damage = damage
+        self.time_in_combat = time_in_combat
+        self.dps = dps
+        self.percentage = percentage
+        self.best_damage = best_damage
+
+    def __str__(self):
+        return "Name {} Damage {} DPS {} percentage {}".format(self.name, self.damage, self.dps, self.percentage)
 
     def __eq__(self, other):
         return self.name == other.name and self.damage == other.damage and self.time_in_combat == other.time_in_combat and self.dps == other.dps
@@ -34,8 +38,14 @@ class FameStat:
 
 def stats(session):
     with_damage = [s for s in session if s['damage'] != 0.0]
-    extended_session = with_precentage(with_damage)
-    statistics = [DamageStat(s['player'], s['damage'], s['time_in_combat'], s['dps'], s['dmg_precentage']) for s in extended_session]
+    extended_session = with_percentage(with_damage)
+    statistics = [DamageStat(
+        s['player'], 
+        s['damage'], 
+        s['time_in_combat'], 
+        s['dps'], 
+        s['dmg_percentage'], 
+        s['best_damage']) for s in extended_session]
     stats_with_fame = [p for p in session if 'fame' in p and p['fame'] != 0.0]
 
     if len(stats_with_fame) > 0:
@@ -47,14 +57,18 @@ def stats(session):
     return statistics, fame
 
 
-def with_precentage(session):
-
+def with_percentage(session):
+    best_damage = 0.0
     damage_done = 0.0
     for s in session:
-        damage_done += s['damage']
+        damage = s['damage']
+        if damage > best_damage:
+            best_damage = damage
+        damage_done += damage
 
     for s in session:
-        s['dmg_precentage'] = s['damage'] / damage_done * 100
+        s['dmg_percentage'] = s['damage'] / damage_done * 100
+        s['best_damage'] = best_damage
 
     return session
 
