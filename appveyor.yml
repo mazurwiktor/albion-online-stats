@@ -34,10 +34,10 @@ build_script:
   - python -m venv env
   - ps: .\env\Scripts\activate.ps1
   - pip install -v -r frontend\requirements.txt
-  - pyinstaller -F -w -i assets\albion-stats-icon.ico frontend\aostats.py
+  - pyinstaller -F -w -i assets\albion-stats-icon.ico frontend\albion-online-stats.py
   - ps: deactivate
 after_build:
-- ps: mv dist\aostats.exe albion-online-stats.exe
+- ps: mv dist\albion-online-stats.exe albion-online-stats.exe
 - ps: ls
 artifacts:
   path: albion-online-stats.exe
