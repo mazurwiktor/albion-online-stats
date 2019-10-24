@@ -26,8 +26,8 @@ class DmgList(QListView):
         def update(self, player):
             self.name = player.name
             self.damage = player.damage
-            self.dps = float("{0:.2f}".format(player.dps))
-            self.percentage = float("{0:.2f}".format(player.percentage))
+            self.dps = player.dps
+            self.percentage = player.percentage
             self.best_damage = player.best_damage
             self.setText("{} {}({}, {}%)".format(
                 self.name, self.damage, self.dps, self.percentage
@@ -35,8 +35,7 @@ class DmgList(QListView):
             self.refresh()
 
         def refresh(self):
-            value =  self.damage / self.best_damage
-
+            value =  round(self.damage / self.best_damage, 2)
             QRectF = QtCore.QRectF(self.parent.rect())
             gradient = QtGui.QLinearGradient(QRectF.topLeft(), QRectF.topRight())
             gradient.setColorAt(value-0.001 if value > 0 else 0, QtGui.QColor('#42413c'))
@@ -51,7 +50,7 @@ class DmgList(QListView):
         def lessThan(self, left, right):
             l = self.sourceModel().item(left.row())
             r = self.sourceModel().item(right.row())
-            return int(l.percentage) < int(r.percentage)
+            return l.percentage < r.percentage
 
     class DmgItemModel(QStandardItemModel):
         def __init__(self, view):

@@ -116,7 +116,11 @@ pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyList> {
 
     if let Some(m) = meter.get() {
         let meter = &mut *m.lock().unwrap();
-        return Ok(core::stats(&meter, stat_type).into_py_object(py))
+        return Ok(core::stats(&meter, stat_type)
+            .into_iter()
+            .filter(|s| s.damage != 0.0 || s.fame != 0.0)
+            .collect::<Vec<meter::PlayerStatistics>>()
+            .into_py_object(py))
     }
 
     Ok(PyList::new(py, Vec::<PyObject>::new().as_slice()))

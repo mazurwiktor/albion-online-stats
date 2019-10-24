@@ -3,6 +3,7 @@ import os
 import aostats
 
 from .config import config
+from .number import Number
 
 TESTING_ENABLED = bool(os.getenv('TESTING'))
 
@@ -17,11 +18,11 @@ class StatType:
 class DamageStat:
     def __init__(self, name, damage, time_in_combat, dps, percentage, best_damage):
         self.name = name
-        self.damage = damage
-        self.time_in_combat = time_in_combat
-        self.dps = dps
-        self.percentage = percentage
-        self.best_damage = best_damage
+        self.damage = Number(damage)
+        self.time_in_combat = Number(time_in_combat)
+        self.dps = Number(dps)
+        self.percentage = Number(percentage)
+        self.best_damage = Number(best_damage)
 
     def __str__(self):
         return "Name {} Damage {} DPS {} percentage {}".format(self.name, self.damage, self.dps, self.percentage)
@@ -32,7 +33,7 @@ class DamageStat:
 
 class FameStat:
     def __init__(self, fame, fame_per_minute):
-        self.fame = '{0:.2f}'.format(fame)
+        self.fame = fame
         self.fame_per_minute = fame_per_minute
 
 
@@ -50,9 +51,12 @@ def stats(session):
 
     if len(stats_with_fame) > 0:
         stat_with_fame = stats_with_fame[0]
-        fame = FameStat(stat_with_fame['fame'], stat_with_fame['fame_per_minute'])
+        fame = FameStat(
+            Number(stat_with_fame['fame']), 
+            Number(stat_with_fame['fame_per_minute'])
+        )
     else:
-        fame = FameStat(0.0, 0.0)
+        fame = FameStat(Number(0.0), Number(0.0))
 
     return statistics, fame
 
@@ -78,7 +82,7 @@ def zone_stats():
             {'player': 'A'*20, 'damage': 1234.02,
                 'time_in_combat': 12.0, 'dps': 12.4234, 'fame': 20.0, 'fame_per_minute': 30},
             {'player': 'B'*20, 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
-            {'player': 'C'*20, 'damage': 23.02, 'time_in_combat': 12.0, 'dps': 13},
+            {'player': 'C'*20, 'damage': 2300000.02, 'time_in_combat': 12.0, 'dps': 13},
             {'player': 'D'*20, 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
         ]
     else:
