@@ -29,6 +29,10 @@ impl Session {
     fn from(session: &Self) -> Self {
         let mut players = HashMap::new();
         for (player_name, player) in &session.players {
+            let mut new_player = Player::new(player.id);
+            if let CombatState::InCombat = player.combat_state() {
+                new_player.enter_combat();
+            }
             players.insert(player_name.clone(), Player::new(player.id));
         }
 
@@ -284,7 +288,7 @@ impl GameStats for Meter {
         self.zone_history = PlayerStatisticsVec::new();
         let last_session = self.zone_session_mut()?;
         self.zone_session = Some(Session::from(&last_session));
-        self.last_fight_session = Session::new();
+        self.last_fight_session = Session::from(&self.last_fight_session);
 
         Some(())
     }

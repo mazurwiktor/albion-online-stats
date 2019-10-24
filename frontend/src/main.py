@@ -1,4 +1,5 @@
 import sys
+import os
 
 from PySide2.QtCore import QTimer
 from PySide2.QtCore import Qt
@@ -10,11 +11,16 @@ from PySide2.QtWidgets import QWidget
 from PySide2.QtWidgets import QLabel
 from PySide2.QtWidgets import QComboBox
 
+from PySide2 import QtGui
+from PySide2 import QtCore
+
 import clipboard
 
 from .dmg_list import DmgList
 from . import about
 from . import engine
+
+assets_path = os.path.join(os.path.dirname(sys.argv[0]), 'src', 'assets')
 
 class Mode:
     CURRENT_ZONE = 'Statistics: Current zone'
@@ -22,18 +28,27 @@ class Mode:
     LAST_FIGHT = 'Statistics: Last fight'
 
 
-class BottomButtons(QWidget):
-    def __init__(self, table, mode):
+class InteractiveBar(QWidget):
+    def __init__(self, table):
         QWidget.__init__(self)
-        self.mode = mode
+        self.mode = ModeWidget()
         self.table = table
         self.layout = QHBoxLayout()
         self.about = about.About()
 
-        self.copy_button = QPushButton("&Copy", self)
-        self.reset_button = QPushButton("&Reset", self)
-        self.close_button = QPushButton("&Close", self)
-        self.about_button = QPushButton("&About", self)
+        self.copy_button = QPushButton(self)
+        self.copy_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'copy.png')))
+
+        self.reset_button = QPushButton()
+        self.reset_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'reset.png')))
+
+        self.close_button = QPushButton(self)
+        self.close_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'close.png')))
+
+        self.about_button = QPushButton(self)
+        self.about_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'about.png')))
+
+        self.layout.addWidget(self.mode)
         self.layout.addWidget(self.copy_button)
         self.layout.addWidget(self.reset_button)
         self.layout.addWidget(self.about_button)
@@ -45,13 +60,8 @@ class BottomButtons(QWidget):
         self.close_button.clicked.connect(self.close)
         self.about_button.clicked.connect(self.about.show)
 
-        self.copy_button.setObjectName('BottomButtons')
-        self.reset_button.setObjectName('BottomButtons')
-        self.about_button.setObjectName('BottomButtons')
-        self.close_button.setObjectName('BottomButtons')
-
     def copy(self):
-        clip = "{}\n".format(self.mode())
+        clip = "{}\n".format(self.mode.currentText())
         model = self.table.model
         items = sorted(
             [model.item(i) for i in range(model.rowCount())], 
@@ -71,7 +81,7 @@ class BottomButtons(QWidget):
             Mode.OVERALL: engine.reset_stats
         }
 
-        reset[self.mode()]()
+        reset[self.mode.currentText()]()
 
     def close(self):
         sys.exit(0)
@@ -90,17 +100,15 @@ class MainWidget(QWidget):
         QWidget.__init__(self)
 
         self.mouse_pos = None
-        self.mode = ModeWidget()
         self.table = DmgList()
         self.fame_label = QLabel()
-        self.bottom_buttons = BottomButtons(
-            self.table, lambda: self.mode.currentText())
+        self.fame_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+        self.bar = InteractiveBar(self.table)
 
         self.layout = QVBoxLayout()
-        self.layout.addWidget(self.mode)
+        self.layout.addWidget(self.bar)
         self.layout.addWidget(self.fame_label)
         self.layout.addWidget(self.table)
-        self.layout.addWidget(self.bottom_buttons)
         self.setLayout(self.layout)
 
         self.refresh()
@@ -114,12 +122,12 @@ class MainWidget(QWidget):
         self.table.update(damage_session)
         self.fame_label.setText("Fame <b>{}</b> | Fame per minute <b>{}</b> | Party members <b>{}</b>".format(
             fame_stat.fame, fame_stat.fame_per_minute, len(engine.get_party_members())))
-
+    
     def mousePressEvent(self, event):
         self.mouse_pos = event.pos()
 
     def mouseMoveEvent(self, event):
-        if self.mode.geometry().contains(event.pos()):
+        if self.bar.mode.geometry().contains(event.pos()):
             return
         if not self.mouse_pos:
             return
@@ -137,4 +145,4 @@ class MainWidget(QWidget):
             Mode.OVERALL: engine.overall_stats
         }
 
-        return sessions[self.mode.currentText()]()
+        return sessions[self.bar.mode.currentText()]()
