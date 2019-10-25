@@ -34,7 +34,7 @@ build_script:
   - python -m venv env
   - ps: .\env\Scripts\activate.ps1
   - pip install -v -r frontend\requirements.txt
-  - pyinstaller -F -w -i assets\albion-stats-icon.ico frontend\albion-online-stats.py
+  - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data frontend\src\assets;src\assets frontend\albion-online-stats.py
   - ps: deactivate
 after_build:
 - ps: mv dist\albion-online-stats.exe albion-online-stats.exe

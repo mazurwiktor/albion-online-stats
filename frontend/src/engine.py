@@ -79,10 +79,14 @@ def with_percentage(session):
 def zone_stats():
     if TESTING_ENABLED:
         session = [
-            {'player': 'A'*20, 'damage': 1234.02,
+            {'player': 'John Wick', 'damage': 1234.02,
                 'time_in_combat': 12.0, 'dps': 12.4234, 'fame': 20.0, 'fame_per_minute': 30},
-            {'player': 'B'*20, 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
-            {'player': 'C'*20, 'damage': 2300000.02, 'time_in_combat': 12.0, 'dps': 13},
+            {'player': 'The Warrior', 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
+            {'player': 'The Mage', 'damage': 23000.02, 'time_in_combat': 12.0, 'dps': 13},
+            {'player': 'Someone', 'damage': 2000.02, 'time_in_combat': 12.0, 'dps': 13},
+            {'player': 'The chosen one', 'damage': 230.02, 'time_in_combat': 12.0, 'dps': 13},
+            {'player': 'Party filler', 'damage': 20.02, 'time_in_combat': 12.0, 'dps': 13},
+            {'player': 'OneMoreToGo', 'damage': 2000.02, 'time_in_combat': 12.0, 'dps': 13},
             {'player': 'D'*20, 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
         ]
     else:

@@ -17,4 +17,8 @@ style = """
     QListView::item:selected:active {
         background-color: black;
     }
+    
+    QListView::item:selected {
+        background-color: black;
+    }
 """ % (font_size)

@@ -7,7 +7,7 @@ CFG_VERSION = '0.2'
 default = """
 [window]
 width = 300
-height = 230
+height = 180
 font-size = '10px'
 opacity = 0.5
 
@@ -37,7 +37,6 @@ def config():
         with open(conf_file, "r") as cfg_file:
             cfg = toml.load(cfg_file)
             if cfg['config']['version'] != CFG_VERSION:
-                print('version changed')
                 raise Exception('Version changed')
             return cfg
     except(Exception) as e:

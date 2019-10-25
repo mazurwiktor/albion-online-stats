@@ -20,7 +20,7 @@ from .dmg_list import DmgList
 from . import about
 from . import engine
 
-assets_path = os.path.join(os.path.dirname(sys.argv[0]), 'src', 'assets')
+assets_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
 
 class Mode:
     CURRENT_ZONE = 'Statistics: Current zone'
@@ -35,6 +35,7 @@ class InteractiveBar(QWidget):
         self.table = table
         self.layout = QHBoxLayout()
         self.about = about.About()
+        self.fame_per_minute = 0.0
 
         self.copy_button = QPushButton(self)
         self.copy_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'copy.png')))
@@ -61,18 +62,20 @@ class InteractiveBar(QWidget):
         self.about_button.clicked.connect(self.about.show)
 
     def copy(self):
-        clip = "{}\n".format(self.mode.currentText())
         model = self.table.model
         items = sorted(
             [model.item(i) for i in range(model.rowCount())], 
             key=lambda i: i.damage, 
             reverse=True)
+        clip = "{}, Fame/min: {}\nDmg\n".format(self.mode.currentText(), self.fame_per_minute)
         for index, i in enumerate(items):
             clip += '{}. {}-{}%'.format(index+1, i.name, i.percentage)
             clip += "\n"
         clip += "(AOStats https://git.io/JeBD1)"
-        print(clip)
         clipboard.copy(clip)
+
+    def set_fame_per_minute(self, fpm):
+        self.fame_per_minute = fpm
 
     def reset(self):
         reset = {
@@ -120,6 +123,7 @@ class MainWidget(QWidget):
     def refresh(self):
         damage_session, fame_stat = self.session()
         self.table.update(damage_session)
+        self.bar.set_fame_per_minute(fame_stat.fame_per_minute)
         self.fame_label.setText("Fame <b>{}</b> | Fame per minute <b>{}</b> | Party members <b>{}</b>".format(
             fame_stat.fame, fame_stat.fame_per_minute, len(engine.get_party_members())))
     
@@ -127,7 +131,7 @@ class MainWidget(QWidget):
         self.mouse_pos = event.pos()
 
     def mouseMoveEvent(self, event):
-        if self.bar.mode.geometry().contains(event.pos()):
+        if self.bar.geometry().contains(event.pos()):
             return
         if not self.mouse_pos:
             return
