@@ -2,7 +2,7 @@ import os
 import sys
 import toml
 
-CFG_VERSION = '0.2'
+CFG_VERSION = '0.3'
 
 default = """
 [window]
