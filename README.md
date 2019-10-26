@@ -23,6 +23,11 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 
 * copied from [Albion Online Data](https://www.albion-online-data.com/)
 
+
+## App preview
+
+![0 6 0](https://user-images.githubusercontent.com/11301109/67619801-62a24180-f800-11e9-9899-c6137403d9c9.png)
+
 # Usage of built release
 
 > **Note** this section does not require any coding knowledge. Those simple two steps are required to use this software :)
@@ -76,9 +81,6 @@ After first execution the app is going to create default configuration file name
     ```shell
     TESTING=true python frontend/aostats.py
     ```
-
-
-
 
 # License
 Licensed under either of
