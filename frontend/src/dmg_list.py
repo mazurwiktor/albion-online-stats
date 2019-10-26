@@ -29,7 +29,7 @@ class DmgList(QListView):
             self.dps = player.dps
             self.percentage = player.percentage
             self.best_damage = player.best_damage
-            self.setText("{} {}({}, {}%)".format(
+            self.setText("{} {} ({}, {}%)".format(
                 self.name, self.damage, self.dps, self.percentage
             ))
             self.refresh()

@@ -65,7 +65,7 @@ impl Session {
         let without_dmg = self
             .players
             .iter()
-            .filter(|(_, player)| player.damage() == 0.0)
+            .filter(|(_, player)| player.damage() == 0.0 && player.fame() == 0.0)
             .map(|(name, _)| name.clone())
             .collect::<Vec<String>>();
         for w in without_dmg {
