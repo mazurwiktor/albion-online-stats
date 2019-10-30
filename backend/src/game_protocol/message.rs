@@ -144,9 +144,10 @@ pub struct HealthUpdate {
 
 impl HealthUpdate {
     fn encode(val: Parameters) -> Option<Message> {
+        info!("HealthUpdate parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "HealthUpdate::source")?;
-        let target = deserialize_number!(val, 6, "HealthUpdate::target")?;
-        let value = deserialize_float!(val, 2, "HealthUpdate::value")?;
+        let target = deserialize_number!(val, 7, "HealthUpdate::target")?;
+        let value = deserialize_float!(val, 3, "HealthUpdate::value")?;
 
         Some(Message::HealthUpdate(Self {
             source,
@@ -166,10 +167,11 @@ pub struct RegenerationHealthChanged {
 
 impl RegenerationHealthChanged {
     fn encode(val: Parameters) -> Option<Message> {
+        info!("RegenerationHealthChanged parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "RegenerationHealthChanged::source")?;
-        let health = deserialize_float!(val, 2, "RegenerationHealthChanged::health")?;
-        let max_health = deserialize_float!(val, 3, "RegenerationHealthChanged::max_health")?;
-        let regeneration_rate = deserialize_float!(val, 4, "RegenerationHealthChanged::regeneration_rate");
+        let health = deserialize_float!(val, 3, "RegenerationHealthChanged::health")?;
+        let max_health = deserialize_float!(val, 4, "RegenerationHealthChanged::max_health")?;
+        let regeneration_rate = deserialize_float!(val, 5, "RegenerationHealthChanged::regeneration_rate");
 
         Some(Message::RegenerationHealthChanged(Self {
             source,
@@ -192,6 +194,7 @@ pub struct CharacterStats {
 
 impl CharacterStats {
     fn encode(val: Parameters) -> Option<Message> {
+        info!("CharacterStats parameters: {:?}", val);
         if val.len() < 40 {
             return None;
         }
@@ -225,6 +228,7 @@ pub struct Leave {
 
 impl Leave {
     fn encode(val: Parameters) -> Option<Message> {
+        info!("Leave parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "Leave::source")?;
 
         Some(Message::Leave(Leave{source}))
@@ -240,9 +244,10 @@ pub struct Died {
 
 impl Died {
     fn encode(val: Parameters) -> Option<Message> {
+        info!("Died parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "Died::source")?;
-        let target = deserialize_number!(val, 1, "Died::target")?;
-        let target_name = deserialize_string!(val, 3, "Died::target_name")?;
+        let target = deserialize_number!(val, 3, "Died::target")?;
+        let target_name = deserialize_string!(val, 4, "Died::target_name")?;
 
         Some(Message::Died(Died{source, target, target_name}))
     }
@@ -256,6 +261,7 @@ pub struct PartyNew {
 
 impl PartyNew {
     fn encode(val: Parameters) -> Option<Message> {
+        info!("PartyNew parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "PartyNew::source")?;
         let players = deserialize_string_vec!(val, 5, "PartyNew::players")?;
 
@@ -271,6 +277,7 @@ pub struct PartyJoin {
 
 impl PartyJoin {
     fn encode(val: Parameters) -> Option<Message> {
+        info!("PartyJoin parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "PartyJoin::source")?;
         let target_name = deserialize_string!(val, 2, "PartyJoin::target_name")?;
 
@@ -285,7 +292,8 @@ pub struct PartyDisbanded {
 
 impl PartyDisbanded {
     fn encode(val: Parameters) -> Option<Message> {
-        let source = deserialize_number!(val, 1, "PartyDisbanded::source")?;
+        info!("PartyDisbanded parameters: {:?}", val);
+        let source = deserialize_number!(val, 0, "PartyDisbanded::source")?;
 
         Some(Message::PartyDisbanded(PartyDisbanded{source}))
     }
@@ -299,6 +307,7 @@ pub struct FameUpdate {
 
 impl FameUpdate {
     fn encode(val: Parameters) -> Option<Message> {
+        info!("FameUpdate parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "FameUpdate::source")?;
         let raw_fame = deserialize_number!(val, 2, "FameUpdate::fame")?;
         let fame = raw_fame as f32 / 10000.0;
@@ -330,12 +339,12 @@ impl Packet {
             6 => HealthUpdate::encode(self.parameters),
             24 => NewCharacter::encode(self.parameters),
             63 => ChatSay::encode(self.parameters),
-            79 => RegenerationHealthChanged::encode(self.parameters),
-            149 => Died::encode(self.parameters),
-            210 => PartyNew::encode(self.parameters),
-            212 => PartyJoin::encode(self.parameters),
-            211 => PartyDisbanded::encode(self.parameters),
-            71 => FameUpdate::encode(self.parameters),
+            80 => RegenerationHealthChanged::encode(self.parameters),
+            150 => Died::encode(self.parameters),
+            209 => PartyNew::encode(self.parameters),
+            211 => PartyJoin::encode(self.parameters),
+            213 => PartyDisbanded::encode(self.parameters),
+            72 => FameUpdate::encode(self.parameters),
             1001 => CharacterStats::encode(self.parameters),
             _ => None,
         }
