@@ -28,8 +28,9 @@ def run():
     app.setStyleSheet(style)
 
     geometry = app.screens()[0].size()
+    clipboard = app.clipboard()
 
-    widget = MainWidget()
+    widget = MainWidget(clipboard)
     widget.setWindowOpacity(window_config['opacity'])
     widget.resize(WIDTH, HEIGHT)
     widget.move(0, geometry.height() - HEIGHT - 280)

@@ -14,8 +14,6 @@ from PySide2.QtWidgets import QComboBox
 from PySide2 import QtGui
 from PySide2 import QtCore
 
-import clipboard
-
 from .dmg_list import DmgList
 from . import about
 from . import engine
@@ -29,13 +27,14 @@ class Mode:
 
 
 class InteractiveBar(QWidget):
-    def __init__(self, table):
+    def __init__(self, table, clipboard):
         QWidget.__init__(self)
         self.mode = ModeWidget()
         self.table = table
         self.layout = QHBoxLayout()
         self.about = about.About()
         self.fame_per_minute = 0.0
+        self.clipboard = clipboard
 
         self.copy_button = QPushButton(self)
         self.copy_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'copy.png')))
@@ -72,7 +71,9 @@ class InteractiveBar(QWidget):
             clip += '{}. {}-{}-{}%'.format(index+1, i.name, i.damage, i.percentage)
             clip += "\n"
         clip += "(AOStats https://git.io/JeBD1)"
-        clipboard.copy(clip)
+
+        self.clipboard.clear(mode=self.clipboard.Clipboard )
+        self.clipboard.setText(clip, mode=self.clipboard.Clipboard)
 
     def set_fame_per_minute(self, fpm):
         self.fame_per_minute = fpm
@@ -99,14 +100,14 @@ class ModeWidget(QComboBox):
 
 
 class MainWidget(QWidget):
-    def __init__(self):
+    def __init__(self, clipboard):
         QWidget.__init__(self)
 
         self.mouse_pos = None
         self.table = DmgList()
         self.fame_label = QLabel()
         self.fame_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
-        self.bar = InteractiveBar(self.table)
+        self.bar = InteractiveBar(self.table, clipboard)
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.bar)
