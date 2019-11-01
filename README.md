@@ -6,6 +6,9 @@ Linux and OS X Build Status: [![Linux and OS X Build Status](https://api.travis-
 
 Windows Build Status: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/jx445p7q0eow95sk/branch/master?svg=true)](https://ci.appveyor.com/project/mazurwiktor/albion-online-stats)
 
+
+Discord: ![Discord](https://discordapp.com/api/guilds/639922572368150552/widget.png?style=banner2)
+
 Albion Online Stats
 ===================
 
