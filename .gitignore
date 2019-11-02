@@ -1,5 +1,4 @@
-backend/target
-/target
+**/target
 **/*.rs.bk
 **/target
 damage-meter.log

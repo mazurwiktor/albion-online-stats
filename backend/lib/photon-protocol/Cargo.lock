@@ -29,7 +29,7 @@ version = "0.2.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "protocol16"
+name = "photon_protocol"
 version = "0.1.0"
 dependencies = [
  "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",

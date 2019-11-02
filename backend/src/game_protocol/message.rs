@@ -334,6 +334,8 @@ pub enum Message {
 
 impl Packet {
     pub fn decode(self) -> Option<Message> {
+        debug!("Decode: {:?}", &self); 
+
         match self.code {
             1 => Leave::encode(self.parameters),
             6 => HealthUpdate::encode(self.parameters),
