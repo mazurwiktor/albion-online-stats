@@ -14,6 +14,16 @@ class StatType:
     Zone = 2
     Overall = 3
 
+class InitializationResult:
+    Ok = 0
+    UnknownFailure = 1
+    NetworkInterfaceListMissing = 2
+
+INITIALIZATION_RESULT = {
+    0: InitializationResult.Ok,
+    1: InitializationResult.UnknownFailure,
+    2: InitializationResult.NetworkInterfaceListMissing
+}
 
 class DamageStat:
     def __init__(self, name, damage, time_in_combat, dps, percentage, best_damage):
@@ -136,9 +146,9 @@ def reset_stats():
 
 def initialize():
     if TESTING_ENABLED:
-        return
+        return InitializationResult.Ok
     cfg = config()
     try:
-        aostats.initialize(cfg['app']['skip_non_party_players'])
+        return INITIALIZATION_RESULT[aostats.initialize(cfg['app']['skip_non_party_players'])]
     except:
         pass

@@ -1,13 +1,7 @@
-use std::fmt;
-use std::sync::{Arc, Mutex};
-
 #[cfg(test)]
 use fake_clock::FakeClock as Instant;
 #[cfg(not(test))]
 use std::time::Instant;
-use log::*;
-
-use timer;
 
 use super::traits::CombatState;
 use super::traits::DamageDealer;

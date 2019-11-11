@@ -25,6 +25,10 @@ pub use meter::PlayerStatisticsVec;
 
 pub use meter::StatType;
 
+pub enum InitializationError {
+    NetworkInterfaceListMissing
+}
+
 lazy_static! {
     static ref METER: Mutex<meter::Meter> = Mutex::new(meter::Meter::new());
 }
@@ -66,7 +70,7 @@ pub fn get_players_in_party(meter: &meter::Meter) -> Vec<String> {
     meter.get_players_in_party().unwrap_or(vec![])
 }
 
-pub fn initialize() -> Arc<Mutex<meter::Meter>> {
+pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
     CombinedLogger::init(vec![WriteLogger::new(
         LevelFilter::Info,
         Config::default(),
@@ -78,28 +82,33 @@ pub fn initialize() -> Arc<Mutex<meter::Meter>> {
 
     let meter = Arc::new(Mutex::new(meter));
     let cloned_meter = meter.clone();
-    thread::spawn(move || {
-        let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = channel();
 
-        let mut photon = Photon::new();
+    if let Ok(interfaces) = packet_sniffer::network_interfaces() {
+        thread::spawn(move || {
+            let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = channel();
 
-        packet_sniffer::receive(tx);
-        info!("Listening to network packets...");
-        loop {
-            if let Ok(packet) = rx.recv() {
-                if packet.destination_port != 5056 && packet.source_port != 5056 {
-                    continue;
-                }
-                if let Ok(ref mut meter) = cloned_meter.lock() {
-                    let game_messages = photon.decode(&packet.payload)
-                        .into_iter().filter_map(into_game_message).collect();
-                    register_messages(meter, &game_messages);
+            let mut photon = Photon::new();
+
+            packet_sniffer::receive(interfaces, tx);
+            info!("Listening to network packets...");
+            loop {
+                if let Ok(packet) = rx.recv() {
+                    if packet.destination_port != 5056 && packet.source_port != 5056 {
+                        continue;
+                    }
+                    if let Ok(ref mut meter) = cloned_meter.lock() {
+                        let game_messages = photon.decode(&packet.payload)
+                            .into_iter().filter_map(into_game_message).collect();
+                        register_messages(meter, &game_messages);
+                    }
                 }
             }
-        }
-    });
+        });
+    } else {
+        return Err(InitializationError::NetworkInterfaceListMissing);
+    }
 
-    meter
+    Ok(meter)
 }
 
 pub fn register_messages(meter: &mut meter::Meter, messages: &Vec<game_protocol::Message>) {

@@ -22,6 +22,7 @@ use cpython::FromPyObject;
 use cpython::PyDict;
 
 use crate::core::StatType;
+use crate::core::InitializationError;
 
 
 struct PyMeter
@@ -150,7 +151,11 @@ pub fn get_players_in_party(py: Python) -> PyResult<PyList> {
 
 fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
     if let Ok(ref mut py_meter) = METER.lock() {
-        py_meter.initialize(core::initialize());
+        match core::initialize() {
+            Ok(core_meter) => py_meter.initialize(core_meter),
+            Err(InitializationError::NetworkInterfaceListMissing) => return Ok(2)
+        };
+
         if let Some(m) = py_meter.get() {
             if let Ok(ref mut meter) = m.lock() {
                 meter.configure(core::MeterConfig {
