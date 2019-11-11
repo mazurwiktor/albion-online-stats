@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use fake_clock::FakeClock as Instant;
 #[cfg(not(test))]
 use std::time::Instant;
+use log::*;
 
 use timer;
 
@@ -14,30 +15,19 @@ use super::traits::DamageStats;
 use super::traits::FameStats;
 use super::traits::FameGatherer;
 
-struct Time {
-    _guard: timer::Guard,
-    _timer: timer::Timer,
+#[derive(Debug)]
+struct CombatTime
+{
+    entered_combat: Option<Instant>,
+    time_in_combat: std::time::Duration
 }
 
-impl Time {
-    fn with(time_elapsed: Arc<Mutex<f32>>, combat_state: Arc<Mutex<CombatState>>) -> Time {
-        let _timer = timer::Timer::new();
-
-        let _guard = {
-            _timer.schedule_repeating(chrono::Duration::milliseconds(10), move || {
-                if *combat_state.lock().unwrap() == CombatState::InCombat {
-                    *time_elapsed.lock().unwrap() += 10.0;
-                }
-            })
-        };
-
-        Self { _timer, _guard }
-    }
-}
-
-impl fmt::Debug for Time {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "")
+impl CombatTime {
+    fn new() -> Self {
+        Self {
+            entered_combat: None,
+            time_in_combat: std::time::Duration::from_millis(0)
+        }
     }
 }
 
@@ -45,9 +35,8 @@ impl fmt::Debug for Time {
 pub struct Player {
     pub id: usize,
     damage_dealt: f32,
-    time_elapsed: Arc<Mutex<f32>>,
-    combat_state: Arc<Mutex<CombatState>>,
-    _time: Option<Time>,
+    combat_time: CombatTime,
+    combat_state: CombatState,
     time_started: Instant,
     fame: f32
 }
@@ -55,15 +44,11 @@ pub struct Player {
 
 impl Player {
     pub fn new(id: usize) -> Self {
-        let time_elapsed = Arc::new(Mutex::new(0.0));
-        let combat_state = Arc::new(Mutex::new(CombatState::OutOfCombat));
-
         Self {
             id,
             damage_dealt: 0.0,
-            time_elapsed,
-            combat_state,
-            _time: None,
+            combat_time: CombatTime::new(),
+            combat_state: CombatState::OutOfCombat,
             time_started: Instant::now(),
             fame: 0.0
         }
@@ -72,12 +57,7 @@ impl Player {
 
 impl DamageDealer for Player {
     fn register_damage_dealt(&mut self, damage_dealt: f32) {
-        if self._time.is_none() {
-            let elapsed = self.time_elapsed.clone();
-            let state = self.combat_state.clone();
-            self._time = Some(Time::with(elapsed, state));
-        }
-        if *self.combat_state.lock().unwrap() == CombatState::OutOfCombat {
+        if self.combat_state == CombatState::OutOfCombat {
             return
         }
 
@@ -85,15 +65,19 @@ impl DamageDealer for Player {
     }
 
     fn enter_combat(&mut self) {
-        *self.combat_state.lock().unwrap() = CombatState::InCombat;
+        self.combat_time.entered_combat = Some(Instant::now());
+        self.combat_state = CombatState::InCombat;
     }
 
     fn leave_combat(&mut self) {
-        *self.combat_state.lock().unwrap() = CombatState::OutOfCombat;
+        if let Some(entered_combat) = self.combat_time.entered_combat {
+            self.combat_time.time_in_combat += Instant::now() - entered_combat;
+        }
+        self.combat_state = CombatState::OutOfCombat;
     }
 
     fn combat_state(&self) -> CombatState {
-        match *self.combat_state.lock().unwrap() {
+        match self.combat_state {
             CombatState::InCombat => CombatState::InCombat,
             CombatState::OutOfCombat => CombatState::OutOfCombat,
         }
@@ -105,7 +89,15 @@ impl DamageStats for Player {
         self.damage_dealt
     }
     fn time_in_combat(&self) -> f32 {
-        *self.time_elapsed.lock().unwrap()
+        if self.combat_state == CombatState::InCombat {
+            if let Some(entered_combat) = self.combat_time.entered_combat {
+                let time_in_combat = self.combat_time.time_in_combat + (Instant::now() - entered_combat);
+                return time_in_combat.as_millis() as f32;
+            }
+        } else {
+            return self.combat_time.time_in_combat.as_millis() as f32;
+        }
+        return 0.0;
     }
 }
 

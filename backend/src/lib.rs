@@ -10,6 +10,7 @@ mod meter;
 mod core;
 
 use std::sync::{Mutex, Arc};
+use log::*;
 
 use cpython::PyList;
 use cpython::PyObject;
@@ -48,35 +49,27 @@ lazy_static! {
     static ref METER: Mutex<PyMeter> = Mutex::new(PyMeter::new());
 }
 
+macro_rules! set_dict_item {
+    ($py:ident, $dict:ident, $from:ident, $field_name:ident) => {
+        if let Ok(_) = $dict.set_item($py, stringify!($field_name), $from.$field_name.to_py_object($py)) 
+        {}
+    };
+}
+
+
 impl ToPyObject for core::PlayerStatistics {
     type ObjectType = PyObject;
     fn to_py_object(&self, py: Python) -> Self::ObjectType {
         let stats = PyDict::new(py);
 
-        stats
-            .set_item(py, "player", self.player.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "damage", self.damage.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "time_in_combat", self.time_in_combat.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "dps", self.dps.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "seconds_in_game", self.seconds_in_game.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "fame", self.fame.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "fame_per_minute", self.fame_per_minute.to_py_object(py))
-            .unwrap();
-        stats
-            .set_item(py, "fame_per_hour", self.fame_per_hour.to_py_object(py))
-            .unwrap();
+        set_dict_item!(py, stats, self, player);
+        set_dict_item!(py, stats, self, damage);
+        set_dict_item!(py, stats, self, time_in_combat);
+        set_dict_item!(py, stats, self, dps);
+        set_dict_item!(py, stats, self, seconds_in_game);
+        set_dict_item!(py, stats, self, fame);
+        set_dict_item!(py, stats, self, fame_per_minute);
+        set_dict_item!(py, stats, self, fame_per_hour);
 
         stats.into_object()
     }
@@ -112,56 +105,64 @@ impl <'source> FromPyObject<'source> for StatType {
 
 
 pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyList> {
-    let meter = &mut METER.lock().unwrap();
-
-    if let Some(m) = meter.get() {
-        let meter = &mut *m.lock().unwrap();
-        return Ok(core::stats(&meter, stat_type)
-            .into_iter()
-            .filter(|s| s.damage != 0.0 || s.fame != 0.0)
-            .collect::<Vec<meter::PlayerStatistics>>()
-            .into_py_object(py))
+    if let Ok(ref mut py_meter) = METER.lock() {
+        if let Some(m) = py_meter.get() {
+            if let Ok(ref mut meter) = m.lock() {
+                return Ok(core::stats(&meter, stat_type)
+                    .into_iter()
+                    .filter(|s| s.damage != 0.0 || s.fame != 0.0)
+                    .collect::<Vec<meter::PlayerStatistics>>()
+                    .into_py_object(py))
+            }
+        }
     }
 
+    error!("Failed to acquire locks on meter");
     Ok(PyList::new(py, Vec::<PyObject>::new().as_slice()))
 }
 
 pub fn reset(_py: Python, stat_type: StatType) -> PyResult<u32> {
-    let meter = &mut METER.lock().unwrap();
-
-    if let Some(m) = meter.get() {
-        let meter = &mut *m.lock().unwrap();
-        core::reset(meter, stat_type);
+    if let Ok(ref mut py_meter) = METER.lock() {
+        if let Some(m) = py_meter.get() {
+            if let Ok(ref mut meter) = m.lock() {
+                core::reset(meter, stat_type);
+                return Ok(0);
+            }
+        }
     }
 
-    Ok(0)
+    error!("Failed to acquire locks on meter");
+    Ok(1)
 }
 
 pub fn get_players_in_party(py: Python) -> PyResult<PyList> {
-    let meter = &mut METER.lock().unwrap();
-
-    if let Some(m) = meter.get() {
-        let meter = &mut *m.lock().unwrap();
-        return Ok(core::get_players_in_party(&meter).into_py_object(py))
+    if let Ok(ref mut py_meter) = METER.lock() {
+        if let Some(m) = py_meter.get() {
+            if let Ok(ref mut meter) = m.lock() {
+                return Ok(core::get_players_in_party(&meter).into_py_object(py))
+            }
+        }
     }
 
+    error!("Failed to acquire locks on meter");
     Ok(PyList::new(py, Vec::<PyObject>::new().as_slice()))
 }
 
 fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
-    let meter = &mut METER.lock().unwrap();
-
-    meter.initialize(core::initialize());
-
-    if let Some(m) = meter.get() {
-        let meter = &mut *m.lock().unwrap();
-        meter.configure(core::MeterConfig {
-            skip_non_party_members,
-            ..Default::default()
-        })
+    if let Ok(ref mut py_meter) = METER.lock() {
+        py_meter.initialize(core::initialize());
+        if let Some(m) = py_meter.get() {
+            if let Ok(ref mut meter) = m.lock() {
+                meter.configure(core::MeterConfig {
+                    skip_non_party_members,
+                    ..Default::default()
+                });
+                return Ok(0);
+            }
+        }
     }
-
-    Ok(0)
+    error!("Failed to initialize meter");
+    Ok(1)
 }
 
 py_module_initializer!(libaostats, initlibaostats, PyInit_libaostats, |py, m| {

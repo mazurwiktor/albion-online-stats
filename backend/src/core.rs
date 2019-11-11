@@ -90,10 +90,11 @@ pub fn initialize() -> Arc<Mutex<meter::Meter>> {
                 if packet.destination_port != 5056 && packet.source_port != 5056 {
                     continue;
                 }
-                let meter = &mut cloned_meter.lock().unwrap();
-                let game_messages = photon.decode(&packet.payload)
-                    .into_iter().filter_map(into_game_message).collect();
-                register_messages(meter, &game_messages);
+                if let Ok(ref mut meter) = cloned_meter.lock() {
+                    let game_messages = photon.decode(&packet.payload)
+                        .into_iter().filter_map(into_game_message).collect();
+                    register_messages(meter, &game_messages);
+                }
             }
         }
     });

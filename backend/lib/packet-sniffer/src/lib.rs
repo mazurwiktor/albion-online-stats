@@ -92,7 +92,7 @@ pub fn receive(tx: Sender<UdpPacket>) {
                         }
                         handle_ethernet_frame(&interface, &EthernetPacket::new(packet).unwrap(), &tx);
                     }
-                    Err(e) => panic!("packetdump: unable to receive packet: {}", e),
+                    Err(e) => warn!("packetdump: unable to receive packet: {}", e),
                 }
             }
         });

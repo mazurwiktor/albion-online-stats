@@ -6,7 +6,7 @@ pub use layout::*;
 
 use std::collections::HashMap;
 use std::convert::TryFrom;
-use std::io::{Cursor, Read};
+use std::io::{Cursor};
 
 impl TryFrom<(&ReliableCommand, &mut Cursor<&[u8]>)> for Message {
     type Error = &'static str;
