@@ -1,6 +1,18 @@
 import os
 
-import aostats
+try:
+    import aostats
+except:
+    class aostats:
+        @staticmethod
+        def initialize(_):
+            return InitializationResult.NetworkInterfaceListMissing
+        @staticmethod
+        def stats(_):
+            return []
+        @staticmethod
+        def get_players_in_party():
+            return []
 
 from .config import config
 from .number import Number
