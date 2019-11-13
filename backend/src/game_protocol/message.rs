@@ -1,8 +1,8 @@
 use log::*;
 
 use super::packet::Packet;
-use photon_protocol::Parameters;
-use photon_protocol::Value;
+use photon_decode::Parameters;
+use photon_decode::Value;
 
 macro_rules! deserialize_number {
     ($val:expr, $index:expr, $name:expr) => {

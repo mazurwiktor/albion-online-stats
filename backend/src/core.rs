@@ -8,8 +8,8 @@ use simplelog::*;
 
 use packet_sniffer::UdpPacket;
 
-use photon_protocol;
-use photon_protocol::Photon;
+use photon_decode;
+use photon_decode::Photon;
 
 use crate::game_protocol;
 use crate::meter;
@@ -151,25 +151,25 @@ fn register_message(events: &mut meter::Meter, message: &game_protocol::Message)
     }
 }
 
-fn into_game_message(photon_message : photon_protocol::Message) -> Option<game_protocol::Message>
+fn into_game_message(photon_message : photon_decode::Message) -> Option<game_protocol::Message>
 {
     static REQUEST_CONSTANT: usize = 10000;
     static RESPONSE_CONSTANT: usize = 1000;
     
     match photon_message {
-        photon_protocol::Message::Event(e) => {
+        photon_decode::Message::Event(e) => {
             if e.code != 2 && e.parameters.get(&252u8).is_some() {
-                if let photon_protocol::Value::Short(event_code) = e.parameters.get(&252u8).unwrap() {
+                if let photon_decode::Value::Short(event_code) = e.parameters.get(&252u8).unwrap() {
                     return game_protocol::Packet{code: *event_code as usize, parameters: e.parameters}.decode()
                 }
             }
             game_protocol::Packet{code: 0, parameters: e.parameters}
         },
-        photon_protocol::Message::Request(r) => {
+        photon_decode::Message::Request(r) => {
             let code = r.code as usize + REQUEST_CONSTANT;
             game_protocol::Packet{code, parameters: r.parameters}
         },
-        photon_protocol::Message::Response(r) => {
+        photon_decode::Message::Response(r) => {
             let code = r.code as usize + RESPONSE_CONSTANT;
             game_protocol::Packet{code, parameters: r.parameters}
         }

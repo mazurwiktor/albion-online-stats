@@ -15,7 +15,7 @@ version = "0.3"
 
 [dependencies]
 packet_sniffer = { path = "./lib/packet-sniffer" }
-photon_protocol = { path = "./lib/photon-protocol" }
+photon_decode = { git = "https://github.com/mazurwiktor/photon_decode" }
 bytes = "0.4"
 simplelog = "0.6"
 timer = "0.1"
