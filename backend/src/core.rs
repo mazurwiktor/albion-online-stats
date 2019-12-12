@@ -15,18 +15,19 @@ use crate::game_protocol;
 use crate::meter;
 pub use meter::GameStats;
 pub use meter::LastFightStats;
+pub use meter::MeterConfig;
 pub use meter::OverallStats;
 pub use meter::PartyEvents;
 pub use meter::PlayerEvents;
-pub use meter::ZoneStats;
-pub use meter::MeterConfig;
 pub use meter::PlayerStatistics;
 pub use meter::PlayerStatisticsVec;
+pub use meter::ZoneStats;
 
 pub use meter::StatType;
+pub use crate::game_protocol::Items;
 
 pub enum InitializationError {
-    NetworkInterfaceListMissing
+    NetworkInterfaceListMissing,
 }
 
 lazy_static! {
@@ -97,8 +98,11 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
                         continue;
                     }
                     if let Ok(ref mut meter) = cloned_meter.lock() {
-                        let game_messages = photon.decode(&packet.payload)
-                            .into_iter().filter_map(into_game_message).collect();
+                        let game_messages = photon
+                            .decode(&packet.payload)
+                            .into_iter()
+                            .filter_map(into_game_message)
+                            .collect();
                         register_messages(meter, &game_messages);
                     }
                 }
@@ -117,13 +121,20 @@ pub fn register_messages(meter: &mut meter::Meter, messages: &Vec<game_protocol:
         .for_each(|message| register_message(meter, &message));
 }
 
-fn register_message(events: &mut meter::Meter, message: &game_protocol::Message) {
+fn register_message<Events>(events: &mut Events, message: &game_protocol::Message)
+where
+    Events: PlayerEvents + PartyEvents,
+{
     info!("Found message {:?}", message);
     match message {
         game_protocol::Message::Leave(msg) => events.register_leave(msg.source).unwrap_or(()),
         game_protocol::Message::NewCharacter(msg) => {
-            events.register_player(&msg.character_name, msg.source)
-        }
+            events.register_player(&msg.character_name, msg.source);
+            events.register_item_update(msg.source, &msg.items);
+        },
+        game_protocol::Message::PlayerItems(msg) => {
+            events.register_item_update(msg.source, &msg.items);
+        },
         game_protocol::Message::CharacterStats(msg) => {
             events.register_main_player(&msg.character_name, msg.source)
         }
@@ -151,29 +162,41 @@ fn register_message(events: &mut meter::Meter, message: &game_protocol::Message)
     }
 }
 
-fn into_game_message(photon_message : photon_decode::Message) -> Option<game_protocol::Message>
-{
+fn into_game_message(photon_message: photon_decode::Message) -> Option<game_protocol::Message> {
     static REQUEST_CONSTANT: usize = 10000;
     static RESPONSE_CONSTANT: usize = 1000;
-    
     match photon_message {
         photon_decode::Message::Event(e) => {
             if e.code != 2 && e.parameters.get(&252u8).is_some() {
                 if let photon_decode::Value::Short(event_code) = e.parameters.get(&252u8).unwrap() {
-                    return game_protocol::Packet{code: *event_code as usize, parameters: e.parameters}.decode()
+                    return game_protocol::Packet {
+                        code: *event_code as usize,
+                        parameters: e.parameters,
+                    }
+                    .decode();
                 }
             }
-            game_protocol::Packet{code: 0, parameters: e.parameters}
-        },
+            game_protocol::Packet {
+                code: 0,
+                parameters: e.parameters,
+            }
+        }
         photon_decode::Message::Request(r) => {
             let code = r.code as usize + REQUEST_CONSTANT;
-            game_protocol::Packet{code, parameters: r.parameters}
-        },
+            game_protocol::Packet {
+                code,
+                parameters: r.parameters,
+            }
+        }
         photon_decode::Message::Response(r) => {
             let code = r.code as usize + RESPONSE_CONSTANT;
-            game_protocol::Packet{code, parameters: r.parameters}
+            game_protocol::Packet {
+                code,
+                parameters: r.parameters,
+            }
         }
-    }.decode()
+    }
+    .decode()
 }
 
 #[cfg(test)]
@@ -181,6 +204,7 @@ mod tests {
     use super::*;
 
     use game_protocol::message;
+    use game_protocol::Items;
     use game_protocol::Message;
 
     mod helpers {
@@ -222,6 +246,7 @@ mod tests {
                 max_health: 10.0,
                 energy: 1.0,
                 max_energy: 1.0,
+                items: Items::from(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
             }
         }
     }
@@ -507,7 +532,9 @@ mod tests {
         ($meter:expr, $id:expr) => {
             register_message(
                 &mut $meter,
-                &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled($id)),
+                &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(
+                    $id,
+                )),
             );
             register_message(
                 &mut $meter,
@@ -520,7 +547,9 @@ mod tests {
         ($meter:expr, $id:expr) => {
             register_message(
                 &mut $meter,
-                &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::enabled($id)),
+                &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::enabled(
+                    $id,
+                )),
             );
         };
     }
@@ -551,7 +580,6 @@ mod tests {
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
-
 
         attack!(meter, 1);
         let zone_stats = stats(&meter, StatType::Zone);
@@ -666,7 +694,7 @@ mod tests {
         ($meter:expr, $members:expr, $party_id:expr) => {
             register_message(
                 &mut $meter,
-                &Message::PartyNew(message::PartyNew::new_list_of_named($members, $party_id))
+                &Message::PartyNew(message::PartyNew::new_list_of_named($members, $party_id)),
             );
         };
     }
@@ -675,7 +703,7 @@ mod tests {
         ($meter:expr, $player:expr, $party_id:expr) => {
             register_message(
                 &mut $meter,
-                &Message::PartyJoin(message::PartyJoin::new_named($player, $party_id))
+                &Message::PartyJoin(message::PartyJoin::new_named($player, $party_id)),
             );
         };
     }
@@ -695,7 +723,6 @@ mod tests {
         assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
         assert!(zone_stats.iter().find(|s| s.player == "CH1").is_none());
 
-
         new_party!(meter, &["MAIN_CH1", "CH1"], 1);
         let zone_stats = stats(&meter, StatType::Zone);
         assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
@@ -713,7 +740,10 @@ mod tests {
         assert!(zone_stats.iter().find(|s| s.player == "CH1").is_some());
         assert!(zone_stats.iter().find(|s| s.player == "CH2").is_some());
 
-        register_message(&mut meter, &Message::PartyDisbanded(message::PartyDisbanded::new(1)));
+        register_message(
+            &mut meter,
+            &Message::PartyDisbanded(message::PartyDisbanded::new(1)),
+        );
         let zone_stats = stats(&meter, StatType::Zone);
         assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
         assert!(zone_stats.iter().find(|s| s.player == "CH1").is_none());
@@ -734,7 +764,10 @@ mod tests {
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.fame_per_minute, 0);
 
-        register_message(&mut meter, &Message::FameUpdate(message::FameUpdate::new(1)));
+        register_message(
+            &mut meter,
+            &Message::FameUpdate(message::FameUpdate::new(1)),
+        );
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.fame_per_minute, 100);

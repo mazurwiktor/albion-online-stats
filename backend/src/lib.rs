@@ -4,7 +4,7 @@ extern crate cpython;
 #[macro_use]
 extern crate lazy_static;
 
-mod game_protocol;
+pub mod game_protocol;
 mod meter;
 
 mod core;
@@ -71,6 +71,7 @@ impl ToPyObject for core::PlayerStatistics {
         set_dict_item!(py, stats, self, fame);
         set_dict_item!(py, stats, self, fame_per_minute);
         set_dict_item!(py, stats, self, fame_per_hour);
+        set_dict_item!(py, stats, self, items);
 
         stats.into_object()
     }
@@ -85,6 +86,31 @@ impl ToPyObject for core::PlayerStatisticsVec {
 
     fn to_py_object(&self, py: Python) -> Self::ObjectType {
         self.value().into_py_object(py)
+    }
+}
+
+impl ToPyObject for core::Items {
+    type ObjectType = PyDict;
+
+    fn into_py_object(self, py: Python) -> Self::ObjectType {
+        self.to_py_object(py)
+    }
+
+    fn to_py_object(&self, py: Python) -> Self::ObjectType {
+        let items = PyDict::new(py);
+
+        set_dict_item!(py, items, self, weapon);
+        set_dict_item!(py, items, self, offhand);
+        set_dict_item!(py, items, self, helmet);
+        set_dict_item!(py, items, self, armor);
+        set_dict_item!(py, items, self, boots);
+        set_dict_item!(py, items, self, bag);
+        set_dict_item!(py, items, self, cape);
+        set_dict_item!(py, items, self, mount);
+        set_dict_item!(py, items, self, potion);
+        set_dict_item!(py, items, self, food);
+        
+        items
     }
 }
 
@@ -111,7 +137,7 @@ pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyList> {
             if let Ok(ref mut meter) = m.lock() {
                 return Ok(core::stats(&meter, stat_type)
                     .into_iter()
-                    .filter(|s| s.damage != 0.0 || s.fame != 0.0)
+                    // .filter(|s| s.damage != 0.0 || s.fame != 0.0)
                     .collect::<Vec<meter::PlayerStatistics>>()
                     .into_py_object(py))
             }

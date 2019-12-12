@@ -3,11 +3,14 @@ use fake_clock::FakeClock as Instant;
 #[cfg(not(test))]
 use std::time::Instant;
 
+use super::game_protocol::Items;
+
 use super::traits::CombatState;
 use super::traits::DamageDealer;
 use super::traits::DamageStats;
 use super::traits::FameStats;
 use super::traits::FameGatherer;
+use super::traits::ItemCarrier;
 
 #[derive(Debug)]
 struct CombatTime
@@ -32,7 +35,8 @@ pub struct Player {
     combat_time: CombatTime,
     combat_state: CombatState,
     time_started: Instant,
-    fame: f32
+    fame: f32,
+    items: Items
 }
 
 
@@ -44,7 +48,8 @@ impl Player {
             combat_time: CombatTime::new(),
             combat_state: CombatState::OutOfCombat,
             time_started: Instant::now(),
-            fame: 0.0
+            fame: 0.0,
+            items: Default::default(),
         }
     }
 }
@@ -100,6 +105,17 @@ impl FameGatherer for Player {
         self.fame += fame;
     }
 }
+
+impl ItemCarrier for Player {
+    fn items_update(&mut self, items: &Items) {
+        self.items = items.clone();
+    }
+
+    fn items(&self) -> Items {
+        self.items.clone()
+    }
+}
+
 
 impl FameStats for Player {
     fn fame(&self) -> f32 {

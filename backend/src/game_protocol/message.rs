@@ -1,5 +1,6 @@
 use log::*;
 
+use super::Items;
 use super::packet::Packet;
 use photon_decode::Parameters;
 use photon_decode::Value;
@@ -14,7 +15,7 @@ macro_rules! deserialize_number {
                 _ => {
                     error!("Failed to deserialize {}", $name);
                     None
-                } 
+                }
             }
         } else {
             error!("Index {} not found in {}", $index, $name);
@@ -31,7 +32,7 @@ macro_rules! deserialize_string {
                 _ => {
                     error!("Failed to deserialize {}", $name);
                     None
-                } 
+                }
             }
         } else {
             None
@@ -52,11 +53,11 @@ macro_rules! deserialize_string_vec {
                     }
 
                     Some(ret)
-                },
+                }
                 _ => {
                     error!("Failed to deserialize {}", $name);
                     None
-                } 
+                }
             }
         } else {
             None
@@ -64,6 +65,39 @@ macro_rules! deserialize_string_vec {
     };
 }
 
+macro_rules! deserialize_number_vec {
+    ($val:expr, $index:expr, $name:expr) => {
+        if let Some(p) = $val.get(&$index) {
+            match p {
+                Value::Array(arr) => {
+                    let mut ret = vec![];
+                    for v in arr {
+                        match v {
+                            Value::Short(v) => {
+                                ret.push(*v as u32);
+                            },
+                            Value::Byte(v) => {
+                                ret.push(*v as u32);
+                            },
+                            _ => {}
+                        }
+                    }
+
+                    Some(ret)
+                },
+                Value::ByteArray(v) => {
+                    Some(v.iter().map(|b| *b as u32).collect::<Vec<u32>>())
+                },
+                _ => {
+                    error!("Failed to deserialize {}", $name);
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    };
+}
 
 macro_rules! deserialize_float {
     ($val:expr, $index:expr, $name:expr) => {
@@ -73,14 +107,13 @@ macro_rules! deserialize_float {
                 _ => {
                     error!("Failed to deserialize {}", $name);
                     None
-                } 
+                }
             }
         } else {
             None
         }
     };
 }
-
 
 #[derive(Debug)]
 pub struct ChatSay {
@@ -110,10 +143,12 @@ pub struct NewCharacter {
     pub max_health: f32,
     pub energy: f32,
     pub max_energy: f32,
+    pub items: Items,
 }
 
 impl NewCharacter {
     fn encode(val: Parameters) -> Option<Message> {
+        info!("NewCharacter parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "NewCharacter::source")?;
 
         let character_name = deserialize_string!(val, 1, "NewCharacter::character_name")?;
@@ -123,6 +158,8 @@ impl NewCharacter {
 
         let energy = deserialize_float!(val, 22, "NewCharacter::energy")?;
         let max_energy = deserialize_float!(val, 23, "NewCharacter::max_energy")?;
+        let item_array = deserialize_number_vec!(val, 33, "NewCharacter::items")?;
+        let items = Items::from(&item_array);
 
         Some(Message::NewCharacter(Self {
             source,
@@ -131,6 +168,7 @@ impl NewCharacter {
             max_health,
             energy,
             max_energy,
+            items,
         }))
     }
 }
@@ -171,7 +209,8 @@ impl RegenerationHealthChanged {
         let source = deserialize_number!(val, 0, "RegenerationHealthChanged::source")?;
         let health = deserialize_float!(val, 3, "RegenerationHealthChanged::health")?;
         let max_health = deserialize_float!(val, 4, "RegenerationHealthChanged::max_health")?;
-        let regeneration_rate = deserialize_float!(val, 5, "RegenerationHealthChanged::regeneration_rate");
+        let regeneration_rate =
+            deserialize_float!(val, 5, "RegenerationHealthChanged::regeneration_rate");
 
         Some(Message::RegenerationHealthChanged(Self {
             source,
@@ -209,7 +248,6 @@ impl CharacterStats {
         let energy = deserialize_float!(val, 15, "CharacterStats::energy")?;
         let max_energy = deserialize_float!(val, 16, "CharacterStats::max_energy")?;
 
-
         Some(Message::CharacterStats(Self {
             source,
             character_name,
@@ -223,7 +261,7 @@ impl CharacterStats {
 
 #[derive(Debug)]
 pub struct Leave {
-    pub source: usize
+    pub source: usize,
 }
 
 impl Leave {
@@ -231,7 +269,7 @@ impl Leave {
         info!("Leave parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "Leave::source")?;
 
-        Some(Message::Leave(Leave{source}))
+        Some(Message::Leave(Leave { source }))
     }
 }
 
@@ -239,7 +277,7 @@ impl Leave {
 pub struct Died {
     pub source: usize,
     pub target: usize,
-    pub target_name: String
+    pub target_name: String,
 }
 
 impl Died {
@@ -249,7 +287,11 @@ impl Died {
         let target = deserialize_number!(val, 3, "Died::target")?;
         let target_name = deserialize_string!(val, 4, "Died::target_name")?;
 
-        Some(Message::Died(Died{source, target, target_name}))
+        Some(Message::Died(Died {
+            source,
+            target,
+            target_name,
+        }))
     }
 }
 
@@ -265,14 +307,14 @@ impl PartyNew {
         let source = deserialize_number!(val, 0, "PartyNew::source")?;
         let players = deserialize_string_vec!(val, 5, "PartyNew::players")?;
 
-        Some(Message::PartyNew(PartyNew{source, players}))
+        Some(Message::PartyNew(PartyNew { source, players }))
     }
 }
 
 #[derive(Debug)]
 pub struct PartyJoin {
     pub source: usize,
-    pub target_name: String
+    pub target_name: String,
 }
 
 impl PartyJoin {
@@ -281,7 +323,10 @@ impl PartyJoin {
         let source = deserialize_number!(val, 0, "PartyJoin::source")?;
         let target_name = deserialize_string!(val, 2, "PartyJoin::target_name")?;
 
-        Some(Message::PartyJoin(PartyJoin{source, target_name}))
+        Some(Message::PartyJoin(PartyJoin {
+            source,
+            target_name,
+        }))
     }
 }
 
@@ -295,14 +340,14 @@ impl PartyDisbanded {
         info!("PartyDisbanded parameters: {:?}", val);
         let source = deserialize_number!(val, 0, "PartyDisbanded::source")?;
 
-        Some(Message::PartyDisbanded(PartyDisbanded{source}))
+        Some(Message::PartyDisbanded(PartyDisbanded { source }))
     }
 }
 
 #[derive(Debug)]
 pub struct FameUpdate {
     pub source: usize,
-    pub fame: f32
+    pub fame: f32,
 }
 
 impl FameUpdate {
@@ -312,14 +357,31 @@ impl FameUpdate {
         let raw_fame = deserialize_number!(val, 2, "FameUpdate::fame")?;
         let fame = raw_fame as f32 / 10000.0;
 
-        Some(Message::FameUpdate(FameUpdate{source, fame}))
+        Some(Message::FameUpdate(FameUpdate { source, fame }))
     }
 }
 
+#[derive(Debug)]
+pub struct PlayerItems {
+    pub source: usize,
+    pub items: Items,
+}
+
+impl PlayerItems {
+    fn encode(val: Parameters) -> Option<Message> {
+        info!("PlayerItems parameters: {:?}", val);
+        let source = deserialize_number!(val, 0, "PlayerItems::source")?;
+        let item_array = deserialize_number_vec!(val, 3, "PlayerItems::items")?;
+        let items = Items::from(&item_array);
+
+        Some(Message::PlayerItems(PlayerItems { source, items }))
+    }
+}
 
 #[derive(Debug)]
 pub enum Message {
     FameUpdate(FameUpdate),
+    PlayerItems(PlayerItems),
     Leave(Leave),
     ChatSay(ChatSay),
     NewCharacter(NewCharacter),
@@ -329,12 +391,12 @@ pub enum Message {
     Died(Died),
     PartyNew(PartyNew),
     PartyJoin(PartyJoin),
-    PartyDisbanded(PartyDisbanded)
+    PartyDisbanded(PartyDisbanded),
 }
 
 impl Packet {
     pub fn decode(self) -> Option<Message> {
-        debug!("Decode: {:?}", &self); 
+        debug!("Decode: {:?}", &self);
 
         match self.code {
             1 => Leave::encode(self.parameters),
@@ -347,6 +409,7 @@ impl Packet {
             211 => PartyJoin::encode(self.parameters),
             213 => PartyDisbanded::encode(self.parameters),
             72 => FameUpdate::encode(self.parameters),
+            79 => PlayerItems::encode(self.parameters),
             1001 => CharacterStats::encode(self.parameters),
             _ => None,
         }

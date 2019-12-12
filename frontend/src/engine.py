@@ -38,8 +38,9 @@ INITIALIZATION_RESULT = {
 }
 
 class DamageStat:
-    def __init__(self, name, damage, time_in_combat, dps, percentage, best_damage):
+    def __init__(self, name, items, damage, time_in_combat, dps, percentage, best_damage):
         self.name = name
+        self.items = items
         self.damage = Number(damage)
         self.time_in_combat = Number(time_in_combat)
         self.dps = Number(dps)
@@ -60,10 +61,10 @@ class FameStat:
 
 
 def stats(session):
-    with_damage = [s for s in session if s['damage'] != 0.0]
-    extended_session = with_percentage(with_damage)
+    extended_session = with_percentage(session)
     statistics = [DamageStat(
-        s['player'], 
+        s['player'],
+        s['items'],
         s['damage'], 
         s['time_in_combat'], 
         s['dps'], 
@@ -93,7 +94,7 @@ def with_percentage(session):
         damage_done += damage
 
     for s in session:
-        s['dmg_percentage'] = s['damage'] / damage_done * 100
+        s['dmg_percentage'] = s['damage'] / damage_done * 100 if s['damage']  else 0.0
         s['best_damage'] = best_damage
 
     return session
@@ -101,15 +102,51 @@ def with_percentage(session):
 def zone_stats():
     if TESTING_ENABLED:
         session = [
-            {'player': 'John Wick', 'damage': 1234.02,
-                'time_in_combat': 12.0, 'dps': 12.4234, 'fame': 20.0, 'fame_per_minute': 30},
-            {'player': 'The Warrior', 'damage': 5435.02, 'time_in_combat': 12.0, 'dps': 12},
-            {'player': 'The Mage', 'damage': 23000.02, 'time_in_combat': 12.0, 'dps': 13},
-            {'player': 'Someone', 'damage': 2000.02, 'time_in_combat': 12.0, 'dps': 13},
-            {'player': 'The chosen one', 'damage': 230.02, 'time_in_combat': 12.0, 'dps': 13},
-            {'player': 'Party filler', 'damage': 20.02, 'time_in_combat': 12.0, 'dps': 13},
-            {'player': 'OneMoreToGo', 'damage': 2000.02, 'time_in_combat': 12.0, 'dps': 13},
-            {'player': 'D'*20, 'damage': 0, 'time_in_combat': 12.0, 'dps': 0}
+            {'player': 'Arcane', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 12.4234, 'fame': 20.0, 'fame_per_minute': 30, 'items': {
+                'weapon': 'T3_MAIN_ARCANESTAFF'
+            }},
+            {'player': 'Cursed', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 12, 'items': {
+                'weapon': 'T5_MAIN_CURSEDSTAFF'
+            }},
+            {'player': 'Fire', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T5_MAIN_FIRESTAFF'
+            }},
+            {'player': 'Frost', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T5_MAIN_FROSTSTAFF@1'
+            }},
+            {'player': 'Holy', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T6_MAIN_HOLYSTAFF'
+            }},
+            {'player': 'Nature', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T8_MAIN_NATURESTAFF@3'
+            }},
+            {'player': 'Axe', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T8_MAIN_AXE'
+            }},
+            {'player': 'Dagger', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T8_MAIN_DAGGER@2'
+            }},
+            {'player': 'Hammer', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T7_MAIN_HAMMER@2'
+            }},
+            {'player': 'Mace', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T6_MAIN_MACE@2'
+            }},
+            {'player': 'Quarterstaff', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T5_2H_IRONCLADEDSTAFF'
+            }},
+            {'player': 'Spear', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T8_MAIN_SPEAR@2'
+            }},
+            {'player': 'Sword', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T7_2H_CLAYMORE@1'
+            }},
+            {'player': 'Bow', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T8_2H_BOW'
+            }},
+            {'player': 'Crossbow', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T8_2H_CROSSBOWLARGE@3'
+            }},
         ]
     else:
         session = aostats.stats(StatType.Zone)
@@ -120,7 +157,7 @@ def zone_stats():
 def overall_stats():
     if TESTING_ENABLED:
         session = [
-            {'player': 'overall', 'damage': 1234.02,
+            {'player': 'overall', 'damage': 1000.0,
                 'time_in_combat': 12.0, 'dps': 12.4234},
         ]
     else:
@@ -132,7 +169,7 @@ def overall_stats():
 def last_fight_stats():
     if TESTING_ENABLED:
         session = [
-            {'player': 'last fight', 'damage': 1234.02,
+            {'player': 'last fight', 'damage': 1000.0,
                 'time_in_combat': 12.0, 'dps': 12.4234},
         ]
     else:

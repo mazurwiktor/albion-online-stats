@@ -13,6 +13,7 @@ use player::Player;
 
 pub use traits::*;
 pub use types::*;
+pub use super::game_protocol;
 
 #[derive(Debug)]
 pub struct Session {
@@ -56,6 +57,7 @@ impl Session {
                     fame: player.fame(),
                     fame_per_minute: player.fame_per_minute(),
                     fame_per_hour: player.fame_per_hour(),
+                    items: player.items()
                 })
                 .collect(),
         )
@@ -184,6 +186,13 @@ impl Meter {
 
 impl PlayerEvents for Meter {
     fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn DamageDealer>> {
+        let (zone, last_fight) = self.sessions_mut()?;
+        let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
+        let zone_player = zone.get_player_by_id(player_id)?;
+        Some(vec![zone_player, las_fight_session_player])
+    }
+
+    fn get_item_carriers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn ItemCarrier>> {
         let (zone, last_fight) = self.sessions_mut()?;
         let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
         let zone_player = zone.get_player_by_id(player_id)?;

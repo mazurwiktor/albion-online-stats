@@ -1,5 +1,4 @@
 import sys
-import os
 
 from PySide2.QtCore import QTimer
 from PySide2.QtCore import Qt
@@ -17,8 +16,7 @@ from PySide2 import QtCore
 from .dmg_list import DmgList
 from . import about
 from . import engine
-
-assets_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+from . import assets
 
 class Mode:
     CURRENT_ZONE = 'Statistics: Current zone'
@@ -37,16 +35,16 @@ class InteractiveBar(QWidget):
         self.clipboard = clipboard
 
         self.copy_button = QPushButton(self)
-        self.copy_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'copy.png')))
+        self.copy_button.setIcon(QtGui.QIcon(assets.path('copy.png')))
 
         self.reset_button = QPushButton()
-        self.reset_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'reset.png')))
+        self.reset_button.setIcon(QtGui.QIcon(assets.path('reset.png')))
 
         self.close_button = QPushButton(self)
-        self.close_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'close.png')))
+        self.close_button.setIcon(QtGui.QIcon(assets.path('close.png')))
 
         self.about_button = QPushButton(self)
-        self.about_button.setIcon(QtGui.QIcon(os.path.join(assets_path, 'about.png')))
+        self.about_button.setIcon(QtGui.QIcon(assets.path('about.png')))
 
         self.layout.addWidget(self.mode)
         self.layout.addWidget(self.copy_button)

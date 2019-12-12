@@ -7,6 +7,7 @@ use fake_clock::FakeClock as Instant;
 #[cfg(not(test))]
 use std::time::Instant;
 
+use super::game_protocol::Items;
 use super::traits::DamageStats;
 use super::traits::FameStats;
 
@@ -42,7 +43,8 @@ pub struct PlayerStatistics {
     pub seconds_in_game: f32,
     pub fame: f32,
     pub fame_per_minute: u32,
-    pub fame_per_hour: u32
+    pub fame_per_hour: u32,
+    pub items: Items
 }
 
 #[derive(Debug, PartialEq, Clone)]
