@@ -74,17 +74,11 @@ pub trait PlayerEvents {
 
     fn register_player(&mut self, name: &str, id: usize);
 
+    fn register_item_update(&mut self, player_id: usize, items: &Items) -> Option<()>;
+
     fn register_fame_gain(&mut self, player_id: usize, fame: f32) -> Option<()> {
         for player in self.get_fame_gatherers_in_zone(player_id)? {
             player.register_fame_gain(fame);
-        }
-
-        Some(())
-    }
-
-    fn register_item_update(&mut self, player_id: usize, items: &Items) -> Option<()> {
-        for player in self.get_item_carriers_in_zone(player_id)? {
-            player.items_update(items);
         }
 
         Some(())

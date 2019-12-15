@@ -28,7 +28,7 @@ def map_weapon(weapon):
         with open(assets.path('item_category_map.json')) as m:
             _mappings = json.loads(m.read())
 
-    return _mappings[weapon]
+    return _mappings[weapon] if weapon in _mappings else None
 
 def get_weapon_type(items):
     weapon = map_weapon(items['weapon'])

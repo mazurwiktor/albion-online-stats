@@ -12,8 +12,8 @@ class Number:
 
     def __truediv__(self, other):
         if isinstance(other, Number):
-            return self.number / other.number
-        return self.number / other
+            return self.number / other.number if other.number else other.number
+        return self.number / other if other else other
 
     def __str__(self):
         if self.number / 1000 < 1:

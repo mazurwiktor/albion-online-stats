@@ -137,7 +137,7 @@ pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyList> {
             if let Ok(ref mut meter) = m.lock() {
                 return Ok(core::stats(&meter, stat_type)
                     .into_iter()
-                    // .filter(|s| s.damage != 0.0 || s.fame != 0.0)
+                    .filter(|s| !s.idle || s.fame != 0.0)
                     .collect::<Vec<meter::PlayerStatistics>>()
                     .into_py_object(py))
             }

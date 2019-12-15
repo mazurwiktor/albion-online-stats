@@ -44,7 +44,8 @@ pub struct PlayerStatistics {
     pub fame: f32,
     pub fame_per_minute: u32,
     pub fame_per_hour: u32,
-    pub items: Items
+    pub items: Items,
+    pub idle: bool
 }
 
 #[derive(Debug, PartialEq, Clone)]

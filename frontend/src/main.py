@@ -1,4 +1,5 @@
 import sys
+import functools
 
 from PySide2.QtCore import QTimer
 from PySide2.QtCore import Qt
@@ -19,10 +20,12 @@ from . import engine
 from . import assets
 
 class Mode:
-    CURRENT_ZONE = 'Statistics: Current zone'
-    OVERALL = 'Statistics: Overall'
-    LAST_FIGHT = 'Statistics: Last fight'
-
+    DMG_CURRENT_ZONE = 'Stats (dmg): Current zone'
+    DMG_OVERALL = 'Stats (dmg): Overall'
+    DMG_LAST_FIGHT = 'Stats (dmg): Last fight'
+    CURRENT_ZONE = 'Stats (all): Current zone'
+    OVERALL = 'Stats (all): Overall'
+    LAST_FIGHT = 'Stats (all): Last fight'
 
 class InteractiveBar(QWidget):
     def __init__(self, table, clipboard):
@@ -78,9 +81,12 @@ class InteractiveBar(QWidget):
 
     def reset(self):
         reset = {
+            Mode.DMG_CURRENT_ZONE: engine.reset_zone_stats,
+            Mode.DMG_LAST_FIGHT: engine.reset_last_fight_stats,
+            Mode.DMG_OVERALL: engine.reset_stats,
             Mode.CURRENT_ZONE: engine.reset_zone_stats,
             Mode.LAST_FIGHT: engine.reset_last_fight_stats,
-            Mode.OVERALL: engine.reset_stats
+            Mode.OVERALL: engine.reset_stats,
         }
 
         reset[self.mode.currentText()]()
@@ -91,7 +97,9 @@ class InteractiveBar(QWidget):
 class ModeWidget(QComboBox):
     def __init__(self):
         QComboBox.__init__(self)
-
+        self.addItem(Mode.DMG_CURRENT_ZONE)
+        self.addItem(Mode.DMG_OVERALL)
+        self.addItem(Mode.DMG_LAST_FIGHT)
         self.addItem(Mode.CURRENT_ZONE)
         self.addItem(Mode.OVERALL)
         self.addItem(Mode.LAST_FIGHT)
@@ -143,6 +151,9 @@ class MainWidget(QWidget):
 
     def session(self):
         sessions = {
+            Mode.DMG_CURRENT_ZONE: functools.partial(engine.zone_stats, with_damage=True),
+            Mode.DMG_LAST_FIGHT: functools.partial(engine.last_fight_stats, with_damage=True),
+            Mode.DMG_OVERALL: functools.partial(engine.overall_stats, with_damage=True),
             Mode.CURRENT_ZONE: engine.zone_stats,
             Mode.LAST_FIGHT: engine.last_fight_stats,
             Mode.OVERALL: engine.overall_stats

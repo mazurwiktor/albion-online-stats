@@ -57,7 +57,8 @@ impl Session {
                     fame: player.fame(),
                     fame_per_minute: player.fame_per_minute(),
                     fame_per_hour: player.fame_per_hour(),
-                    items: player.items()
+                    items: player.items(),
+                    idle: player.idle(),
                 })
                 .collect(),
         )
@@ -100,6 +101,7 @@ pub struct Meter {
     last_fight_session: Session,
     main_player_id: Option<usize>,
     party: Option<types::Party>,
+    unconsumed_items: HashMap<usize, game_protocol::Items>,
     config: MeterConfig,
 }
 
@@ -111,6 +113,7 @@ impl Meter {
             last_fight_session: Session::new(),
             main_player_id: None,
             party: None,
+            unconsumed_items: HashMap::new(),
             config: Default::default(),
         }
     }
@@ -211,6 +214,21 @@ impl PlayerEvents for Meter {
         Some(vec![zone_player, las_fight_session_player])
     }
 
+    fn register_item_update(&mut self, player_id: usize, items: &game_protocol::Items) -> Option<()> {
+        let mut consumed = false;
+        for player in self.get_item_carriers_in_zone(player_id).unwrap_or(vec![]) {
+            player.items_update(items);
+            consumed = true;
+        }
+
+        if !consumed {
+            info!("Storing not consumed items for player id: {}", player_id);
+            self.unconsumed_items.insert(player_id, items.clone());
+        }
+
+        Some(())
+    }
+
     fn register_main_player(&mut self, name: &str, id: usize) {
         info!("Main player {} registered with id {}", name, id);
         self.main_player_id = Some(id);
@@ -219,6 +237,11 @@ impl PlayerEvents for Meter {
             self.new_session();
         }
         self.add_player(name, id);
+        if let Some(items) = self.unconsumed_items.get(&id) {
+            let i = items.clone();
+            self.register_item_update(id, &i);
+            self.unconsumed_items.remove(&id);
+        }
     }
 
     fn register_leave(&mut self, id: usize) -> Option<()> {
@@ -261,6 +284,7 @@ impl LastFightStats for Meter {
 
     fn reset_last_fight_stats(&mut self) -> Option<()> {
         self.last_fight_session = Session::from(&self.last_fight_session);
+        info!("Reset: last fight");
         Some(())
     }
 }
@@ -274,7 +298,7 @@ impl ZoneStats for Meter {
     fn reset_zone_stats(&mut self) -> Option<()> {
         let last_session = self.zone_session_mut()?;
         self.zone_session = Some(Session::from(&last_session));
-
+        info!("Reset: zone");
         Some(())
     }
 }
@@ -298,7 +322,7 @@ impl GameStats for Meter {
         let last_session = self.zone_session_mut()?;
         self.zone_session = Some(Session::from(&last_session));
         self.last_fight_session = Session::from(&self.last_fight_session);
-
+        info!("Reset: overall");
         Some(())
     }
 

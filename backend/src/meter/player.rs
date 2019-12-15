@@ -36,7 +36,8 @@ pub struct Player {
     combat_state: CombatState,
     time_started: Instant,
     fame: f32,
-    items: Items
+    items: Items,
+    idle: bool,
 }
 
 
@@ -50,7 +51,12 @@ impl Player {
             time_started: Instant::now(),
             fame: 0.0,
             items: Default::default(),
+            idle: true
         }
+    }
+
+    pub fn idle(&self) -> bool {
+        self.idle
     }
 }
 
@@ -59,11 +65,12 @@ impl DamageDealer for Player {
         if self.combat_state == CombatState::OutOfCombat {
             return
         }
-
+        self.idle = false;
         self.damage_dealt += damage_dealt
     }
 
     fn enter_combat(&mut self) {
+        self.idle = false;
         self.combat_time.entered_combat = Some(Instant::now());
         self.combat_state = CombatState::InCombat;
     }
@@ -103,12 +110,14 @@ impl DamageStats for Player {
 impl FameGatherer for Player {
     fn register_fame_gain(&mut self, fame: f32) {
         self.fame += fame;
+        self.idle = false;
     }
 }
 
 impl ItemCarrier for Player {
     fn items_update(&mut self, items: &Items) {
         self.items = items.clone();
+        self.idle = false;
     }
 
     fn items(&self) -> Items {

@@ -1,6 +1,5 @@
 import collections
 import functools
-import requests
 from PIL import Image, ImageQt
 from io import BytesIO
 
@@ -23,6 +22,7 @@ from PySide2 import QtCore
 
 from . import weapon
 from . import assets
+from . import async_request
 
 Style = collections.namedtuple('Style', 'bg')
 
@@ -62,17 +62,19 @@ def player_style(items):
     else:
         return Style(bg = '#42413c')
 
-@functools.lru_cache(maxsize=None)
+# @functools.lru_cache(maxsize=None)
 def player_icon(weapon):
     url = f'https://albiononline2d.ams3.cdn.digitaloceanspaces.com/thumbnails/orig/{weapon}'
+    try:
+        r = async_request.get(url)
+        img = Image.open(BytesIO(r.content))
 
-    r = requests.get(url)
-    img = Image.open(BytesIO(r.content))
+        img_qt = ImageQt.ImageQt(img)
+        pix = QtGui.QPixmap.fromImage(img_qt)
 
-    img_qt = ImageQt.ImageQt(img)
-    pix = QtGui.QPixmap.fromImage(img_qt)
-
-    return QtGui.QIcon(pix)
+        return QtGui.QIcon(pix)
+    except Exception:
+        return None
 
 class DmgList(QListView):
     class DmgItem(QtGui.QStandardItem):
@@ -83,7 +85,7 @@ class DmgList(QListView):
             self.player_style = player_style(player.items)
             self.update(player)
             
-            self.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+            self.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
 
         def update(self, player):
             self.player = player
@@ -103,8 +105,9 @@ class DmgList(QListView):
             brush = QtGui.QBrush(gradient)
 
             self.setBackground(brush)
-       
-            self.setIcon(player_icon(self.player.items['weapon']))
+            icon = player_icon(self.player.items['weapon'])
+            if icon:
+                self.setIcon(icon)
 
     class SortProxyModel(QtCore.QSortFilterProxyModel):
         def lessThan(self, left, right):
@@ -126,6 +129,10 @@ class DmgList(QListView):
         self.setModel(self.proxy)
 
     def update(self, players):
+        if not players:
+            self.model.clear()
+            return
+
         visible_names = []
         for player in players:
             items = (self.model.item(i) for i in range(self.model.rowCount()))
@@ -137,7 +144,7 @@ class DmgList(QListView):
             visible_names.append(player.name)
         for i in range(self.model.rowCount()):
             item = self.model.item(i)
-            if hasattr(item, 'name') and item.name not in visible_names:
+            if hasattr(item.player, 'name') and item.player.name not in visible_names:
                 self.model.removeRow(i)
         
         self.proxy.sort(0, QtCore.Qt.DescendingOrder)

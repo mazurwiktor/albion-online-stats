@@ -60,8 +60,9 @@ class FameStat:
         self.fame_per_minute = fame_per_minute
 
 
-def stats(session):
-    extended_session = with_percentage(session)
+def stats(session, with_dmg=False):
+    with_damage = [s for s in session if s['damage'] != 0.0] if with_dmg else session
+    extended_session = with_percentage(with_damage)
     statistics = [DamageStat(
         s['player'],
         s['items'],
@@ -99,7 +100,7 @@ def with_percentage(session):
 
     return session
 
-def zone_stats():
+def zone_stats(with_damage=False):
     if TESTING_ENABLED:
         session = [
             {'player': 'Arcane', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 12.4234, 'fame': 20.0, 'fame_per_minute': 30, 'items': {
@@ -151,10 +152,10 @@ def zone_stats():
     else:
         session = aostats.stats(StatType.Zone)
 
-    return stats(session)
+    return stats(session, with_damage)
 
 
-def overall_stats():
+def overall_stats(with_damage=False):
     if TESTING_ENABLED:
         session = [
             {'player': 'overall', 'damage': 1000.0,
@@ -163,10 +164,10 @@ def overall_stats():
     else:
         session = aostats.stats(StatType.Overall)
 
-    return stats(session)
+    return stats(session, with_damage)
 
 
-def last_fight_stats():
+def last_fight_stats(with_damage=False):
     if TESTING_ENABLED:
         session = [
             {'player': 'last fight', 'damage': 1000.0,
@@ -175,7 +176,7 @@ def last_fight_stats():
     else:
         session = aostats.stats(StatType.LastFight)
 
-    return stats(session)
+    return stats(session, with_damage)
 
 def get_party_members():
     if TESTING_ENABLED:
