@@ -158,6 +158,7 @@ impl Meter {
         let session = self.zone_session_mut()?;
         session.add_player(name, id);
         self.last_fight_session.add_player(name, id);
+
         Some(())
     }
 
@@ -260,8 +261,10 @@ impl PlayerEvents for Meter {
             info!("New player ({}) registered without session, creating new session", name);
             self.new_session();
         }
-
-        self.add_player(name, id);
+        
+        if self.get_damage_dealers_in_zone(id).unwrap_or(vec![]).is_empty() {
+            self.add_player(name, id);
+        }
     }
 
     fn register_combat_enter(&mut self, player_id: usize) -> Option<()> {

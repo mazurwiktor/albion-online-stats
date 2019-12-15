@@ -563,7 +563,7 @@ mod tests {
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
 
-        character_enters!(meter, "CH1", 1);
+        character_enters!(meter, "CH1", 2);
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);

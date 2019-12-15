@@ -58,7 +58,7 @@ def player_style(items):
     elif weapon_type == weapon.WeaponType.Spear:
         return Style(bg = '#a9a9a9')
     elif weapon_type == weapon.WeaponType.Sword:
-        return Style(bg = '#ffe119')
+        return Style(bg = '#b59d00')
     else:
         return Style(bg = '#42413c')
 
