@@ -1,5 +1,6 @@
 import sys
 import functools
+import datetime
 
 from PySide2.QtCore import QTimer
 from PySide2.QtCore import Qt
@@ -67,7 +68,7 @@ class InteractiveBar(QWidget):
             [model.item(i) for i in range(model.rowCount())], 
             key=lambda i: i.damage, 
             reverse=True)
-        clip = "{}, Fame/min: {}\nDMG: \n".format(self.mode.currentText(), self.fame_per_minute)
+        clip = "{}, FPM: {}\nDMG: \n".format(self.mode.currentText(), self.fame_per_minute)
         for index, i in enumerate(items[:3]):
             clip += '{}. {}-{}-{}%'.format(index+1, i.name, i.damage, i.percentage)
             clip += "\n"
@@ -128,11 +129,11 @@ class MainWidget(QWidget):
         timer.start(500)
 
     def refresh(self):
-        damage_session, fame_stat = self.session()
+        damage_session, fame_stat, elapsed = self.session()
         self.table.update(damage_session)
         self.bar.set_fame_per_minute(fame_stat.fame_per_minute)
-        self.fame_label.setText("Fame <b>{}</b> | Fame per minute <b>{}</b> | Party members <b>{}</b>".format(
-            fame_stat.fame, fame_stat.fame_per_minute, len(engine.get_party_members())))
+        self.fame_label.setText("<b>{}</b> | Fame <b>{}</b> | FPM <b>{}</b> | Party members <b>{}</b>".format(
+            datetime.timedelta(seconds=elapsed), fame_stat.fame, fame_stat.fame_per_minute, len(engine.get_party_members())))
     
     def mousePressEvent(self, event):
         self.mouse_pos = event.pos()

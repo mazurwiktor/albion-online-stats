@@ -38,11 +38,12 @@ pub struct Player {
     fame: f32,
     items: Items,
     idle: bool,
+    pub main: bool
 }
 
 
 impl Player {
-    pub fn new(id: usize) -> Self {
+    pub fn new(id: usize, main: bool) -> Self {
         Self {
             id,
             damage_dealt: 0.0,
@@ -51,7 +52,8 @@ impl Player {
             time_started: Instant::now(),
             fame: 0.0,
             items: Default::default(),
-            idle: true
+            idle: true,
+            main
         }
     }
 
@@ -147,7 +149,7 @@ mod test {
 
     #[test]
     fn test_player_fame_stats() {
-        let mut player = Player::new(1);
+        let mut player = Player::new(1, true);
 
         sleep(1000 * 60);
         player.register_fame_gain(100.0);

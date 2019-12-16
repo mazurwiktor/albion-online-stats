@@ -30,11 +30,11 @@ impl Session {
     fn from(session: &Self) -> Self {
         let mut players = HashMap::new();
         for (player_name, player) in &session.players {
-            let mut new_player = Player::new(player.id);
+            let mut new_player = Player::new(player.id, player.main);
             if let CombatState::InCombat = player.combat_state() {
                 new_player.enter_combat();
             }
-            players.insert(player_name.clone(), Player::new(player.id));
+            players.insert(player_name.clone(), new_player);
         }
 
         Self { players }
@@ -59,6 +59,7 @@ impl Session {
                     fame_per_hour: player.fame_per_hour(),
                     items: player.items(),
                     idle: player.idle(),
+                    main_player_stats: player.main,
                 })
                 .collect(),
         )
@@ -68,7 +69,7 @@ impl Session {
         let without_dmg = self
             .players
             .iter()
-            .filter(|(_, player)| player.damage() == 0.0 && player.fame() == 0.0)
+            .filter(|(_, player)| !player.main && player.damage() == 0.0 && player.fame() == 0.0)
             .map(|(name, _)| name.clone())
             .collect::<Vec<String>>();
         for w in without_dmg {
@@ -84,9 +85,9 @@ impl Session {
         self.players.values_mut().find(|p| p.id == player_id)
     }
 
-    fn add_player(&mut self, player_name: &str, player_id: usize) {
+    fn add_player(&mut self, player_name: &str, player_id: usize, main: bool) {
         self.players
-            .insert(player_name.to_owned(), Player::new(player_id));
+            .insert(player_name.to_owned(), Player::new(player_id, main));
     }
 }
 
@@ -154,10 +155,10 @@ impl Meter {
         }
     }
 
-    fn add_player(&mut self, name: &str, id: usize) -> Option<()> {
+    fn add_player(&mut self, name: &str, id: usize, main: bool) -> Option<()> {
         let session = self.zone_session_mut()?;
-        session.add_player(name, id);
-        self.last_fight_session.add_player(name, id);
+        session.add_player(name, id, main);
+        self.last_fight_session.add_player(name, id, main);
 
         Some(())
     }
@@ -237,7 +238,7 @@ impl PlayerEvents for Meter {
         if self.zone_session.is_none() {
             self.new_session();
         }
-        self.add_player(name, id);
+        self.add_player(name, id, true);
         if let Some(items) = self.unconsumed_items.get(&id) {
             let i = items.clone();
             self.register_item_update(id, &i);
@@ -263,7 +264,7 @@ impl PlayerEvents for Meter {
         }
         
         if self.get_damage_dealers_in_zone(id).unwrap_or(vec![]).is_empty() {
-            self.add_player(name, id);
+            self.add_player(name, id, false);
         }
     }
 

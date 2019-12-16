@@ -45,7 +45,8 @@ pub struct PlayerStatistics {
     pub fame_per_minute: u32,
     pub fame_per_hour: u32,
     pub items: Items,
-    pub idle: bool
+    pub idle: bool,
+    pub main_player_stats: bool,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -91,6 +92,7 @@ impl PlayerStatisticsVec {
                         s.fame += stat.fame;
                         s.fame_per_minute = s.fame_per_minute();
                         s.fame_per_hour = s.fame_per_hour();
+                        s.main_player_stats = stat.main_player_stats;
                     })
                     .or_insert(stat.clone());
                 acc

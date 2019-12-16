@@ -131,21 +131,30 @@ impl <'source> FromPyObject<'source> for StatType {
 }
 
 
-pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyList> {
+pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyDict> {
+    let stats = PyDict::new(py);
     if let Ok(ref mut py_meter) = METER.lock() {
         if let Some(m) = py_meter.get() {
             if let Ok(ref mut meter) = m.lock() {
-                return Ok(core::stats(&meter, stat_type)
+                let mut main : Option<core::PlayerStatistics> = None;
+                stats.set_item(py, "players", core::stats(&meter, stat_type)
                     .into_iter()
+                    .inspect(|s| {
+                        if s.main_player_stats {
+                            main = Some(s.clone());
+                        }
+                    })
                     .filter(|s| !s.idle || s.fame != 0.0)
                     .collect::<Vec<meter::PlayerStatistics>>()
-                    .into_py_object(py))
+                    .into_py_object(py)).ok();
+                stats.set_item(py, "main", main.into_py_object(py)).ok();
+                return Ok(stats);
             }
         }
     }
 
     error!("Failed to acquire locks on meter");
-    Ok(PyList::new(py, Vec::<PyObject>::new().as_slice()))
+    Ok(stats)
 }
 
 pub fn reset(_py: Python, stat_type: StatType) -> PyResult<u32> {

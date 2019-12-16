@@ -9,7 +9,10 @@ except:
             return InitializationResult.NetworkInterfaceListMissing
         @staticmethod
         def stats(_):
-            return []
+            return {
+                'players': [],
+                'main': None
+            }
         @staticmethod
         def get_players_in_party():
             return []
@@ -61,7 +64,10 @@ class FameStat:
 
 
 def stats(session, with_dmg=False):
-    with_damage = [s for s in session if s['damage'] != 0.0] if with_dmg else session
+    players = session['players']
+    main_player = session['main']
+
+    with_damage = [s for s in players if s['damage'] != 0.0] if with_dmg else players
     extended_session = with_percentage(with_damage)
     statistics = [DamageStat(
         s['player'],
@@ -71,18 +77,16 @@ def stats(session, with_dmg=False):
         s['dps'], 
         s['dmg_percentage'], 
         s['best_damage']) for s in extended_session]
-    stats_with_fame = [p for p in session if 'fame' in p and p['fame'] != 0.0]
 
-    if len(stats_with_fame) > 0:
-        stat_with_fame = stats_with_fame[0]
-        fame = FameStat(
-            Number(stat_with_fame['fame']), 
-            Number(stat_with_fame['fame_per_minute'])
-        )
-    else:
-        fame = FameStat(Number(0.0), Number(0.0))
+    elapsed = 0
+    fame = FameStat(Number(0.0), Number(0.0))
+    if main_player:
+        if 'fame' in main_player:
+            fame = FameStat(Number(main_player['fame']), Number(main_player['fame_per_minute']))
+        if 'seconds_in_game' in main_player:
+            elapsed = main_player['seconds_in_game']
 
-    return statistics, fame
+    return statistics, fame, elapsed
 
 
 def with_percentage(session):
@@ -102,7 +106,8 @@ def with_percentage(session):
 
 def zone_stats(with_damage=False):
     if TESTING_ENABLED:
-        session = [
+        session = {
+            'players': [
             {'player': 'Arcane', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 12.4234, 'fame': 20.0, 'fame_per_minute': 30, 'items': {
                 'weapon': 'T3_MAIN_ARCANESTAFF'
             }},
@@ -148,7 +153,11 @@ def zone_stats(with_damage=False):
             {'player': 'Crossbow', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
                 'weapon': 'T8_2H_CROSSBOWLARGE@3'
             }},
-        ]
+        ],
+        'main': {'player': 'Crossbow', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
+                'weapon': 'T8_2H_CROSSBOWLARGE@3'
+            }, 'fame': 20000, 'fame_per_minute': 200 }
+        }
     else:
         session = aostats.stats(StatType.Zone)
 
