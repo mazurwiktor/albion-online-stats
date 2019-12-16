@@ -109,13 +109,13 @@ def zone_stats(with_damage=False):
         session = {
             'players': [
             {'player': 'Arcane', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 12.4234, 'fame': 20.0, 'fame_per_minute': 30, 'items': {
-                'weapon': 'T3_MAIN_ARCANESTAFF'
+                'weapon': 'T4_MAIN_ARCANESTAFF@3'
             }},
             {'player': 'Cursed', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 12, 'items': {
-                'weapon': 'T5_MAIN_CURSEDSTAFF'
+                'weapon': 'T5_MAIN_CURSEDSTAFF@2'
             }},
             {'player': 'Fire', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
-                'weapon': 'T5_MAIN_FIRESTAFF'
+                'weapon': 'T5_MAIN_FIRESTAFF@1'
             }},
             {'player': 'Frost', 'damage': 1000.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
                 'weapon': 'T5_MAIN_FROSTSTAFF@1'

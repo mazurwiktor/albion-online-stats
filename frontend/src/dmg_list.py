@@ -2,6 +2,7 @@ import collections
 import functools
 from PIL import Image, ImageQt
 from io import BytesIO
+import re
 
 
 from PySide2.QtCore import Qt
@@ -26,6 +27,20 @@ from . import async_request
 
 Style = collections.namedtuple('Style', 'bg')
 
+def weapon_info(items):
+    tier_re = re.compile(r"(T\d+).*")
+    enchant_re = re.compile(r".*@(\d+)")
+
+    if 'weapon' in items:
+        tier = tier_re.match(items['weapon'])
+        enchant = enchant_re.match(items['weapon'])
+        if tier:
+            return f'{tier[1] if tier else ""}@{enchant[1] if enchant else 0}'
+
+    return ''
+
+    # T8_MAIN_NATURESTAFF@3
+    # T8_MAIN_NATURESTAF
 def player_style(items):
     weapon_type = weapon.get_weapon_type(items)
 
@@ -82,7 +97,6 @@ class DmgList(QListView):
             QtGui.QStandardItem .__init__(self)
             self.parent = parent
             self.player = player
-            self.player_style = player_style(player.items)
             self.update(player)
             
             self.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
@@ -98,7 +112,7 @@ class DmgList(QListView):
             value =  round(self.player.damage / self.player.best_damage, 2)
             QRectF = QtCore.QRectF(self.parent.rect())
             gradient = QtGui.QLinearGradient(QRectF.topLeft(), QRectF.topRight())
-            gradient.setColorAt(value-0.001 if value > 0 else 0, QtGui.QColor(self.player_style.bg))
+            gradient.setColorAt(value-0.001 if value > 0 else 0, QtGui.QColor(player_style(self.player.items).bg))
             gradient.setColorAt(value, QtGui.QColor('#000000'))
             gradient.setColorAt(value+0.001 if value < 1 else 1, QtGui.QColor('#000000'))
 
@@ -106,8 +120,10 @@ class DmgList(QListView):
 
             self.setBackground(brush)
             icon = player_icon(self.player.items['weapon'])
+            self.setToolTip('\n'.join([f'{k}: {v}' for (k,v) in self.player.items.items() if v]))
             if icon:
                 self.setIcon(icon)
+                
 
     class SortProxyModel(QtCore.QSortFilterProxyModel):
         def lessThan(self, left, right):
@@ -121,7 +137,7 @@ class DmgList(QListView):
 
     def __init__(self):
         QListView .__init__(self)
-        self.setIconSize(QtCore.QSize(30, 30))
+        self.setIconSize(QtCore.QSize(20, 20))
         self.model = self.DmgItemModel(self)
         self.proxy = self.SortProxyModel()
         self.proxy.setSourceModel(self.model)
