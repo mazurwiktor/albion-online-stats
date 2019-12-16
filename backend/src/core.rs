@@ -258,7 +258,7 @@ mod tests {
         fn new(source: usize) -> Self {
             Self {
                 source: source,
-                fame: 100.0,
+                fame: 1000000,
             }
         }
     }
