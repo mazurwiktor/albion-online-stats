@@ -121,7 +121,7 @@ class DmgList(QListView):
 
     def __init__(self):
         QListView .__init__(self)
-
+        self.setIconSize(QtCore.QSize(30, 30))
         self.model = self.DmgItemModel(self)
         self.proxy = self.SortProxyModel()
         self.proxy.setSourceModel(self.model)
@@ -144,7 +144,7 @@ class DmgList(QListView):
             visible_names.append(player.name)
         for i in range(self.model.rowCount()):
             item = self.model.item(i)
-            if hasattr(item.player, 'name') and item.player.name not in visible_names:
+            if hasattr(item, 'player') and hasattr(item.player, 'name') and item.player.name not in visible_names:
                 self.model.removeRow(i)
         
         self.proxy.sort(0, QtCore.Qt.DescendingOrder)
