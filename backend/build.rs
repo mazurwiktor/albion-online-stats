@@ -1,15 +1,13 @@
-// build.rs
-
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
 fn main() {
-    let out_dir = env::var("OUT_DIR").unwrap();
-    let dest_path = Path::new(&out_dir).join("itemdb.rs");
-    let mut f = File::create(&dest_path).unwrap();
+    save_file("itemdb.rs", &generate_itemdb());
+}
 
+fn generate_itemdb() -> String {
     let mut out = String::new();
 
     out.push_str("use std::collections::HashMap;\n");
@@ -28,5 +26,12 @@ fn main() {
     out.push_str("};\n");
     out.push_str("}");
 
-    f.write_all(out.as_bytes()).unwrap();
+    out
+}
+
+fn save_file(file_name: &str, content: &str) {
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let dest_path = Path::new(&out_dir).join(file_name);
+    let mut f = File::create(&dest_path).unwrap();
+    f.write_all(content.as_bytes()).unwrap();
 }
