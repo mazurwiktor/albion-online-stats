@@ -1,5 +1,5 @@
 include!(concat!(env!("OUT_DIR"), "/itemdb.rs"));
-
+include!(concat!(env!("OUT_DIR"), "/messages.rs"));
 mod packet;
 pub mod message;
 

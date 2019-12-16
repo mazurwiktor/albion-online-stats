@@ -3,8 +3,48 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
+use serde::{Deserialize};
+
+#[derive(Deserialize)]
+enum ParamType
+{
+    Number
+}
+
+#[derive(Deserialize)]
+struct Param
+{
+    name: String,
+    id: u32,
+    param_type: ParamType
+}
+
+#[derive(Deserialize)]
+struct Message
+{
+    name: String,
+    code: u32,
+    params: Vec<Param>
+}
+
 fn main() {
     save_file("itemdb.rs", &generate_itemdb());
+    save_file("messages.rs", &generate_messages());
+}
+
+fn generate_messages() -> String {
+    let mut out = String::new();
+
+    out.push_str(r"
+        use log::*;
+
+        use photon_decode::Parameters;
+        use photon_decode::Value;
+    ");
+
+    out.push_str(include_str!("assets/decode_macros.rs"));
+
+    out
 }
 
 fn generate_itemdb() -> String {

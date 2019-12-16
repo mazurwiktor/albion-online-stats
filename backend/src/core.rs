@@ -165,6 +165,7 @@ where
 fn into_game_message(photon_message: photon_decode::Message) -> Option<game_protocol::Message> {
     static REQUEST_CONSTANT: usize = 10000;
     static RESPONSE_CONSTANT: usize = 1000;
+    error!("Photon message: {:?}", photon_message);
     match photon_message {
         photon_decode::Message::Event(e) => {
             if e.code != 2 && e.parameters.get(&252u8).is_some() {
