@@ -2,14 +2,14 @@ import os
 import sys
 import toml
 
-CFG_VERSION = '0.3'
+CFG_VERSION = '0.4'
 
 default = """
 [window]
 width = 300
 height = 180
 font-size = '10px'
-opacity = 0.5
+opacity = 0.8
 
 [app]
 skip_non_party_players = false
