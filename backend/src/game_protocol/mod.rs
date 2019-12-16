@@ -1,10 +1,12 @@
 include!(concat!(env!("OUT_DIR"), "/itemdb.rs"));
-include!(concat!(env!("OUT_DIR"), "/messages.rs"));
-mod packet;
-pub mod message;
+
+pub mod message{
+    include!(concat!(env!("OUT_DIR"), "/messages.rs"));
+}
+
 
 pub use message::Message;
-pub use packet::Packet;
+pub use message::into_game_message;
 
 
 #[derive(Debug, Clone, PartialEq, Default)]

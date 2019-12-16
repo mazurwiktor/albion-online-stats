@@ -101,7 +101,7 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
                         let game_messages = photon
                             .decode(&packet.payload)
                             .into_iter()
-                            .filter_map(into_game_message)
+                            .filter_map(game_protocol::into_game_message)
                             .collect();
                         register_messages(meter, &game_messages);
                     }
@@ -156,48 +156,9 @@ where
             events.register_party_disbanded().unwrap_or(())
         }
         game_protocol::Message::FameUpdate(msg) => events
-            .register_fame_gain(msg.source, msg.fame)
+            .register_fame_gain(msg.source, msg.fame as f32 / 10000.0)
             .unwrap_or(()),
-        _ => {}
     }
-}
-
-fn into_game_message(photon_message: photon_decode::Message) -> Option<game_protocol::Message> {
-    static REQUEST_CONSTANT: usize = 10000;
-    static RESPONSE_CONSTANT: usize = 1000;
-    error!("Photon message: {:?}", photon_message);
-    match photon_message {
-        photon_decode::Message::Event(e) => {
-            if e.code != 2 && e.parameters.get(&252u8).is_some() {
-                if let photon_decode::Value::Short(event_code) = e.parameters.get(&252u8).unwrap() {
-                    return game_protocol::Packet {
-                        code: *event_code as usize,
-                        parameters: e.parameters,
-                    }
-                    .decode();
-                }
-            }
-            game_protocol::Packet {
-                code: 0,
-                parameters: e.parameters,
-            }
-        }
-        photon_decode::Message::Request(r) => {
-            let code = r.code as usize + REQUEST_CONSTANT;
-            game_protocol::Packet {
-                code,
-                parameters: r.parameters,
-            }
-        }
-        photon_decode::Message::Response(r) => {
-            let code = r.code as usize + RESPONSE_CONSTANT;
-            game_protocol::Packet {
-                code,
-                parameters: r.parameters,
-            }
-        }
-    }
-    .decode()
 }
 
 #[cfg(test)]

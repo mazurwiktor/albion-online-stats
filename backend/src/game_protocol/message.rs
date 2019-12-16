@@ -1,7 +1,6 @@
 use log::*;
 
 use super::Items;
-use super::packet::Packet;
 use photon_decode::Parameters;
 use photon_decode::Value;
 
@@ -123,7 +122,7 @@ pub struct ChatSay {
 }
 
 impl ChatSay {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         let source = decode_number!(val, 0, "ChatSay::source")?;
         let source_name = decode_string!(val, 1, "ChatSay::source_name")?;
         let text = decode_string!(val, 2, "ChatSay::text")?;
@@ -147,7 +146,7 @@ pub struct NewCharacter {
 }
 
 impl NewCharacter {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("NewCharacter parameters: {:?}", val);
         let source = decode_number!(val, 0, "NewCharacter::source")?;
 
@@ -181,7 +180,7 @@ pub struct HealthUpdate {
 }
 
 impl HealthUpdate {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("HealthUpdate parameters: {:?}", val);
         let source = decode_number!(val, 0, "HealthUpdate::source")?;
         let target = decode_number!(val, 7, "HealthUpdate::target")?;
@@ -204,7 +203,7 @@ pub struct RegenerationHealthChanged {
 }
 
 impl RegenerationHealthChanged {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("RegenerationHealthChanged parameters: {:?}", val);
         let source = decode_number!(val, 0, "RegenerationHealthChanged::source")?;
         let health = decode_float!(val, 3, "RegenerationHealthChanged::health")?;
@@ -232,11 +231,8 @@ pub struct CharacterStats {
 }
 
 impl CharacterStats {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("CharacterStats parameters: {:?}", val);
-        if val.len() < 40 {
-            return None;
-        }
 
         let source = decode_number!(val, 0, "CharacterStats::source")?;
 
@@ -265,7 +261,7 @@ pub struct Leave {
 }
 
 impl Leave {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("Leave parameters: {:?}", val);
         let source = decode_number!(val, 0, "Leave::source")?;
 
@@ -281,7 +277,7 @@ pub struct Died {
 }
 
 impl Died {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("Died parameters: {:?}", val);
         let source = decode_number!(val, 0, "Died::source")?;
         let target = decode_number!(val, 3, "Died::target")?;
@@ -302,7 +298,7 @@ pub struct PartyNew {
 }
 
 impl PartyNew {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("PartyNew parameters: {:?}", val);
         let source = decode_number!(val, 0, "PartyNew::source")?;
         let players = decode_string_vec!(val, 5, "PartyNew::players")?;
@@ -318,7 +314,7 @@ pub struct PartyJoin {
 }
 
 impl PartyJoin {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("PartyJoin parameters: {:?}", val);
         let source = decode_number!(val, 0, "PartyJoin::source")?;
         let target_name = decode_string!(val, 2, "PartyJoin::target_name")?;
@@ -336,7 +332,7 @@ pub struct PartyDisbanded {
 }
 
 impl PartyDisbanded {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("PartyDisbanded parameters: {:?}", val);
         let source = decode_number!(val, 0, "PartyDisbanded::source")?;
 
@@ -351,7 +347,7 @@ pub struct FameUpdate {
 }
 
 impl FameUpdate {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("FameUpdate parameters: {:?}", val);
         let source = decode_number!(val, 0, "FameUpdate::source")?;
         let raw_fame = decode_number!(val, 2, "FameUpdate::fame")?;
@@ -368,7 +364,7 @@ pub struct PlayerItems {
 }
 
 impl PlayerItems {
-    fn parse(val: Parameters) -> Option<Message> {
+    pub fn parse(val: Parameters) -> Option<Message> {
         info!("PlayerItems parameters: {:?}", val);
         let source = decode_number!(val, 0, "PlayerItems::source")?;
         let item_array = decode_number_vec!(val, 3, "PlayerItems::items")?;
@@ -392,26 +388,4 @@ pub enum Message {
     PartyNew(PartyNew),
     PartyJoin(PartyJoin),
     PartyDisbanded(PartyDisbanded),
-}
-
-impl Packet {
-    pub fn decode(self) -> Option<Message> {
-        debug!("Decode: {:?}", &self);
-
-        match self.code {
-            1 => Leave::parse(self.parameters),
-            6 => HealthUpdate::parse(self.parameters),
-            24 => NewCharacter::parse(self.parameters),
-            63 => ChatSay::parse(self.parameters),
-            80 => RegenerationHealthChanged::parse(self.parameters),
-            150 => Died::parse(self.parameters),
-            209 => PartyNew::parse(self.parameters),
-            211 => PartyJoin::parse(self.parameters),
-            213 => PartyDisbanded::parse(self.parameters),
-            72 => FameUpdate::parse(self.parameters),
-            79 => PlayerItems::parse(self.parameters),
-            1001 => CharacterStats::parse(self.parameters),
-            _ => None,
-        }
-    }
 }

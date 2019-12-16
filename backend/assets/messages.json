@@ -1,0 +1,238 @@
+{
+    "events": [
+        {
+            "name": "Leave",
+            "code": 1,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                }
+            ]
+        },
+        {
+            "name": "HealthUpdate",
+            "code": 6,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "target",
+                    "id": 7,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "value",
+                    "id": 3,
+                    "param_type": "Float"
+                }
+            ]
+        },
+        {
+            "name": "RegenerationHealthChanged",
+            "code": 80,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "health",
+                    "id": 3,
+                    "param_type": "Float"
+                },
+                {
+                    "name": "max_health",
+                    "id": 4,
+                    "param_type": "Float"
+                },
+                {
+                    "name": "regeneration_rate",
+                    "id": 5,
+                    "param_type": "Float",
+                    "optional": true
+                }
+            ]
+        },
+        {
+            "name": "Died",
+            "code": 150,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "target",
+                    "id": 3,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "target_name",
+                    "id": 4,
+                    "param_type": "String"
+                }
+            ]
+        },
+        {
+            "name": "NewCharacter",
+            "code": 24,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "character_name",
+                    "id": 1,
+                    "param_type": "String"
+                },
+                {
+                    "name": "health",
+                    "id": 18,
+                    "param_type": "Float"
+                },
+                {
+                    "name": "max_health",
+                    "id": 19,
+                    "param_type": "Float"
+                },
+                {
+                    "name": "energy",
+                    "id": 22,
+                    "param_type": "Float"
+                },
+                {
+                    "name": "max_energy",
+                    "id": 23,
+                    "param_type": "Float"
+                },
+                {
+                    "name": "items",
+                    "id": 33,
+                    "param_type": "Items"
+                }
+            ]
+        },
+        {
+            "name": "FameUpdate",
+            "code": 72,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "fame",
+                    "id": 2,
+                    "param_type": "Number"
+                }
+            ]
+        },
+        {
+            "name": "PlayerItems",
+            "code": 79,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "items",
+                    "id": 3,
+                    "param_type": "Items"
+                }
+            ]
+        },
+        {
+            "name": "PartyNew",
+            "code": 209,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "players",
+                    "id": 5,
+                    "param_type": "StringList"
+                }
+            ]
+        },
+        {
+            "name": "PartyJoin",
+            "code": 211,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "target_name",
+                    "id": 2,
+                    "param_type": "String"
+                }
+            ]
+        },
+        {
+            "name": "PartyDisbanded",
+            "code": 213,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                }
+            ]
+        }
+    ],
+    "responses": [
+        {
+            "name": "CharacterStats",
+            "code": 2,
+            "params": [
+                {
+                    "name": "source",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "character_name",
+                    "id": 2,
+                    "param_type": "String"
+                },
+                {
+                    "name": "health",
+                    "id": 11,
+                    "param_type": "Float"
+                },
+                {
+                    "name": "max_health",
+                    "id": 12,
+                    "param_type": "Float"
+                },
+                {
+                    "name": "energy",
+                    "id": 15,
+                    "param_type": "Float"
+                },
+                {
+                    "name": "max_energy",
+                    "id": 16,
+                    "param_type": "Float"
+                }
+            ]
+        }
+    ]
+}
