@@ -29,8 +29,7 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 
 ## App preview
 
-![0 6 0](https://user-images.githubusercontent.com/11301109/67619801-62a24180-f800-11e9-9899-c6137403d9c9.png)
-
+![0.7.0](https://user-images.githubusercontent.com/11301109/71000581-d9124000-20db-11ea-8c19-4d7f69a2c155.png)
 # Usage of built release
 
 > **Note** this section does not require any coding knowledge. Those simple two steps are required to use this software :)
