@@ -174,6 +174,10 @@ fn generate_messages() -> String {
                 return_code: _,
                 debug_message: _
             }}) => {{
+                if parameters.len() >= 40 {{  // TODO: Fix this workaround, on some configurations 253 isn't filled
+                    return CharacterStats::parse(parameters);
+                }}
+
                 match parameters.get(&253u8) {{
                     {}
                     _ => None
