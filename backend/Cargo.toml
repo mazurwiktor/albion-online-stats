@@ -15,7 +15,7 @@ version = "0.3"
 
 [dependencies]
 packet_sniffer = { path = "./lib/packet-sniffer" }
-photon_decode = "0.1"
+photon_decode = "0.2"
 bytes = "0.4"
 simplelog = "0.6"
 timer = "0.1"
