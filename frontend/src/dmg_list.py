@@ -22,22 +22,20 @@ from PySide2 import QtGui
 from PySide2 import QtCore
 
 from . import weapon
+from . import names
 from . import assets
 from . import async_request
 
 Style = collections.namedtuple('Style', 'bg')
 
-def weapon_info(items):
-    tier_re = re.compile(r"(T\d+).*")
-    enchant_re = re.compile(r".*@(\d+)")
+enchant_re = re.compile(r"(.*)@(\d+)")
+def map_name(name):
+    
+    match = enchant_re.match(name)
+    if match:
+        return names.map_name(match[1])
 
-    if 'weapon' in items:
-        tier = tier_re.match(items['weapon'])
-        enchant = enchant_re.match(items['weapon'])
-        if tier:
-            return f'{tier[1] if tier else ""}@{enchant[1] if enchant else 0}'
-
-    return ''
+    return names.map_name(name)
 
     # T8_MAIN_NATURESTAFF@3
     # T8_MAIN_NATURESTAF
@@ -120,7 +118,7 @@ class DmgList(QListView):
 
             self.setBackground(brush)
             icon = player_icon(self.player.items['weapon'])
-            self.setToolTip('\n'.join([f'{k}: {v}' for (k,v) in self.player.items.items() if v]))
+            self.setToolTip('\n'.join([f'{k}: {map_name(v)}' for (k,v) in self.player.items.items() if v]))
             if icon:
                 self.setIcon(icon)
                 
