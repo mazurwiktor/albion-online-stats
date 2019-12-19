@@ -40,15 +40,19 @@ class InteractiveBar(QWidget):
 
         self.copy_button = QPushButton(self)
         self.copy_button.setIcon(QtGui.QIcon(assets.path('copy.png')))
+        self.copy_button.setToolTip("Copy to clipboard")
 
         self.reset_button = QPushButton()
         self.reset_button.setIcon(QtGui.QIcon(assets.path('reset.png')))
+        self.reset_button.setToolTip("Reset")
 
         self.close_button = QPushButton(self)
         self.close_button.setIcon(QtGui.QIcon(assets.path('close.png')))
+        self.close_button.setToolTip("Close")
 
         self.about_button = QPushButton(self)
         self.about_button.setIcon(QtGui.QIcon(assets.path('about.png')))
+        self.about_button.setToolTip("About")
 
         self.layout.addWidget(self.mode)
         self.layout.addWidget(self.copy_button)
