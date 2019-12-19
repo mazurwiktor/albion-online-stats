@@ -69,12 +69,12 @@ class InteractiveBar(QWidget):
     def copy(self):
         model = self.table.model
         items = sorted(
-            [model.item(i) for i in range(model.rowCount())], 
+            [model.item(i).player for i in range(model.rowCount())], 
             key=lambda i: i.damage, 
             reverse=True)
         clip = "{}, FPM: {}\nDMG: \n".format(self.mode.currentText(), self.fame_per_minute)
         for index, i in enumerate(items[:3]):
-            clip += '{}. {}-{}-{}%'.format(index+1, i.name, i.damage, i.percentage)
+            clip += '{}. {}-{}/{}-{}%'.format(index+1, i.name, i.damage, i.dps, i.percentage)
             clip += "\n"
         clip += "(AOStats https://git.io/JeBD1)"
 
