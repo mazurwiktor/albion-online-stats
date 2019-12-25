@@ -30,7 +30,7 @@ impl CombatTime {
 
 #[derive(Debug)]
 pub struct Player {
-    pub id: usize,
+    id: usize,
     damage_dealt: f32,
     combat_time: CombatTime,
     combat_state: CombatState,
@@ -38,7 +38,7 @@ pub struct Player {
     fame: f32,
     items: Items,
     idle: bool,
-    pub main: bool
+    main: bool
 }
 
 
@@ -59,6 +59,14 @@ impl Player {
 
     pub fn idle(&self) -> bool {
         self.idle
+    }
+
+    pub fn id(&self) -> usize {
+        self.id
+    }
+
+    pub fn main(&self) -> bool {
+        self.main
     }
 }
 
