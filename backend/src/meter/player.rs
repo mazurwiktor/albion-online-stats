@@ -29,6 +29,13 @@ impl CombatTime {
 }
 
 #[derive(Debug)]
+struct Flags
+{
+    idle: bool,
+    main: bool
+}
+
+#[derive(Debug)]
 pub struct Player {
     id: usize,
     damage_dealt: f32,
@@ -37,8 +44,7 @@ pub struct Player {
     time_started: Instant,
     fame: f32,
     items: Items,
-    idle: bool,
-    main: bool
+    flags: Flags
 }
 
 
@@ -52,13 +58,12 @@ impl Player {
             time_started: Instant::now(),
             fame: 0.0,
             items: Default::default(),
-            idle: true,
-            main
+            flags: Flags{idle: true, main},
         }
     }
 
     pub fn idle(&self) -> bool {
-        self.idle
+        self.flags.idle
     }
 
     pub fn id(&self) -> usize {
@@ -66,7 +71,7 @@ impl Player {
     }
 
     pub fn main(&self) -> bool {
-        self.main
+        self.flags.main
     }
 }
 
@@ -75,12 +80,12 @@ impl DamageDealer for Player {
         if self.combat_state == CombatState::OutOfCombat {
             return
         }
-        self.idle = false;
+        self.flags.idle = false;
         self.damage_dealt += damage_dealt
     }
 
     fn enter_combat(&mut self) {
-        self.idle = false;
+        self.flags.idle = false;
         self.combat_time.entered_combat = Some(Instant::now());
         self.combat_state = CombatState::InCombat;
     }
@@ -120,14 +125,14 @@ impl DamageStats for Player {
 impl FameGatherer for Player {
     fn register_fame_gain(&mut self, fame: f32) {
         self.fame += fame;
-        self.idle = false;
+        self.flags.idle = false;
     }
 }
 
 impl ItemCarrier for Player {
     fn items_update(&mut self, items: &Items) {
         self.items = items.clone();
-        self.idle = false;
+        self.flags.idle = false;
     }
 
     fn items(&self) -> Items {
