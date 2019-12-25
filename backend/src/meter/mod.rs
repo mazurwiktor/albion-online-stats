@@ -30,7 +30,7 @@ impl Session {
     fn from(session: &Self) -> Self {
         let mut players = HashMap::new();
         for (player_name, player) in &session.players {
-            let mut new_player = Player::new(player.id, player.main);
+            let mut new_player = Player::new(player.id(), player.main());
             if let CombatState::InCombat = player.combat_state() {
                 new_player.enter_combat();
             }
@@ -59,7 +59,7 @@ impl Session {
                     fame_per_hour: player.fame_per_hour(),
                     items: player.items(),
                     idle: player.idle(),
-                    main_player_stats: player.main,
+                    main_player_stats: player.main(),
                 })
                 .collect(),
         )
@@ -69,7 +69,7 @@ impl Session {
         let without_dmg = self
             .players
             .iter()
-            .filter(|(_, player)| !player.main && player.damage() == 0.0 && player.fame() == 0.0)
+            .filter(|(_, player)| !player.main() && player.damage() == 0.0 && player.fame() == 0.0)
             .map(|(name, _)| name.clone())
             .collect::<Vec<String>>();
         for w in without_dmg {
@@ -82,7 +82,7 @@ impl Session {
     }
 
     fn get_player_by_id(&mut self, player_id: usize) -> Option<&mut Player> {
-        self.players.values_mut().find(|p| p.id == player_id)
+        self.players.values_mut().find(|p| p.id() == player_id)
     }
 
     fn add_player(&mut self, player_name: &str, player_id: usize, main: bool) {
@@ -125,7 +125,7 @@ impl Meter {
 
     fn stats_filter(&self, player: &(&String, &Player)) -> bool {
         if self.config.skip_non_party_members {
-            let is_main_player = if let Some(id) = &self.main_player_id { *id == player.1.id } else { false };
+            let is_main_player = if let Some(id) = &self.main_player_id { *id == player.1.id() } else { false };
             let is_in_party = if let Some(party) = &self.party { party.includes(&player.0) } else { false };
 
             return is_main_player || is_in_party;
