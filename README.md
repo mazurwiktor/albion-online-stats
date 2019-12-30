@@ -49,7 +49,7 @@ After first execution the app is going to create default configuration file name
 ## Prerequisites
 
 - Rust installed (https://www.rust-lang.org/tools/install)
-- Python installed 
+- Python installed (python3.5 / python3.6 / python3.7)
 - *Windows only prerequisites*  https://github.com/libpnet/libpnet#windows
 
 
@@ -74,14 +74,14 @@ After first execution the app is going to create default configuration file name
 
 4. Run the application
     ```shell
-    [sudo on linux] python frontend/aostats.py
+    [sudo on linux] python frontend/albion-online-stats.py
     ```
 
 ## GUI testing
 - Seting TESTING variable runs frontend without backend dependency
 
     ```shell
-    TESTING=true python frontend/aostats.py
+    TESTING=true python frontend/albion-online-stats.py
     ```
 
 # License
