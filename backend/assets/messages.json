@@ -152,49 +152,6 @@
                     "param_type": "Items"
                 }
             ]
-        },
-        {
-            "name": "PartyNew",
-            "code": 209,
-            "params": [
-                {
-                    "name": "source",
-                    "id": 0,
-                    "param_type": "Number"
-                },
-                {
-                    "name": "players",
-                    "id": 5,
-                    "param_type": "StringList"
-                }
-            ]
-        },
-        {
-            "name": "PartyJoin",
-            "code": 211,
-            "params": [
-                {
-                    "name": "source",
-                    "id": 0,
-                    "param_type": "Number"
-                },
-                {
-                    "name": "target_name",
-                    "id": 2,
-                    "param_type": "String"
-                }
-            ]
-        },
-        {
-            "name": "PartyDisbanded",
-            "code": 213,
-            "params": [
-                {
-                    "name": "source",
-                    "id": 0,
-                    "param_type": "Number"
-                }
-            ]
         }
     ],
     "responses": [

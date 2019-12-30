@@ -136,8 +136,8 @@ class MainWidget(QWidget):
         damage_session, fame_stat, elapsed = self.session()
         self.table.update(damage_session)
         self.bar.set_fame_per_minute(fame_stat.fame_per_minute)
-        self.fame_label.setText("<b>{}</b> | Fame <b>{}</b> | FPM <b>{}</b> | Party members <b>{}</b>".format(
-            datetime.timedelta(seconds=elapsed), fame_stat.fame, fame_stat.fame_per_minute, len(engine.get_party_members())))
+        self.fame_label.setText("<b>{}</b> | Fame <b>{}</b> | FPM <b>{}</b>".format(
+            datetime.timedelta(seconds=elapsed), fame_stat.fame, fame_stat.fame_per_minute))
     
     def mousePressEvent(self, event):
         self.mouse_pos = event.pos()

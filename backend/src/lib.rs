@@ -171,20 +171,7 @@ pub fn reset(_py: Python, stat_type: StatType) -> PyResult<u32> {
     Ok(1)
 }
 
-pub fn get_players_in_party(py: Python) -> PyResult<PyList> {
-    if let Ok(ref mut py_meter) = METER.lock() {
-        if let Some(m) = py_meter.get() {
-            if let Ok(ref mut meter) = m.lock() {
-                return Ok(core::get_players_in_party(&meter).into_py_object(py))
-            }
-        }
-    }
-
-    error!("Failed to acquire locks on meter");
-    Ok(PyList::new(py, Vec::<PyObject>::new().as_slice()))
-}
-
-fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
+fn initialize(_py: Python) -> PyResult<u32> {
     if let Ok(ref mut py_meter) = METER.lock() {
         match core::initialize() {
             Ok(core_meter) => py_meter.initialize(core_meter),
@@ -194,7 +181,6 @@ fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
         if let Some(m) = py_meter.get() {
             if let Ok(ref mut meter) = m.lock() {
                 meter.configure(core::MeterConfig {
-                    skip_non_party_members,
                     ..Default::default()
                 });
                 return Ok(0);
@@ -207,9 +193,8 @@ fn initialize(_py: Python, skip_non_party_members: bool) -> PyResult<u32> {
 
 py_module_initializer!(libaostats, initlibaostats, PyInit_libaostats, |py, m| {
     m.add(py, "__doc__", "This module is implemented in Rust")?;
-    m.add(py, "initialize", py_fn!(py, initialize(skip_non_party_members: bool)))?;
+    m.add(py, "initialize", py_fn!(py, initialize()))?;
     m.add(py, "stats", py_fn!(py, stats(stat_type: StatType)))?;
     m.add(py, "reset", py_fn!(py, reset(stat_type: StatType)))?;
-    m.add(py, "get_players_in_party", py_fn!(py, get_players_in_party()))?;
     Ok(())
 });

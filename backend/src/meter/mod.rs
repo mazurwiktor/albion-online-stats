@@ -92,16 +92,13 @@ impl Session {
 }
 
 #[derive(Default)]
-pub struct MeterConfig {
-    pub skip_non_party_members: bool,
-}
+pub struct MeterConfig {}
 
 pub struct Meter {
     zone_history: PlayerStatisticsVec,
     zone_session: Option<Session>,
     last_fight_session: Session,
     main_player_id: Option<usize>,
-    party: Option<types::Party>,
     unconsumed_items: HashMap<usize, game_protocol::Items>,
     config: MeterConfig,
 }
@@ -113,7 +110,6 @@ impl Meter {
             zone_session: None,
             last_fight_session: Session::new(),
             main_player_id: None,
-            party: None,
             unconsumed_items: HashMap::new(),
             config: Default::default(),
         }
@@ -123,14 +119,7 @@ impl Meter {
         self.config = config;
     }
 
-    fn stats_filter(&self, player: &(&String, &Player)) -> bool {
-        if self.config.skip_non_party_members {
-            let is_main_player = if let Some(id) = &self.main_player_id { *id == player.1.id() } else { false };
-            let is_in_party = if let Some(party) = &self.party { party.includes(&player.0) } else { false };
-
-            return is_main_player || is_in_party;
-        }
-
+    fn stats_filter(&self, _player: &(&String, &Player)) -> bool {
         true
     }
 
@@ -327,38 +316,6 @@ impl GameStats for Meter {
         self.zone_session = Some(Session::from(&last_session));
         self.last_fight_session = Session::from(&self.last_fight_session);
         info!("Reset: overall");
-        Some(())
-    }
-
-    fn get_players_in_party(&self) -> Option<Vec<String>> {
-        if let Some(party) = &self.party {
-            let members = party.clone().members;
-            return Some(members.into_iter().collect())
-        }
-        None       
-    }
-}
-
-impl traits::PartyEvents for Meter {
-    fn register_new_party(
-        &mut self,
-        player_names: &std::vec::Vec<std::string::String>,
-        id: usize,
-    ) -> Option<()> {
-        self.party = Some(types::Party::new(id, player_names));
-
-        Some(())
-    }
-
-    fn register_new_member(&mut self, player_name: &str) -> Option<()> {
-        if let Some(party) = &mut self.party {
-            party.add_member(player_name);
-        }
-        Some(())
-    }
-
-    fn register_party_disbanded(&mut self) -> Option<()> {
-        self.party = None;
         Some(())
     }
 }

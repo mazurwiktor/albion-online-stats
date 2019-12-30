@@ -33,6 +33,7 @@ macro_rules! decode_string {
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! decode_string_vec {
     ($val:expr, $index:expr, $name:expr) => {
         if let Some(p) = $val.get(&$index) {

@@ -126,12 +126,5 @@ pub trait OverallStats {
 }
 
 pub trait GameStats {
-    fn get_players_in_party(&self) -> Option<Vec<String>>;
     fn reset_stats(&mut self) -> Option<()>;
-}
-
-pub trait PartyEvents {
-    fn register_new_party(&mut self, player_names: &std::vec::Vec<std::string::String>, id: usize) -> Option<()>;
-    fn register_new_member(&mut self, player_name: &str) -> Option<()>;
-    fn register_party_disbanded(&mut self) -> Option<()>;
 }

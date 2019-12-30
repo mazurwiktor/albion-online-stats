@@ -1,6 +1,4 @@
-use std::collections::HashSet;
 use std::collections::HashMap;
-use std::iter::FromIterator;
 
 #[cfg(test)]
 use fake_clock::FakeClock as Instant;
@@ -10,29 +8,6 @@ use std::time::Instant;
 use super::game_protocol::Items;
 use super::traits::DamageStats;
 use super::traits::FameStats;
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Party {
-    pub id: usize,
-    pub members: HashSet<String>
-}
-
-impl Party {
-    pub fn new(id: usize, members: &std::vec::Vec<std::string::String>) -> Self {
-        Self {
-            id,
-            members: HashSet::from_iter(members.iter().cloned()),
-        }
-    }
-
-    pub fn add_member(&mut self, member_name: &str) {
-        self.members.insert(member_name.to_string());
-    }
-
-    pub fn includes(&self, other: &str) -> bool {
-        return self.members.contains(other);
-    }
-}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct PlayerStatistics {

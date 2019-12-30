@@ -2,7 +2,7 @@ import os
 import sys
 import toml
 
-CFG_VERSION = '0.4'
+CFG_VERSION = '0.5'
 
 default = """
 [window]
@@ -12,7 +12,6 @@ font-size = '10px'
 opacity = 0.8
 
 [app]
-skip_non_party_players = false
 
 [config]
 # do not change

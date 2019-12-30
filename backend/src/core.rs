@@ -17,7 +17,6 @@ pub use meter::GameStats;
 pub use meter::LastFightStats;
 pub use meter::MeterConfig;
 pub use meter::OverallStats;
-pub use meter::PartyEvents;
 pub use meter::PlayerEvents;
 pub use meter::PlayerStatistics;
 pub use meter::PlayerStatisticsVec;
@@ -65,10 +64,6 @@ pub fn reset(meter: &mut meter::Meter, stat_type: StatType) {
         }
         _ => error!("Unexpected stat to reset."),
     }
-}
-
-pub fn get_players_in_party(meter: &meter::Meter) -> Vec<String> {
-    meter.get_players_in_party().unwrap_or(vec![])
 }
 
 pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
@@ -123,7 +118,7 @@ pub fn register_messages(meter: &mut meter::Meter, messages: &Vec<game_protocol:
 
 fn register_message<Events>(events: &mut Events, message: &game_protocol::Message)
 where
-    Events: PlayerEvents + PartyEvents,
+    Events: PlayerEvents,
 {
     info!("Found message {:?}", message);
     match message {
@@ -146,15 +141,6 @@ where
             None => events.register_combat_enter(msg.source).unwrap_or(()),
         },
         game_protocol::Message::Died(msg) => events.register_combat_leave(msg.source).unwrap_or(()),
-        game_protocol::Message::PartyNew(msg) => events
-            .register_new_party(&msg.players, msg.source)
-            .unwrap_or(()),
-        game_protocol::Message::PartyJoin(msg) => {
-            events.register_new_member(&msg.target_name).unwrap_or(())
-        }
-        game_protocol::Message::PartyDisbanded(_) => {
-            events.register_party_disbanded().unwrap_or(())
-        }
         game_protocol::Message::FameUpdate(msg) => events
             .register_fame_gain(msg.source, msg.fame as f32 / 10000.0)
             .unwrap_or(()),
@@ -280,30 +266,6 @@ mod tests {
                 max_health: 10.0,
                 regeneration_rate: None,
             }
-        }
-    }
-
-    impl ListNamedTesting for message::PartyNew {
-        fn new_list_of_named(names: &[&str], source: usize) -> Self {
-            Self {
-                source: source,
-                players: names.iter().map(ToString::to_string).collect(),
-            }
-        }
-    }
-
-    impl NamedTesting for message::PartyJoin {
-        fn new_named(name: &str, source: usize) -> Self {
-            Self {
-                target_name: name.to_string(),
-                source,
-            }
-        }
-    }
-
-    impl Testing for message::PartyDisbanded {
-        fn new(source: usize) -> Self {
-            Self { source }
         }
     }
 
@@ -650,66 +612,6 @@ mod tests {
         assert_eq!(player_stats.damage, 0.0);
         let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
         assert_eq!(player_stats.damage, 0.0);
-    }
-
-    macro_rules! new_party {
-        ($meter:expr, $members:expr, $party_id:expr) => {
-            register_message(
-                &mut $meter,
-                &Message::PartyNew(message::PartyNew::new_list_of_named($members, $party_id)),
-            );
-        };
-    }
-
-    macro_rules! new_party_member {
-        ($meter:expr, $player:expr, $party_id:expr) => {
-            register_message(
-                &mut $meter,
-                &Message::PartyJoin(message::PartyJoin::new_named($player, $party_id)),
-            );
-        };
-    }
-
-    #[test]
-    fn test_party_members() {
-        let mut meter = helpers::init_();
-        meter.configure(meter::MeterConfig {
-            skip_non_party_members: true,
-            ..Default::default()
-        });
-
-        main_character_enters!(meter, "MAIN_CH1", 1);
-        character_enters!(meter, "CH1", 2);
-
-        let zone_stats = stats(&meter, StatType::Zone);
-        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
-        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_none());
-
-        new_party!(meter, &["MAIN_CH1", "CH1"], 1);
-        let zone_stats = stats(&meter, StatType::Zone);
-        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
-        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_some());
-
-        character_enters!(meter, "CH2", 3);
-        let zone_stats = stats(&meter, StatType::Zone);
-        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
-        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_some());
-        assert!(zone_stats.iter().find(|s| s.player == "CH2").is_none());
-
-        new_party_member!(meter, "CH2", 1);
-        let zone_stats = stats(&meter, StatType::Zone);
-        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
-        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_some());
-        assert!(zone_stats.iter().find(|s| s.player == "CH2").is_some());
-
-        register_message(
-            &mut meter,
-            &Message::PartyDisbanded(message::PartyDisbanded::new(1)),
-        );
-        let zone_stats = stats(&meter, StatType::Zone);
-        assert!(zone_stats.iter().find(|s| s.player == "MAIN_CH1").is_some());
-        assert!(zone_stats.iter().find(|s| s.player == "CH1").is_none());
-        assert!(zone_stats.iter().find(|s| s.player == "CH2").is_none());
     }
 
     #[test]

@@ -13,9 +13,6 @@ except:
                 'players': [],
                 'main': None
             }
-        @staticmethod
-        def get_players_in_party():
-            return []
 
 from .config import config
 from .number import Number
@@ -166,10 +163,10 @@ def zone_stats(with_damage=False):
 
 def overall_stats(with_damage=False):
     if TESTING_ENABLED:
-        session = [
+        session = {'players': [
             {'player': 'overall', 'damage': 1000.0,
-                'time_in_combat': 12.0, 'dps': 12.4234},
-        ]
+                'time_in_combat': 12.0, 'dps': 12.4234, 'items': {'weapon': 'T8_2H_CROSSBOWLARGE@3'}},
+        ], 'main': {}}
     else:
         session = aostats.stats(StatType.Overall)
 
@@ -178,21 +175,14 @@ def overall_stats(with_damage=False):
 
 def last_fight_stats(with_damage=False):
     if TESTING_ENABLED:
-        session = [
-            {'player': 'last fight', 'damage': 1000.0,
-                'time_in_combat': 12.0, 'dps': 12.4234},
-        ]
+        session = {'players': [
+            {'player': 'last', 'damage': 1000.0,
+                'time_in_combat': 12.0, 'dps': 12.4234, 'items': {'weapon': 'T8_2H_CROSSBOWLARGE@3'}},
+        ], 'main': {}}
     else:
         session = aostats.stats(StatType.LastFight)
 
     return stats(session, with_damage)
-
-def get_party_members():
-    if TESTING_ENABLED:
-        return ['a', 'b', 'c', 'a', 'b', 'c', 'a', 'b', 'c']
-    else:
-        return aostats.get_players_in_party()
-   
 
 def reset_zone_stats():
     aostats.reset(StatType.Zone)
@@ -208,6 +198,6 @@ def initialize():
         return InitializationResult.Ok
     cfg = config()
     try:
-        return INITIALIZATION_RESULT[aostats.initialize(cfg['app']['skip_non_party_players'])]
+        return INITIALIZATION_RESULT[aostats.initialize()]
     except:
         pass
