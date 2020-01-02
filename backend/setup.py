@@ -26,5 +26,6 @@ setup(
     install_requires=install_requires,
     setup_requires=setup_requires,
     include_package_data=True,
+    version="6.6.6",
     zip_safe=False,
 )
