@@ -29,53 +29,56 @@ from . import async_request
 Style = collections.namedtuple('Style', 'bg')
 
 enchant_re = re.compile(r"(.*)@(\d+)")
+
+
 def map_name(name):
-    
+
     match = enchant_re.match(name)
     if match:
         return names.map_name(match[1])
 
     return names.map_name(name)
 
-    # T8_MAIN_NATURESTAFF@3
-    # T8_MAIN_NATURESTAF
+
 def player_style(items):
     weapon_type = weapon.get_weapon_type(items)
 
     if weapon_type == weapon.WeaponType.Arcane:
-        return Style(bg = '#f032e6')
+        return Style(bg='#f032e6')
     elif weapon_type == weapon.WeaponType.Axe:
-        return Style(bg = '#800000')
+        return Style(bg='#800000')
     elif weapon_type == weapon.WeaponType.Bow:
-        return Style(bg = '#469990')
+        return Style(bg='#469990')
     elif weapon_type == weapon.WeaponType.Crossbow:
-        return Style(bg = '#000075')
+        return Style(bg='#000075')
     elif weapon_type == weapon.WeaponType.Curse:
-        return Style(bg = '#911eb4')
+        return Style(bg='#911eb4')
     elif weapon_type == weapon.WeaponType.Dagger:
-        return Style(bg = '#4d5f20')
+        return Style(bg='#4d5f20')
     elif weapon_type == weapon.WeaponType.Fire:
-        return Style(bg = '#e6194B')
+        return Style(bg='#e6194B')
     elif weapon_type == weapon.WeaponType.Frost:
-        return Style(bg = '#4363d8')
+        return Style(bg='#4363d8')
     elif weapon_type == weapon.WeaponType.Hammer:
-        return Style(bg = '#9A6324')
+        return Style(bg='#9A6324')
     elif weapon_type == weapon.WeaponType.Holy:
-        return Style(bg = '#42d4f4')
+        return Style(bg='#42d4f4')
     elif weapon_type == weapon.WeaponType.Mace:
-        return Style(bg = '#808000')
+        return Style(bg='#808000')
     elif weapon_type == weapon.WeaponType.Nature:
-        return Style(bg = '#3cb44b')
+        return Style(bg='#3cb44b')
     elif weapon_type == weapon.WeaponType.Quarterstaff:
-        return Style(bg = '#f58231')
+        return Style(bg='#f58231')
     elif weapon_type == weapon.WeaponType.Spear:
-        return Style(bg = '#a9a9a9')
+        return Style(bg='#a9a9a9')
     elif weapon_type == weapon.WeaponType.Sword:
-        return Style(bg = '#b59d00')
+        return Style(bg='#b59d00')
     else:
-        return Style(bg = '#42413c')
+        return Style(bg='#42413c')
 
 # @functools.lru_cache(maxsize=None)
+
+
 def player_icon(weapon):
     url = f'https://albiononline2d.ams3.cdn.digitaloceanspaces.com/thumbnails/orig/{weapon}'
     try:
@@ -89,6 +92,7 @@ def player_icon(weapon):
     except Exception:
         return None
 
+
 class DmgList(QListView):
     class DmgItem(QtGui.QStandardItem):
         def __init__(self, player, parent):
@@ -96,8 +100,9 @@ class DmgList(QListView):
             self.parent = parent
             self.player = player
             self.update(player)
-            
-            self.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+
+            self.setTextAlignment(
+                QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
 
         def update(self, player):
             self.player = player
@@ -107,21 +112,24 @@ class DmgList(QListView):
             self.refresh()
 
         def refresh(self):
-            value =  round(self.player.damage / self.player.best_damage, 2)
+            value = round(self.player.damage / self.player.best_damage, 2)
             QRectF = QtCore.QRectF(self.parent.rect())
-            gradient = QtGui.QLinearGradient(QRectF.topLeft(), QRectF.topRight())
-            gradient.setColorAt(value-0.001 if value > 0 else 0, QtGui.QColor(player_style(self.player.items).bg))
+            gradient = QtGui.QLinearGradient(
+                QRectF.topLeft(), QRectF.topRight())
+            gradient.setColorAt(value-0.001 if value > 0 else 0,
+                                QtGui.QColor(player_style(self.player.items).bg))
             gradient.setColorAt(value, QtGui.QColor('#000000'))
-            gradient.setColorAt(value+0.001 if value < 1 else 1, QtGui.QColor('#000000'))
+            gradient.setColorAt(value+0.001 if value <
+                                1 else 1, QtGui.QColor('#000000'))
 
             brush = QtGui.QBrush(gradient)
 
             self.setBackground(brush)
             icon = player_icon(self.player.items['weapon'])
-            self.setToolTip('\n'.join([f'{k}: {map_name(v)}' for (k,v) in self.player.items.items() if v]))
+            self.setToolTip('\n'.join(
+                [f'{k}: {map_name(v)}' for (k, v) in self.player.items.items() if v]))
             if icon:
                 self.setIcon(icon)
-                
 
     class SortProxyModel(QtCore.QSortFilterProxyModel):
         def lessThan(self, left, right):
@@ -150,7 +158,8 @@ class DmgList(QListView):
         visible_names = []
         for player in players:
             items = (self.model.item(i) for i in range(self.model.rowCount()))
-            found = next((i for i in items if i.player.name == player.name), None)
+            found = next(
+                (i for i in items if i.player.name == player.name), None)
             if found:
                 found.update(player)
             else:
@@ -160,5 +169,5 @@ class DmgList(QListView):
             item = self.model.item(i)
             if hasattr(item, 'player') and hasattr(item.player, 'name') and item.player.name not in visible_names:
                 self.model.removeRow(i)
-        
+
         self.proxy.sort(0, QtCore.Qt.DescendingOrder)

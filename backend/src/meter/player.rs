@@ -8,31 +8,29 @@ use super::game_protocol::Items;
 use super::traits::CombatState;
 use super::traits::DamageDealer;
 use super::traits::DamageStats;
-use super::traits::FameStats;
 use super::traits::FameGatherer;
+use super::traits::FameStats;
 use super::traits::ItemCarrier;
 
 #[derive(Debug)]
-struct CombatTime
-{
+struct CombatTime {
     entered_combat: Option<Instant>,
-    time_in_combat: std::time::Duration
+    time_in_combat: std::time::Duration,
 }
 
 impl CombatTime {
     fn new() -> Self {
         Self {
             entered_combat: None,
-            time_in_combat: std::time::Duration::from_millis(0)
+            time_in_combat: std::time::Duration::from_millis(0),
         }
     }
 }
 
 #[derive(Debug)]
-struct Flags
-{
+struct Flags {
     idle: bool,
-    main: bool
+    main: bool,
 }
 
 #[derive(Debug)]
@@ -44,9 +42,8 @@ pub struct Player {
     time_started: Instant,
     fame: f32,
     items: Items,
-    flags: Flags
+    flags: Flags,
 }
-
 
 impl Player {
     pub fn new(id: usize, main: bool) -> Self {
@@ -58,7 +55,23 @@ impl Player {
             time_started: Instant::now(),
             fame: 0.0,
             items: Default::default(),
-            flags: Flags{idle: true, main},
+            flags: Flags { idle: true, main },
+        }
+    }
+
+    pub fn from(other: &Self) -> Self {
+        Self {
+            id: other.id,
+            damage_dealt: 0.0,
+            combat_time: CombatTime::new(),
+            combat_state: other.combat_state(),
+            time_started: Instant::now(),
+            fame: 0.0,
+            items: other.items.clone(),
+            flags: Flags {
+                idle: true,
+                main: other.main(),
+            },
         }
     }
 
@@ -78,7 +91,7 @@ impl Player {
 impl DamageDealer for Player {
     fn register_damage_dealt(&mut self, damage_dealt: f32) {
         if self.combat_state == CombatState::OutOfCombat {
-            return
+            return;
         }
         self.flags.idle = false;
         self.damage_dealt += damage_dealt
@@ -112,7 +125,8 @@ impl DamageStats for Player {
     fn time_in_combat(&self) -> f32 {
         if self.combat_state == CombatState::InCombat {
             if let Some(entered_combat) = self.combat_time.entered_combat {
-                let time_in_combat = self.combat_time.time_in_combat + (Instant::now() - entered_combat);
+                let time_in_combat =
+                    self.combat_time.time_in_combat + (Instant::now() - entered_combat);
                 return time_in_combat.as_millis() as f32;
             }
         } else {
@@ -139,7 +153,6 @@ impl ItemCarrier for Player {
         self.items.clone()
     }
 }
-
 
 impl FameStats for Player {
     fn fame(&self) -> f32 {
@@ -174,4 +187,3 @@ mod test {
         assert_eq!(player.fame_per_hour(), 100);
     }
 }
-

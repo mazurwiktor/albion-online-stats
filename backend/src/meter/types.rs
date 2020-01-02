@@ -26,7 +26,7 @@ pub struct PlayerStatistics {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct PlayerStatisticsVec {
-    _vec: Vec<PlayerStatistics>
+    _vec: Vec<PlayerStatistics>,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -34,19 +34,17 @@ pub enum StatType {
     LastFight,
     Zone,
     Overall,
-    Unknown
+    Unknown,
 }
 
 impl PlayerStatisticsVec {
     pub fn new() -> Self {
-        Self {
-            _vec: vec![]
-        }
+        Self { _vec: vec![] }
     }
 
     pub fn from(player_statistics_vec: Vec<PlayerStatistics>) -> Self {
         Self {
-            _vec: player_statistics_vec
+            _vec: player_statistics_vec,
         }
     }
 
@@ -68,6 +66,7 @@ impl PlayerStatisticsVec {
                         s.fame_per_minute = s.fame_per_minute();
                         s.fame_per_hour = s.fame_per_hour();
                         s.main_player_stats = stat.main_player_stats;
+                        s.items = stat.items.clone();
                     })
                     .or_insert(stat.clone());
                 acc
@@ -75,7 +74,7 @@ impl PlayerStatisticsVec {
         );
 
         Self {
-            _vec: merged.iter().map(|(_, v)| v.clone()).collect()
+            _vec: merged.iter().map(|(_, v)| v.clone()).collect(),
         }
     }
 }
@@ -102,4 +101,3 @@ impl FameStats for PlayerStatistics {
         std::time::Duration::from_secs(self.seconds_in_game as u64)
     }
 }
-
