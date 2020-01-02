@@ -127,10 +127,10 @@ where
             events.register_player(&msg.character_name, msg.source);
             events.register_item_update(msg.source, &msg.items);
         },
-        game_protocol::Message::PlayerItems(msg) => {
+        game_protocol::Message::CharacterEquipmentChanged(msg) => {
             events.register_item_update(msg.source, &msg.items);
         },
-        game_protocol::Message::CharacterStats(msg) => {
+        game_protocol::Message::Join(msg) => {
             events.register_main_player(&msg.character_name, msg.source)
         }
         game_protocol::Message::HealthUpdate(msg) => events
@@ -140,8 +140,8 @@ where
             Some(_) => events.register_combat_leave(msg.source).unwrap_or(()),
             None => events.register_combat_enter(msg.source).unwrap_or(()),
         },
-        game_protocol::Message::Died(msg) => events.register_combat_leave(msg.source).unwrap_or(()),
-        game_protocol::Message::FameUpdate(msg) => events
+        game_protocol::Message::KnockedDown(msg) => events.register_combat_leave(msg.source).unwrap_or(()),
+        game_protocol::Message::UpdateFame(msg) => events
             .register_fame_gain(msg.source, msg.fame as f32 / 10000.0)
             .unwrap_or(()),
     }
@@ -199,7 +199,7 @@ mod tests {
         }
     }
 
-    impl NamedTesting for message::CharacterStats {
+    impl NamedTesting for message::Join {
         fn new_named(name: &str, source: usize) -> Self {
             Self {
                 source: source,
@@ -218,9 +218,9 @@ mod tests {
         }
     }
 
-    impl Testing for message::CharacterStats {
+    impl Testing for message::Join {
         fn new(source: usize) -> Self {
-            message::CharacterStats::new_named("MAIN_CH1", source)
+            message::Join::new_named("MAIN_CH1", source)
         }
     }
 
@@ -240,7 +240,7 @@ mod tests {
         }
     }
 
-    impl Testing for message::FameUpdate {
+    impl Testing for message::UpdateFame {
         fn new(source: usize) -> Self {
             Self {
                 source: source,
@@ -395,7 +395,7 @@ mod tests {
         let mut meter = helpers::init_();
         register_message(
             &mut meter,
-            &Message::CharacterStats(message::CharacterStats::new(1)),
+            &Message::Join(message::Join::new(1)),
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -416,7 +416,7 @@ mod tests {
         register_message(&mut meter, &Message::Leave(message::Leave::new(1)));
         register_message(
             &mut meter,
-            &Message::CharacterStats(message::CharacterStats::new(2)),
+            &Message::Join(message::Join::new(2)),
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -438,7 +438,7 @@ mod tests {
         ($meter:expr, $name:expr, $id:expr) => {
             register_message(
                 &mut $meter,
-                &Message::CharacterStats(message::CharacterStats::new_named($name, $id)),
+                &Message::Join(message::Join::new_named($name, $id)),
             );
         };
     }
@@ -630,7 +630,7 @@ mod tests {
 
         register_message(
             &mut meter,
-            &Message::FameUpdate(message::FameUpdate::new(1)),
+            &Message::UpdateFame(message::UpdateFame::new(1)),
         );
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
