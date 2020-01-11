@@ -8,6 +8,7 @@ use log::*;
 mod player;
 mod traits;
 mod types;
+mod session;
 
 use player::Player;
 
@@ -15,81 +16,7 @@ pub use super::game_protocol;
 pub use traits::*;
 pub use types::*;
 
-#[derive(Debug)]
-pub struct Session {
-    players: HashMap<String, Player>,
-}
-
-impl Session {
-    fn new() -> Self {
-        Self {
-            players: HashMap::new(),
-        }
-    }
-
-    fn from(session: &Self) -> Self {
-        let mut players = HashMap::new();
-        for (player_name, player) in &session.players {
-            let mut new_player = Player::from(player);
-            if let CombatState::InCombat = player.combat_state() {
-                new_player.enter_combat();
-            }
-            players.insert(player_name.clone(), new_player);
-        }
-
-        Self { players }
-    }
-
-    pub fn stats<F>(&self, filter: F) -> PlayerStatisticsVec
-    where
-        F: Fn(&(&String, &Player)) -> bool,
-    {
-        PlayerStatisticsVec::from(
-            self.players
-                .iter()
-                .filter(filter)
-                .map(|(name, player)| PlayerStatistics {
-                    player: name.to_owned(),
-                    damage: player.damage(),
-                    time_in_combat: player.time_in_combat(),
-                    dps: player.dps(),
-                    seconds_in_game: player.time_in_game().as_secs() as f32,
-                    fame: player.fame(),
-                    fame_per_minute: player.fame_per_minute(),
-                    fame_per_hour: player.fame_per_hour(),
-                    items: player.items(),
-                    idle: player.idle(),
-                    main_player_stats: player.main(),
-                })
-                .collect(),
-        )
-    }
-
-    pub fn cleanup_players(&mut self) {
-        let without_dmg = self
-            .players
-            .iter()
-            .filter(|(_, player)| !player.main() && player.damage() == 0.0 && player.fame() == 0.0)
-            .map(|(name, _)| name.clone())
-            .collect::<Vec<String>>();
-        for w in without_dmg {
-            self.players.remove_entry(&w);
-        }
-    }
-
-    pub fn players(&self) -> Vec<&Player> {
-        self.players.iter().map(|(_, p)| p).collect()
-    }
-
-    fn get_player_by_id(&mut self, player_id: usize) -> Option<&mut Player> {
-        self.players.values_mut().find(|p| p.id() == player_id)
-    }
-
-    fn add_player(&mut self, player_name: &str, player_id: usize, main: bool) {
-        self.players
-            .insert(player_name.to_owned(), Player::new(player_id, main));
-    }
-}
+use session::Session;
 
 #[derive(Default)]
 pub struct MeterConfig {}
