@@ -1,20 +1,19 @@
+from .version import latest_url
+from .version import latest_version as get_latest_version
+from .version import current_version as get_current_version
+from .styling import style
+from .engine import InitializationResult
+from .engine import initialize
+from .main import MainWidget
+from .config import config
+from PySide2.QtWidgets import QMessageBox
+from PySide2.QtWidgets import QApplication
+from PySide2.QtCore import Qt
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.abspath('__file__')))
 
-from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QApplication
-from PySide2.QtWidgets import QMessageBox
-
-from .config import config
-from .main import MainWidget
-from .engine import initialize
-from .engine import InitializationResult
-from .styling import style
-from .version import current_version as get_current_version
-from .version import latest_version as get_latest_version
-from .version import latest_url
 
 def run():
     initialization_result = initialize()
@@ -39,11 +38,15 @@ def run():
 
     widget.setWindowTitle('Damage Meter')
 
-    widget.setWindowFlag(Qt.WindowStaysOnTopHint)
-    widget.setWindowFlag(Qt.FramelessWindowHint)
+    if window_config['always_on_top']:
+        widget.setWindowFlag(Qt.WindowStaysOnTopHint)
+    if window_config['frameless']:
+        widget.setWindowFlag(Qt.FramelessWindowHint)
+
     widget.show()
 
-    current_version, latest_version = (get_current_version(), get_latest_version())
+    current_version, latest_version = (
+        get_current_version(), get_latest_version())
 
     if latest_version and current_version != latest_version:
         msg = QMessageBox()
@@ -59,9 +62,10 @@ def run():
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
         msg.setWindowTitle("Unable to track network traffic data!")
-        msg.setText("On windows make sure that WinPcap is installed in your system.")
+        msg.setText(
+            "On windows make sure that WinPcap is installed in your system.")
         msg.setInformativeText("WinPcap can be installed from <a href='{}'>here</a> <br> <b>Make sure to install with the \"Install Npcap in WinPcap API-compatible Mode\"<b> option"
-            .format('https://nmap.org/npcap/dist/npcap-0.9983.exe'))
+                               .format('https://nmap.org/npcap/dist/npcap-0.9986.exe'))
         msg.setStandardButtons(QMessageBox.Ok)
         msg.show()
 

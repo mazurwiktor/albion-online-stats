@@ -2,7 +2,7 @@ import os
 import sys
 import toml
 
-CFG_VERSION = '0.5'
+CFG_VERSION = '0.6'
 
 default = """
 [window]
@@ -10,6 +10,8 @@ width = 300
 height = 220
 font-size = '10px'
 opacity = 0.8
+frameless = true
+always_on_top = true
 
 [app]
 

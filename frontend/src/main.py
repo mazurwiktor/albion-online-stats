@@ -19,6 +19,8 @@ from .dmg_list import DmgList
 from . import about
 from . import engine
 from . import assets
+from .config import config
+
 
 class Mode:
     DMG_CURRENT_ZONE = 'Stats (dmg): Current zone'
@@ -27,6 +29,7 @@ class Mode:
     CURRENT_ZONE = 'Stats (all): Current zone'
     OVERALL = 'Stats (all): Overall'
     LAST_FIGHT = 'Stats (all): Last fight'
+
 
 class InteractiveBar(QWidget):
     def __init__(self, table, clipboard):
@@ -38,47 +41,50 @@ class InteractiveBar(QWidget):
         self.fame_per_minute = 0.0
         self.clipboard = clipboard
 
+        self.layout.addWidget(self.mode)
+
         self.copy_button = QPushButton(self)
         self.copy_button.setIcon(QtGui.QIcon(assets.path('copy.png')))
         self.copy_button.setToolTip("Copy to clipboard")
+        self.layout.addWidget(self.copy_button)
+        self.copy_button.clicked.connect(self.copy)
 
         self.reset_button = QPushButton()
         self.reset_button.setIcon(QtGui.QIcon(assets.path('reset.png')))
         self.reset_button.setToolTip("Reset")
-
-        self.close_button = QPushButton(self)
-        self.close_button.setIcon(QtGui.QIcon(assets.path('close.png')))
-        self.close_button.setToolTip("Close")
+        self.layout.addWidget(self.reset_button)
+        self.reset_button.clicked.connect(self.reset)
 
         self.about_button = QPushButton(self)
         self.about_button.setIcon(QtGui.QIcon(assets.path('about.png')))
         self.about_button.setToolTip("About")
-
-        self.layout.addWidget(self.mode)
-        self.layout.addWidget(self.copy_button)
-        self.layout.addWidget(self.reset_button)
         self.layout.addWidget(self.about_button)
-        self.layout.addWidget(self.close_button)
-        self.setLayout(self.layout)
-
-        self.copy_button.clicked.connect(self.copy)
-        self.reset_button.clicked.connect(self.reset)
-        self.close_button.clicked.connect(self.close)
         self.about_button.clicked.connect(self.about.show)
+
+        if config()['window']['frameless']:
+            self.close_button = QPushButton(self)
+            self.close_button.setIcon(QtGui.QIcon(assets.path('close.png')))
+            self.close_button.setToolTip("Close")
+            self.layout.addWidget(self.close_button)
+            self.close_button.clicked.connect(self.close)
+
+        self.setLayout(self.layout)
 
     def copy(self):
         model = self.table.model
         items = sorted(
-            [model.item(i).player for i in range(model.rowCount())], 
-            key=lambda i: i.damage, 
+            [model.item(i).player for i in range(model.rowCount())],
+            key=lambda i: i.damage,
             reverse=True)
-        clip = "{}, FPM: {}\nDMG: \n".format(self.mode.currentText(), self.fame_per_minute)
+        clip = "{}, FPM: {}\nDMG: \n".format(
+            self.mode.currentText(), self.fame_per_minute)
         for index, i in enumerate(items[:3]):
-            clip += '{}. {}-{}/{}-{}%'.format(index+1, i.name, i.damage, i.dps, i.percentage)
+            clip += '{}. {}-{}/{}-{}%'.format(index+1,
+                                              i.name, i.damage, i.dps, i.percentage)
             clip += "\n"
         clip += "(AOStats https://git.io/JeBD1)"
 
-        self.clipboard.clear(mode=self.clipboard.Clipboard )
+        self.clipboard.clear(mode=self.clipboard.Clipboard)
         self.clipboard.setText(clip, mode=self.clipboard.Clipboard)
 
     def set_fame_per_minute(self, fpm):
@@ -98,6 +104,7 @@ class InteractiveBar(QWidget):
 
     def close(self):
         sys.exit(0)
+
 
 class ModeWidget(QComboBox):
     def __init__(self):
@@ -138,7 +145,7 @@ class MainWidget(QWidget):
         self.bar.set_fame_per_minute(fame_stat.fame_per_minute)
         self.fame_label.setText("<b>{}</b> | Fame <b>{}</b> | FPM <b>{}</b>".format(
             datetime.timedelta(seconds=elapsed), fame_stat.fame, fame_stat.fame_per_minute))
-    
+
     def mousePressEvent(self, event):
         self.mouse_pos = event.pos()
 
