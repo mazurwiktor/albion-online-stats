@@ -38,7 +38,7 @@ class InteractiveBar(QWidget):
         self.table = table
         self.layout = QHBoxLayout()
         self.about = about.About()
-        self.fame_per_minute = 0.0
+        self.fame_per_hour = 0.0
         self.clipboard = clipboard
 
         self.layout.addWidget(self.mode)
@@ -76,8 +76,8 @@ class InteractiveBar(QWidget):
             [model.item(i).player for i in range(model.rowCount())],
             key=lambda i: i.damage,
             reverse=True)
-        clip = "{}, FPM: {}\nDMG: \n".format(
-            self.mode.currentText(), self.fame_per_minute)
+        clip = "{}, FPH: {}\nDMG: \n".format(
+            self.mode.currentText(), self.fame_per_hour)
         for index, i in enumerate(items[:3]):
             clip += '{}. {}-{}/{}-{}%'.format(index+1,
                                               i.name, i.damage, i.dps, i.percentage)
@@ -87,8 +87,8 @@ class InteractiveBar(QWidget):
         self.clipboard.clear(mode=self.clipboard.Clipboard)
         self.clipboard.setText(clip, mode=self.clipboard.Clipboard)
 
-    def set_fame_per_minute(self, fpm):
-        self.fame_per_minute = fpm
+    def set_fame_per_hour(self, fpm):
+        self.fame_per_hour = fpm
 
     def reset(self):
         reset = {
@@ -142,9 +142,9 @@ class MainWidget(QWidget):
     def refresh(self):
         damage_session, fame_stat, elapsed = self.session()
         self.table.update(damage_session)
-        self.bar.set_fame_per_minute(fame_stat.fame_per_minute)
-        self.fame_label.setText("<b>{}</b> | Fame <b>{}</b> | FPM <b>{}</b>".format(
-            datetime.timedelta(seconds=elapsed), fame_stat.fame, fame_stat.fame_per_minute))
+        self.bar.set_fame_per_hour(fame_stat.fame_per_hour)
+        self.fame_label.setText("<b>{}</b> | Fame <b>{}</b> | FPH <b>{}</b>".format(
+            datetime.timedelta(seconds=elapsed), fame_stat.fame, fame_stat.fame_per_hour))
 
     def mousePressEvent(self, event):
         self.mouse_pos = event.pos()
