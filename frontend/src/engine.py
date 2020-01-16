@@ -59,9 +59,9 @@ class DamageStat:
 
 
 class FameStat:
-    def __init__(self, fame, fame_per_minute):
+    def __init__(self, fame, fame_per_hour):
         self.fame = fame
-        self.fame_per_minute = fame_per_minute
+        self.fame_per_hour = fame_per_hour
 
 
 def stats(session, with_dmg=False):
@@ -85,7 +85,7 @@ def stats(session, with_dmg=False):
     if main_player:
         if 'fame' in main_player:
             fame = FameStat(Number(main_player['fame']), Number(
-                main_player['fame_per_minute']))
+                main_player['fame_per_hour']))
         if 'seconds_in_game' in main_player:
             elapsed = main_player['seconds_in_game']
 
@@ -113,7 +113,7 @@ def zone_stats(with_damage=False):
     if TESTING_ENABLED:
         session = {
             'players': [
-                {'player': 'Arcane', 'damage': 200.0, 'time_in_combat': 12.0, 'dps': 142.4234, 'fame': 20.0, 'fame_per_minute': 30, 'items': {
+                {'player': 'Arcane', 'damage': 200.0, 'time_in_combat': 12.0, 'dps': 142.4234, 'fame': 20.0, 'fame_per_hour': 30, 'items': {
                     'weapon': 'T4_MAIN_ARCANESTAFF@3'
                 }},
                 {'player': 'Cursed', 'damage': 1100.0, 'time_in_combat': 12.0, 'dps': 222, 'items': {
@@ -161,7 +161,7 @@ def zone_stats(with_damage=False):
             ],
             'main': {'player': 'Crossbow', 'damage': 250.0, 'time_in_combat': 120000.0, 'dps': 13, 'items': {
                 'weapon': 'T8_2H_CROSSBOWLARGE@3'
-            }, 'fame': 2300000, 'fame_per_minute': 46000.0, 'seconds_in_game': 3000}
+            }, 'fame': 2300000, 'fame_per_hour': 46000.0, 'seconds_in_game': 3000}
         }
     else:
         session = aostats.stats(StatType.Zone)
