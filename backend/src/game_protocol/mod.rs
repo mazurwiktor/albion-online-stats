@@ -55,5 +55,5 @@ impl Items {
 
 #[test]
 fn test_itemdb_generation() {
-    assert_eq!(ITEMDB.get(&0), Some(&"T1_FARM_CARROT_SEED"));
+    assert_eq!(ITEMDB.get(&0), Some(&"UNIQUE_HIDEOUT"));
 }
