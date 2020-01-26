@@ -150,6 +150,7 @@ fn generate_messages() -> String {
 
     out.push_str(&format!(r###"
     pub fn into_game_message(photon_message: photon_decode::Message) -> Option<Message> {{
+        debug!("Raw photon : {{:?}}", photon_message);
         match photon_message {{
             photon_decode::Message::Event(photon_decode::EventData{{
                 code: 1,
