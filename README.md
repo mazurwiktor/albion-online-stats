@@ -14,23 +14,10 @@ Albion Online Stats
 
 Albion online stats is an extension to MMORPG game - Albion Online. It tracks network traffic and displays various statistics, such as damage and DPS meter calculated from in-game actions. 
 
-## Donate
-
-[![Become a patron](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/wiktormazur)
-
-
-## Is This Allowed
- ```Our position is quite simple. As long as you just look and analyze we are ok with it. The moment you modify or manipulate something or somehow interfere with our services we will react (e.g. perma-ban, take legal action, whatever```
-
-~MadDave, Technical Lead at Sandbox Interactive for Albion Online, [source](https://forum.albiononline.com/index.php/Thread/51604-Is-it-allowed-to-scan-your-internet-trafic-and-pick-up-logs/?postID=512670#post512670)
-
-* copied from [Albion Online Data](https://www.albion-online-data.com/)
-
-
-## App preview
-
 ![0.7.0](https://user-images.githubusercontent.com/11301109/71000581-d9124000-20db-11ea-8c19-4d7f69a2c155.png)
-# Usage of built release
+
+
+# How to use this app
 
 > **Note** this section does not require any coding knowledge. Those simple two steps are required to use this software :)
 
@@ -43,6 +30,19 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 ## Configuration
 
 After first execution the app is going to create default configuration file named `albion-online-stats.cfg`. Feel free to edit it according to your needs. 
+
+## Is This Allowed
+ ```Our position is quite simple. As long as you just look and analyze we are ok with it. The moment you modify or manipulate something or somehow interfere with our services we will react (e.g. perma-ban, take legal action, whatever```
+
+~MadDave, Technical Lead at Sandbox Interactive for Albion Online, [source](https://forum.albiononline.com/index.php/Thread/51604-Is-it-allowed-to-scan-your-internet-trafic-and-pick-up-logs/?postID=512670#post512670)
+
+* copied from [Albion Online Data](https://www.albion-online-data.com/)
+
+
+## Donate
+
+[![Become a patron](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/wiktormazur)
+
 
 # Getting started
 
