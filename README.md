@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="assets/albion-stats-icon.png" width="100"> 
+    <img src="assets/albion-stats-icon.png" width="100">
 </p>
 
 Linux and OS X Build Status: [![Linux and OS X Build Status](https://api.travis-ci.org/mazurwiktor/albion-online-stats.svg)](https://travis-ci.org/mazurwiktor/albion-online-stats)
@@ -12,7 +12,7 @@ Windows Build Status: [![Windows Build Status](https://ci.appveyor.com/api/proje
 Albion Online Stats
 ===================
 
-Albion online stats is an extension to MMORPG game - Albion Online. It tracks network traffic and displays various statistics, such as damage and DPS meter calculated from in-game actions. 
+Albion online stats is an extension to MMORPG game - Albion Online. It tracks network traffic and displays various statistics, such as damage and DPS meter calculated from in-game actions.
 
 ![0.7.0](https://user-images.githubusercontent.com/11301109/71000581-d9124000-20db-11ea-8c19-4d7f69a2c155.png)
 
@@ -29,7 +29,7 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 
 ## Configuration
 
-After first execution the app is going to create default configuration file named `albion-online-stats.cfg`. Feel free to edit it according to your needs. 
+After first execution the app is going to create default configuration file named `albion-online-stats.cfg`. Feel free to edit it according to your needs.
 
 ## Is This Allowed
  ```Our position is quite simple. As long as you just look and analyze we are ok with it. The moment you modify or manipulate something or somehow interfere with our services we will react (e.g. perma-ban, take legal action, whatever```
@@ -55,7 +55,7 @@ After first execution the app is going to create default configuration file name
 
 ## All platforms
 1. Clone repository:
-    ```shell 
+    ```shell
     git clone https://github.com/mazurwiktor/albion-online-stats.git
     ```
 2. [optional] Create and activate python virtualenv
@@ -64,6 +64,13 @@ After first execution the app is going to create default configuration file name
     python -m venv env
     [linux/mac] . env/bin/activate
     [windows] .\env\Scripts\activate.ps1
+    ```
+
+    or alternatively using conda and skip installing requirements step
+
+    ```shell
+    conda env create --file frontend/environment.yml
+    conda activate albion
     ```
 
 3. Install requirements (backend will be compiled during requirements installation)
