@@ -1,0 +1,12 @@
+name: albion
+
+channels:
+  - conda-forge
+
+dependencies:
+  - rust=1.41
+  - pyside2=5.13.2
+  - pyinstaller=3.6
+  - toml=0.10.0
+  - requests=2.22
+  - pillow=7.0.0
