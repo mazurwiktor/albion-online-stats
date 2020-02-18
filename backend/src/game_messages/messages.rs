@@ -114,7 +114,7 @@ macro_rules! decode_float {
     };
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Leave {
     pub source: usize,
 
@@ -130,7 +130,7 @@ impl Leave {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct HealthUpdate {
     pub source: usize,
     pub target: usize,
@@ -150,7 +150,7 @@ impl HealthUpdate {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct RegenerationHealthChanged {
     pub source: usize,
     pub health: f32,
@@ -172,7 +172,7 @@ impl RegenerationHealthChanged {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct KnockedDown {
     pub source: usize,
     pub target: usize,
@@ -192,7 +192,7 @@ impl KnockedDown {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct NewCharacter {
     pub source: usize,
     pub character_name: String,
@@ -221,7 +221,7 @@ impl NewCharacter {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct UpdateFame {
     pub source: usize,
     pub fame: usize,
@@ -239,7 +239,7 @@ impl UpdateFame {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct CharacterEquipmentChanged {
     pub source: usize,
     pub items: Items,
@@ -258,7 +258,7 @@ impl CharacterEquipmentChanged {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Join {
     pub source: usize,
     pub character_name: String,
@@ -284,7 +284,7 @@ impl Join {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Message {
     Leave(Leave),
     HealthUpdate(HealthUpdate),

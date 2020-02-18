@@ -89,7 +89,7 @@ use photon_decode::Value;
         }
 
         out.push_str(&format!(r###"
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct {} {{
 {}
 }}
@@ -128,7 +128,7 @@ impl {0} {{
 "###, msg.name, parse_body, param_names));
     }
 
-    out.push_str("\n#[derive(Debug)]\n");
+    out.push_str("\n#[derive(Debug, Clone)]\n");
     out.push_str("pub enum Message {\n");
     for msg in &[&messages.events[..], &messages.responses[..]].concat() {
         out.push_str(&format!("    {0}({0}),\n", msg.name));
