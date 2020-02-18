@@ -1,6 +1,6 @@
 import pytest
 
-from number import Number
+from src.number import Number
 
 def test_number_equality():
     n = 10

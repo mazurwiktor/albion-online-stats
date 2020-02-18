@@ -8,6 +8,7 @@ build = "build.rs"
 
 [lib]
 name = "libaostats"
+path = "src/lib_python.rs"
 crate-type = ["dylib"]
 
 [dependencies.cpython]
@@ -15,13 +16,15 @@ version = "0.3"
 
 [dependencies]
 packet_sniffer = { path = "./lib/packet-sniffer" }
-photon_decode = "0.2"
+photon_decode = { path = "./lib/photon-decode" }
 bytes = "0.4"
 simplelog = "0.6"
 timer = "0.1"
 chrono = "0.4"
 log = { version = "0.4", features = ["std"] }
 lazy_static = "1.2"
+derive_more = "0.99"
+bimap = "0.4.0"
 
 [build-dependencies]
 serde_json = "1.0"

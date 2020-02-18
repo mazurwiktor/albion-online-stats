@@ -1,4 +1,4 @@
-from .config import config
+from ..utils.config import config
 
 cfg = config()
 font_size = cfg['window']['font-size']

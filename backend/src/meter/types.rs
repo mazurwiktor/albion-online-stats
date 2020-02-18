@@ -5,7 +5,7 @@ use fake_clock::FakeClock as Instant;
 #[cfg(not(test))]
 use std::time::Instant;
 
-use super::game_messages::Items;
+use super::photon_messages::Items;
 use super::traits::DamageStats;
 use super::traits::FameStats;
 
@@ -24,7 +24,7 @@ pub struct PlayerStatistics {
     pub main_player_stats: bool,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct PlayerStatisticsVec {
     _vec: Vec<PlayerStatistics>,
 }

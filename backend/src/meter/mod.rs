@@ -10,9 +10,10 @@ mod traits;
 mod types;
 mod session;
 
+use crate::game::Event;
 use player::Player;
 
-pub use super::game_messages;
+use super::photon_messages;
 pub use traits::*;
 pub use types::*;
 
@@ -21,29 +22,138 @@ use session::Session;
 #[derive(Default)]
 pub struct MeterConfig {}
 
+#[derive(Default)]
 pub struct Meter {
     zone_history: PlayerStatisticsVec,
     zone_session: Option<Session>,
     last_fight_session: Session,
-    main_player_id: Option<usize>,
-    unconsumed_items: HashMap<usize, game_messages::Items>,
-    config: MeterConfig,
+    unconsumed_items: HashMap<usize, photon_messages::Items>,
 }
 
 impl Meter {
     pub fn new() -> Self {
         Self {
-            zone_history: PlayerStatisticsVec::new(),
-            zone_session: None,
-            last_fight_session: Session::new(),
-            main_player_id: None,
-            unconsumed_items: HashMap::new(),
-            config: Default::default(),
+            ..Default::default()
         }
     }
 
-    pub fn configure(&mut self, config: MeterConfig) {
-        self.config = config;
+    pub fn consume(&mut self, event: Event) -> Option<()> {
+        match event {
+            Event::MainPlayerAppeared(e) => {
+                let id = u32::from(e.id) as usize;
+                self.register_player(&e.name, id, true);
+
+                if let Some(items) = self.unconsumed_items.get(&id) {
+                    let i = items.clone();
+                    self.register_item_update(id, &i);
+                    self.unconsumed_items.remove(&id);
+                }
+            },
+            Event::PlayerAppeared(e) => {
+                let id = u32::from(e.id) as usize;
+                self.register_player(&e.name, id, false);
+
+                if let Some(items) = self.unconsumed_items.get(&id) {
+                    let i = items.clone();
+                    self.register_item_update(id, &i);
+                    self.unconsumed_items.remove(&id);
+                }
+            },
+            Event::ZoneChange => {
+                self.new_session();
+            },
+            Event::UpdateItems(e) => {
+                let player_id = u32::from(e.source) as usize;
+                let items = e.value;
+                let mut consumed = false;
+                for player in self.get_players_in_the_zone(player_id).unwrap_or(vec![]) {
+                    player.items_update(&items);
+                    consumed = true;
+                }
+        
+                if !consumed {
+                    info!("Storing not consumed items for player id: {}", player_id);
+                    self.unconsumed_items.insert(player_id, items.clone());
+                }
+            }
+            Event::DamageDone(e) => {
+                let player_id = u32::from(e.source) as usize;
+                for player in self.get_players_in_the_zone(player_id)? {
+                    player.register_damage_dealt(f32::abs(e.value));
+                }
+            }
+            Event::EnterCombat(e) => {
+                let player_id = u32::from(e.id) as usize;
+                if self.combat_state() == CombatState::OutOfCombat {
+                    self.last_fight_session = Session::from(&self.last_fight_session);
+                }
+                for player in self.get_players_in_the_zone(player_id)? {
+                    player.enter_combat();
+                }
+            }
+            Event::LeaveCombat(e) => {
+                let player_id = u32::from(e.id) as usize;
+                for player in self.get_players_in_the_zone(player_id)? {
+                    player.leave_combat();
+                }
+            }
+            Event::UpdateFame(e) => {
+                let player_id = u32::from(e.source) as usize;
+                for player in self.get_players_in_the_zone(player_id)? {
+                    player.register_fame_gain(e.value);
+                }
+            }
+            _ => {}
+        }
+
+        Some(())
+    }
+
+    fn get_players_in_the_zone(
+        &mut self,
+        player_id: usize,
+    ) -> Option<Vec<&mut Player>> {
+        let (zone, last_fight) = self.sessions_mut()?;
+        let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
+        let zone_player = zone.get_player_by_id(player_id)?;
+        Some(vec![zone_player, las_fight_session_player])
+    }
+
+    fn register_player(&mut self, name: &str, id: usize, main: bool) {
+        if self.zone_session.is_none() {
+            info!(
+                "New player ({}) registered without session, creating new session",
+                name
+            );
+            self.new_session();
+        }
+
+        if self
+            .get_players_in_the_zone(id)
+            .unwrap_or(vec![])
+            .is_empty()
+        {
+            self.add_player(name, id, main);
+        }
+    }
+
+    fn register_item_update(
+        &mut self,
+        player_id: usize,
+        items: &photon_messages::Items,
+    ) -> Option<()> {
+        let mut consumed = false;
+        for player in self.get_players_in_the_zone(player_id).unwrap_or(vec![]) {
+            player.items_update(items);
+            consumed = true;
+        }
+
+        if !consumed {
+            info!("Storing not consumed items for player id: {}", player_id);
+            self.unconsumed_items.insert(player_id, items.clone());
+        }
+
+        Some(())
     }
 
     fn stats_filter(&self, _player: &(&String, &Player)) -> bool {
@@ -90,7 +200,6 @@ impl Meter {
         self.last_fight_session = Session::new();
     }
 
-    #[allow(unused)]
     fn combat_state(&self) -> CombatState {
         if self
             .last_fight_session
@@ -102,117 +211,6 @@ impl Meter {
         }
 
         CombatState::OutOfCombat
-    }
-}
-
-impl PlayerEvents for Meter {
-    fn get_damage_dealers_in_zone(
-        &mut self,
-        player_id: usize,
-    ) -> Option<Vec<&mut dyn DamageDealer>> {
-        let (zone, last_fight) = self.sessions_mut()?;
-        let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
-        let zone_player = zone.get_player_by_id(player_id)?;
-        Some(vec![zone_player, las_fight_session_player])
-    }
-
-    fn get_item_carriers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn ItemCarrier>> {
-        let (zone, last_fight) = self.sessions_mut()?;
-        let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
-        let zone_player = zone.get_player_by_id(player_id)?;
-        Some(vec![zone_player, las_fight_session_player])
-    }
-
-    fn get_fame_gatherers_in_zone(
-        &mut self,
-        player_id: usize,
-    ) -> Option<Vec<&mut dyn FameGatherer>> {
-        let main_player_id = self.main_player_id?;
-        let (zone, last_fight) = self.sessions_mut()?;
-        if player_id != main_player_id {
-            return None;
-        }
-
-        let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
-        let zone_player = zone.get_player_by_id(player_id)?;
-        Some(vec![zone_player, las_fight_session_player])
-    }
-
-    fn register_item_update(
-        &mut self,
-        player_id: usize,
-        items: &game_messages::Items,
-    ) -> Option<()> {
-        let mut consumed = false;
-        for player in self.get_item_carriers_in_zone(player_id).unwrap_or(vec![]) {
-            player.items_update(items);
-            consumed = true;
-        }
-
-        if !consumed {
-            info!("Storing not consumed items for player id: {}", player_id);
-            self.unconsumed_items.insert(player_id, items.clone());
-        }
-
-        Some(())
-    }
-
-    fn register_main_player(&mut self, name: &str, id: usize) {
-        info!("Main player {} registered with id {}", name, id);
-        self.main_player_id = Some(id);
-
-        if self.zone_session.is_none() {
-            self.new_session();
-        }
-        self.add_player(name, id, true);
-        if let Some(items) = self.unconsumed_items.get(&id) {
-            let i = items.clone();
-            self.register_item_update(id, &i);
-            self.unconsumed_items.remove(&id);
-        }
-    }
-
-    fn register_leave(&mut self, id: usize) -> Option<()> {
-        let main_player_id = self.main_player_id?;
-        if id == main_player_id {
-            info!(
-                "Main player ({}) left the zone, Creating new zone session.",
-                id
-            );
-            self.zone_session_mut()?.cleanup_players();
-            self.new_session();
-        }
-
-        Some(())
-    }
-
-    fn register_player(&mut self, name: &str, id: usize) {
-        if self.zone_session.is_none() {
-            info!(
-                "New player ({}) registered without session, creating new session",
-                name
-            );
-            self.new_session();
-        }
-
-        if self
-            .get_damage_dealers_in_zone(id)
-            .unwrap_or(vec![])
-            .is_empty()
-        {
-            self.add_player(name, id, false);
-        }
-    }
-
-    fn register_combat_enter(&mut self, player_id: usize) -> Option<()> {
-        if self.combat_state() == CombatState::OutOfCombat {
-            self.last_fight_session = Session::from(&self.last_fight_session);
-        }
-        for player in self.get_damage_dealers_in_zone(player_id)? {
-            player.enter_combat();
-        }
-
-        Some(())
     }
 }
 
@@ -265,14 +263,4 @@ impl GameStats for Meter {
         info!("Reset: overall");
         Some(())
     }
-}
-
-#[test]
-fn test_meter() {
-    let mut meter = Meter::new();
-
-    assert_eq!(meter.zone_stats(), None);
-
-    meter.register_main_player("name", 0);
-    assert!(meter.zone_stats().is_some());
 }

@@ -1,30 +1,28 @@
-import collections
-import functools
+from ..utils import assets
+from ..utils import names
+from ..utils import async_request
+from ..utils import weapon
+
 from PIL import Image, ImageQt
-from io import BytesIO
-import re
-
-
+from PySide2 import QtCore
+from PySide2 import QtGui
 from PySide2.QtCore import Qt
+from PySide2.QtGui import QStandardItem
+from PySide2.QtGui import QStandardItemModel
 from PySide2.QtWidgets import QApplication
-from PySide2.QtWidgets import QMessageBox
+from PySide2.QtWidgets import QComboBox
 from PySide2.QtWidgets import QHBoxLayout
+from PySide2.QtWidgets import QLabel
+from PySide2.QtWidgets import QListView
+from PySide2.QtWidgets import QMessageBox
+from PySide2.QtWidgets import QProgressBar
 from PySide2.QtWidgets import QPushButton
 from PySide2.QtWidgets import QVBoxLayout
-from PySide2.QtWidgets import QLabel
-from PySide2.QtWidgets import QComboBox
-from PySide2.QtWidgets import QProgressBar
-from PySide2.QtWidgets import QListView
-from PySide2.QtGui import QStandardItemModel
-from PySide2.QtGui import QStandardItem
 
-from PySide2 import QtGui
-from PySide2 import QtCore
-
-from . import weapon
-from . import names
-from . import assets
-from . import async_request
+from io import BytesIO
+import collections
+import functools
+import re
 
 Style = collections.namedtuple('Style', 'bg')
 

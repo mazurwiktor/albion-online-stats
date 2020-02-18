@@ -30,11 +30,15 @@ test_script:
   - ps: cd backend
   - cargo test
   - ps: cd ..
+  - pip install tox
+  - ps: cd frontend
+  - tox -e ut
+  - pd: cd ..
 build_script:
   - python -m venv env
   - ps: .\env\Scripts\activate.ps1
-  - pip install -v -r frontend\requirements.txt
-  - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data frontend\src\assets;src\assets frontend\albion-online-stats.py
+  - pip install -v -r application\requirements.txt
+  - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data application\src\assets;src\assets application\albion-online-stats.py
   - ps: deactivate
 after_build:
 - ps: mv dist\albion-online-stats.exe albion-online-stats.exe

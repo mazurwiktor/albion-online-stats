@@ -12,7 +12,7 @@ use super::player::Player;
 use super::traits::CombatState;
 use super::types::PlayerStatisticsVec;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Session {
     players: HashMap<String, Player>,
 }
@@ -60,18 +60,6 @@ impl Session {
                 })
                 .collect(),
         )
-    }
-
-    pub fn cleanup_players(&mut self) {
-        let without_dmg = self
-            .players
-            .iter()
-            .filter(|(_, player)| !player.main() && player.damage() == 0.0 && player.fame() == 0.0)
-            .map(|(name, _)| name.clone())
-            .collect::<Vec<String>>();
-        for w in without_dmg {
-            self.players.remove_entry(&w);
-        }
     }
 
     pub fn players(&self) -> Vec<&Player> {

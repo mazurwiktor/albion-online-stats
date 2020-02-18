@@ -4,7 +4,7 @@ use fake_clock::FakeClock as Instant;
 use std::time::Instant;
 
 use super::types::PlayerStatisticsVec;
-use super::game_messages::Items;
+use super::photon_messages::Items;
 
 #[derive(Debug, PartialEq)]
 pub enum CombatState {
@@ -59,56 +59,6 @@ pub trait DamageDealer {
 pub trait ItemCarrier {
     fn items_update(&mut self, items: &Items);
     fn items(&self) -> Items;
-}
-
-pub trait PlayerEvents {
-    fn get_damage_dealers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn DamageDealer>>;
-
-    fn get_fame_gatherers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn FameGatherer>>;
-
-    fn get_item_carriers_in_zone(&mut self, player_id: usize) -> Option<Vec<&mut dyn ItemCarrier>>;
-
-    fn register_main_player(&mut self, name: &str, id: usize);
-
-    fn register_leave(&mut self, id: usize) -> Option<()>;
-
-    fn register_player(&mut self, name: &str, id: usize);
-
-    fn register_item_update(&mut self, player_id: usize, items: &Items) -> Option<()>;
-
-    fn register_fame_gain(&mut self, player_id: usize, fame: f32) -> Option<()> {
-        for player in self.get_fame_gatherers_in_zone(player_id)? {
-            player.register_fame_gain(fame);
-        }
-
-        Some(())
-    }
-
-    fn register_damage_dealt(&mut self, player_id: usize, damage: f32) -> Option<()> {
-        for player in self.get_damage_dealers_in_zone(player_id)? {
-            if damage < 0.0 {
-                player.register_damage_dealt(f32::abs(damage));
-            }
-        }
-
-        Some(())
-    }
-
-    fn register_combat_enter(&mut self, player_id: usize) -> Option<()> {
-        for player in self.get_damage_dealers_in_zone(player_id)? {
-            player.enter_combat();
-        }
-
-        Some(())
-    }
-
-    fn register_combat_leave(&mut self, player_id: usize) -> Option<()> {
-        for player in self.get_damage_dealers_in_zone(player_id)? {
-            player.leave_combat();
-        }
-
-        Some(())
-    }
 }
 
 pub trait LastFightStats {

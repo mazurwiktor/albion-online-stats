@@ -1,16 +1,18 @@
-from .version import latest_url
-from .version import latest_version as get_latest_version
-from .version import current_version as get_current_version
-from .styling import style
-from .engine import InitializationResult
-from .engine import initialize
+from ..engine import InitializationResult
+from ..engine import initialize
+from ..utils.config import config
+
 from .main import MainWidget
-from .config import config
-from PySide2.QtWidgets import QMessageBox
-from PySide2.QtWidgets import QApplication
+from .styling import style
+from ..utils.version import current_version as get_current_version
+from ..utils.version import latest_url
+from ..utils.version import latest_version as get_latest_version
 from PySide2.QtCore import Qt
-import sys
+from PySide2.QtWidgets import QApplication
+from PySide2.QtWidgets import QMessageBox
+
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.abspath('__file__')))
 
