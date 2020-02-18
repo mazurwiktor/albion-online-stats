@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::game_messages;
+use crate::photon_messages;
 
 use super::id_cache::StaticId;
 
@@ -26,7 +26,7 @@ pub struct Fame {
 #[derive(Debug, PartialEq)]
 pub struct Items {
     pub source: StaticId,
-    pub value: game_messages::Items,
+    pub value: photon_messages::Items,
 }
 
 #[derive(Debug, PartialEq)]

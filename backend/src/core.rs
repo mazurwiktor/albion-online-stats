@@ -11,7 +11,7 @@ use packet_sniffer::UdpPacket;
 use photon_decode;
 use photon_decode::Photon;
 
-use crate::game_messages;
+use crate::photon_messages;
 use crate::meter;
 pub use meter::GameStats;
 pub use meter::LastFightStats;
@@ -23,7 +23,7 @@ pub use meter::PlayerStatisticsVec;
 pub use meter::ZoneStats;
 
 pub use meter::StatType;
-pub use crate::game_messages::Items;
+pub use crate::photon_messages::Items;
 
 pub enum InitializationError {
     NetworkInterfaceListMissing,
@@ -93,12 +93,12 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
                         continue;
                     }
                     if let Ok(ref mut meter) = cloned_meter.lock() {
-                        let game_messages = photon
+                        let photon_messages = photon
                             .decode(&packet.payload)
                             .into_iter()
-                            .filter_map(game_messages::into_game_message)
+                            .filter_map(photon_messages::into_game_message)
                             .collect();
-                        register_messages(meter, &game_messages);
+                        register_messages(meter, &photon_messages);
                     }
                 }
             }
@@ -110,38 +110,38 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
     Ok(meter)
 }
 
-pub fn register_messages(meter: &mut meter::Meter, messages: &Vec<game_messages::Message>) {
+pub fn register_messages(meter: &mut meter::Meter, messages: &Vec<photon_messages::Message>) {
     messages
         .iter()
         .for_each(|message| register_message(meter, &message));
 }
 
-fn register_message<Events>(events: &mut Events, message: &game_messages::Message)
+fn register_message<Events>(events: &mut Events, message: &photon_messages::Message)
 where
     Events: PlayerEvents,
 {
     info!("Found message {:?}", message);
     match message {
-        game_messages::Message::Leave(msg) => events.register_leave(msg.source).unwrap_or(()),
-        game_messages::Message::NewCharacter(msg) => {
+        photon_messages::Message::Leave(msg) => events.register_leave(msg.source).unwrap_or(()),
+        photon_messages::Message::NewCharacter(msg) => {
             events.register_player(&msg.character_name, msg.source);
             events.register_item_update(msg.source, &msg.items);
         },
-        game_messages::Message::CharacterEquipmentChanged(msg) => {
+        photon_messages::Message::CharacterEquipmentChanged(msg) => {
             events.register_item_update(msg.source, &msg.items);
         },
-        game_messages::Message::Join(msg) => {
+        photon_messages::Message::Join(msg) => {
             events.register_main_player(&msg.character_name, msg.source)
         }
-        game_messages::Message::HealthUpdate(msg) => events
+        photon_messages::Message::HealthUpdate(msg) => events
             .register_damage_dealt(msg.target, msg.value)
             .unwrap_or(()),
-        game_messages::Message::RegenerationHealthChanged(msg) => match msg.regeneration_rate {
+        photon_messages::Message::RegenerationHealthChanged(msg) => match msg.regeneration_rate {
             Some(_) => events.register_combat_leave(msg.source).unwrap_or(()),
             None => events.register_combat_enter(msg.source).unwrap_or(()),
         },
-        game_messages::Message::KnockedDown(msg) => events.register_combat_leave(msg.source).unwrap_or(()),
-        game_messages::Message::UpdateFame(msg) => events
+        photon_messages::Message::KnockedDown(msg) => events.register_combat_leave(msg.source).unwrap_or(()),
+        photon_messages::Message::UpdateFame(msg) => events
             .register_fame_gain(msg.source, msg.fame as f32 / 10000.0)
             .unwrap_or(()),
     }
@@ -151,9 +151,9 @@ where
 mod tests {
     use super::*;
 
-    use game_messages::messages;
-    use game_messages::Items;
-    use game_messages::Message;
+    use photon_messages::messages;
+    use photon_messages::Items;
+    use photon_messages::Message;
 
     mod helpers {
         use super::*;

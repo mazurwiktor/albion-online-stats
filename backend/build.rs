@@ -69,7 +69,7 @@ fn generate_messages() -> String {
     let mut out = String::new();
 
     out.push_str(r"use log::*;
-use crate::game_messages::Items;
+use crate::photon_messages::Items;
 use photon_decode::Parameters;
 use photon_decode::Value;
 
@@ -208,7 +208,7 @@ fn generate_itemdb() -> String {
 }
 
 fn save_file(file_name: &str, content: &str) {  
-    let dest_path = Path::new(&"src/game_messages").join(file_name);
+    let dest_path = Path::new(&"src/photon_messages").join(file_name);
     let mut f = File::create(&dest_path).unwrap();
     f.write_all(content.as_bytes()).unwrap();
 }

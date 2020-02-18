@@ -12,7 +12,7 @@ mod session;
 
 use player::Player;
 
-pub use super::game_messages;
+pub use super::photon_messages;
 pub use traits::*;
 pub use types::*;
 
@@ -26,7 +26,7 @@ pub struct Meter {
     zone_session: Option<Session>,
     last_fight_session: Session,
     main_player_id: Option<usize>,
-    unconsumed_items: HashMap<usize, game_messages::Items>,
+    unconsumed_items: HashMap<usize, photon_messages::Items>,
     config: MeterConfig,
 }
 
@@ -141,7 +141,7 @@ impl PlayerEvents for Meter {
     fn register_item_update(
         &mut self,
         player_id: usize,
-        items: &game_messages::Items,
+        items: &photon_messages::Items,
     ) -> Option<()> {
         let mut consumed = false;
         for player in self.get_item_carriers_in_zone(player_id).unwrap_or(vec![]) {

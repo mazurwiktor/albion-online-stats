@@ -4,7 +4,7 @@
 //! Inconsistency list:
 //!     - player id is different in each zone
 
-use crate::game_messages;
+use crate::photon_messages;
 
 use super::events;
 use super::convert;
@@ -27,10 +27,10 @@ impl World {
     /// Transforms inconsistent game message into corresponding list of game events
     pub fn consume_message(
         &mut self,
-        message: game_messages::Message,
+        message: photon_messages::Message,
     ) -> Option<Vec<events::Events>> {
         match message {
-            game_messages::Message::NewCharacter(msg) => {
+            photon_messages::Message::NewCharacter(msg) => {
                 let mut result = vec![];
 
                 self.assign_dynamic_id(msg.source, &msg.character_name);
@@ -44,7 +44,7 @@ impl World {
 
                 Some(result)
             }
-            game_messages::Message::Join(msg) => {
+            photon_messages::Message::Join(msg) => {
                 let mut result = vec![];
                 
                 self.assign_dynamic_id(msg.source, &msg.character_name);
@@ -60,7 +60,7 @@ impl World {
 
                 Some(result)
             }
-            game_messages::Message::Leave(msg) => {
+            photon_messages::Message::Leave(msg) => {
                 let static_id = self.get_static_id(msg.source)?;
                 if let Some(main_player_id) = self.main_player_id {
                     if main_player_id == static_id {
@@ -69,23 +69,23 @@ impl World {
                 }
                 None
             }
-            game_messages::Message::HealthUpdate(msg) => {
+            photon_messages::Message::HealthUpdate(msg) => {
                 let static_id = self.get_static_id(msg.target)?;
                 Some(vec![self.get_intermediate(static_id, msg)?.into()])
             }
-            game_messages::Message::RegenerationHealthChanged(msg) => {
+            photon_messages::Message::RegenerationHealthChanged(msg) => {
                 let static_id = self.get_static_id(msg.source)?;
                 Some(vec![self.get_intermediate(static_id, msg)?.into()])
             }
-            game_messages::Message::KnockedDown(msg) => {
+            photon_messages::Message::KnockedDown(msg) => {
                 let static_id = self.get_static_id(msg.source)?;
                 Some(vec![self.get_intermediate(static_id, msg)?.into()])
             }
-            game_messages::Message::UpdateFame(msg) => {
+            photon_messages::Message::UpdateFame(msg) => {
                 let static_id = self.get_static_id(msg.source)?;
                 Some(vec![self.get_intermediate(static_id, msg)?.into()])
             }
-            game_messages::Message::CharacterEquipmentChanged(msg) => {
+            photon_messages::Message::CharacterEquipmentChanged(msg) => {
                 let static_id = self.get_static_id(msg.source)?;
                 Some(vec![self.get_intermediate(static_id, msg)?.into()])
             }
@@ -129,7 +129,7 @@ mod tests {
 
     macro_rules! simulate_new_player {
         ($id:expr, $name:expr, $msg:ident) => {
-            game_messages::Message::$msg(game_messages::messages::$msg {
+            photon_messages::Message::$msg(photon_messages::messages::$msg {
                 source: $id,
                 character_name: $name.to_string(),
                 ..Default::default()
@@ -138,7 +138,7 @@ mod tests {
     }
 
     #[test]
-    /// game_messages::NewCharacter -> events::Events::PlayerAppeared
+    /// photon_messages::NewCharacter -> events::Events::PlayerAppeared
     fn test_player_appeared() {
         let mut world = World::new();
 
@@ -152,7 +152,7 @@ mod tests {
     }
 
     #[test]
-    /// game_messages::Join -> Events::PlayerAppeared
+    /// photon_messages::Join -> Events::PlayerAppeared
     fn test_main_player_appeared() {
         let mut world = World::new();
 
@@ -166,7 +166,7 @@ mod tests {
     }
 
     #[test]
-    /// game_messages::HealthUpdate -> Events::DamageDone | Events::HealthReceived
+    /// photon_messages::HealthUpdate -> Events::DamageDone | Events::HealthReceived
     fn test_damage_done() {
         let mut world = World::new();
 
@@ -179,7 +179,7 @@ mod tests {
 
         let target = 1;
         let game_message =
-            game_messages::Message::HealthUpdate(game_messages::messages::HealthUpdate {
+            photon_messages::Message::HealthUpdate(photon_messages::messages::HealthUpdate {
                 target,
                 value: -666.0,
                 ..Default::default()
@@ -191,7 +191,7 @@ mod tests {
 
         let target = 1;
         let game_message =
-            game_messages::Message::HealthUpdate(game_messages::messages::HealthUpdate {
+            photon_messages::Message::HealthUpdate(photon_messages::messages::HealthUpdate {
                 target,
                 value: 666.0,
                 ..Default::default()
@@ -206,11 +206,11 @@ mod tests {
     }
 
     #[test]
-    /// game_messages::Leave -> Events::ZoneChange
+    /// photon_messages::Leave -> Events::ZoneChange
     fn test_zone_change() {
         let mut world = World::new();
 
-        let game_message = game_messages::Message::Leave(game_messages::messages::Leave {
+        let game_message = photon_messages::Message::Leave(photon_messages::messages::Leave {
             source: 1,
             ..Default::default()
         });
@@ -225,7 +225,7 @@ mod tests {
             "PlayerAppeared"
         );
 
-        let game_message = game_messages::Message::Leave(game_messages::messages::Leave {
+        let game_message = photon_messages::Message::Leave(photon_messages::messages::Leave {
             source: 1,
             ..Default::default()
         });
@@ -234,7 +234,7 @@ mod tests {
 
         let game_message = simulate_new_player!(2, "TestCharacter", NewCharacter);
         assert!(world.consume_message(game_message.clone()).is_some());
-        let game_message = game_messages::Message::Leave(game_messages::messages::Leave {
+        let game_message = photon_messages::Message::Leave(photon_messages::messages::Leave {
             source: 1,
             ..Default::default()
         });
@@ -242,15 +242,15 @@ mod tests {
     }
 
     #[test]
-    /// game_messages::RegenerationHealthChanged.regeneration_rate -> Events::LeaveCombat
+    /// photon_messages::RegenerationHealthChanged.regeneration_rate -> Events::LeaveCombat
     fn test_combat_leave_via_regeneration_change() {
         let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
         assert!(world.consume_message(game_message.clone()).is_some());
 
-        let game_message = game_messages::Message::RegenerationHealthChanged(
-            game_messages::messages::RegenerationHealthChanged {
+        let game_message = photon_messages::Message::RegenerationHealthChanged(
+            photon_messages::messages::RegenerationHealthChanged {
                 source: 1,
                 regeneration_rate: Some(1.0),
                 ..Default::default()
@@ -261,15 +261,15 @@ mod tests {
     }
 
     #[test]
-    /// game_messages::RegenerationHealthChanged.regeneration_rate -> Events::EnterCombat
+    /// photon_messages::RegenerationHealthChanged.regeneration_rate -> Events::EnterCombat
     fn test_combat_enter_via_regeneration_change() {
         let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
         assert!(world.consume_message(game_message.clone()).is_some());
 
-        let game_message = game_messages::Message::RegenerationHealthChanged(
-            game_messages::messages::RegenerationHealthChanged {
+        let game_message = photon_messages::Message::RegenerationHealthChanged(
+            photon_messages::messages::RegenerationHealthChanged {
                 source: 1,
                 regeneration_rate: None,
                 ..Default::default()
@@ -280,7 +280,7 @@ mod tests {
     }
 
     #[test]
-    /// game_messages::KnockedDown -> Events::EnterCombat
+    /// photon_messages::KnockedDown -> Events::EnterCombat
     fn test_combat_enter_via_knockout() {
         let mut world = World::new();
 
@@ -288,7 +288,7 @@ mod tests {
         assert!(world.consume_message(game_message.clone()).is_some());
 
         let game_message =
-            game_messages::Message::KnockedDown(game_messages::messages::KnockedDown {
+            photon_messages::Message::KnockedDown(photon_messages::messages::KnockedDown {
                 source: 1,
                 ..Default::default()
             });
@@ -297,7 +297,7 @@ mod tests {
     }
 
     #[test]
-    /// game_messages::UpdateFame -> Events::FameUpdate
+    /// photon_messages::UpdateFame -> Events::FameUpdate
     fn test_fame_update() {
         let mut world = World::new();
 
@@ -305,7 +305,7 @@ mod tests {
         assert!(world.consume_message(game_message.clone()).is_some());
 
         let game_message =
-            game_messages::Message::UpdateFame(game_messages::messages::UpdateFame {
+            photon_messages::Message::UpdateFame(photon_messages::messages::UpdateFame {
                 source: 1,
                 ..Default::default()
             });

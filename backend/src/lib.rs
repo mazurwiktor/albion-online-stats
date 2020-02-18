@@ -4,7 +4,7 @@ extern crate cpython;
 #[macro_use]
 extern crate lazy_static;
 
-pub mod game_messages;
+pub mod photon_messages;
 mod meter;
 mod game;
 mod core;

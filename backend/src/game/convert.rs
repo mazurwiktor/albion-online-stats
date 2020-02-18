@@ -1,6 +1,6 @@
 use std::convert::From;
 
-use crate::game_messages::messages;
+use crate::photon_messages::messages;
 
 use super::events;
 use super::id_cache;

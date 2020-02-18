@@ -4,7 +4,7 @@ use fake_clock::FakeClock as Instant;
 use std::time::Instant;
 
 use super::types::PlayerStatisticsVec;
-use super::game_messages::Items;
+use super::photon_messages::Items;
 
 #[derive(Debug, PartialEq)]
 pub enum CombatState {
