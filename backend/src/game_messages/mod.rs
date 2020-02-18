@@ -1,14 +1,20 @@
-include!(concat!(env!("OUT_DIR"), "/itemdb.rs"));
+//! Translates photon packets into game messages
 
-pub mod message{
-    include!(concat!(env!("OUT_DIR"), "/messages.rs"));
-}
+//! Generated messages based on assets/messages.json
+//! See build.rs 
+pub mod messages;
+/// generated from assets/item_ids.txt
+/// See build.rs 
+mod itemdb;
 
+use itemdb::ITEMDB;
 
-pub use message::Message;
-pub use message::into_game_message;
+use std::convert::From;
 
+pub use messages::Message;
+pub use messages::into_game_message;
 
+/// Player inventory items
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Items {
     pub weapon: Option<String>,
@@ -23,8 +29,8 @@ pub struct Items {
     pub food: Option<String>,
 }
 
-impl Items {
-    pub fn from(item_array: &[u32]) -> Self {
+impl From<std::vec::Vec<u32>> for Items {
+    fn from(item_array: std::vec::Vec<u32>) -> Self {
         macro_rules! extract {
             ($id:expr) => {
                 item_array

@@ -5,7 +5,7 @@ use fake_clock::FakeClock as Instant;
 #[cfg(not(test))]
 use std::time::Instant;
 
-use super::game_protocol::Items;
+use super::game_messages::Items;
 use super::traits::DamageStats;
 use super::traits::FameStats;
 

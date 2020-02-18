@@ -11,7 +11,7 @@ use packet_sniffer::UdpPacket;
 use photon_decode;
 use photon_decode::Photon;
 
-use crate::game_protocol;
+use crate::game_messages;
 use crate::meter;
 pub use meter::GameStats;
 pub use meter::LastFightStats;
@@ -23,7 +23,7 @@ pub use meter::PlayerStatisticsVec;
 pub use meter::ZoneStats;
 
 pub use meter::StatType;
-pub use crate::game_protocol::Items;
+pub use crate::game_messages::Items;
 
 pub enum InitializationError {
     NetworkInterfaceListMissing,
@@ -96,7 +96,7 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
                         let game_messages = photon
                             .decode(&packet.payload)
                             .into_iter()
-                            .filter_map(game_protocol::into_game_message)
+                            .filter_map(game_messages::into_game_message)
                             .collect();
                         register_messages(meter, &game_messages);
                     }
@@ -110,38 +110,38 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
     Ok(meter)
 }
 
-pub fn register_messages(meter: &mut meter::Meter, messages: &Vec<game_protocol::Message>) {
+pub fn register_messages(meter: &mut meter::Meter, messages: &Vec<game_messages::Message>) {
     messages
         .iter()
         .for_each(|message| register_message(meter, &message));
 }
 
-fn register_message<Events>(events: &mut Events, message: &game_protocol::Message)
+fn register_message<Events>(events: &mut Events, message: &game_messages::Message)
 where
     Events: PlayerEvents,
 {
     info!("Found message {:?}", message);
     match message {
-        game_protocol::Message::Leave(msg) => events.register_leave(msg.source).unwrap_or(()),
-        game_protocol::Message::NewCharacter(msg) => {
+        game_messages::Message::Leave(msg) => events.register_leave(msg.source).unwrap_or(()),
+        game_messages::Message::NewCharacter(msg) => {
             events.register_player(&msg.character_name, msg.source);
             events.register_item_update(msg.source, &msg.items);
         },
-        game_protocol::Message::CharacterEquipmentChanged(msg) => {
+        game_messages::Message::CharacterEquipmentChanged(msg) => {
             events.register_item_update(msg.source, &msg.items);
         },
-        game_protocol::Message::Join(msg) => {
+        game_messages::Message::Join(msg) => {
             events.register_main_player(&msg.character_name, msg.source)
         }
-        game_protocol::Message::HealthUpdate(msg) => events
+        game_messages::Message::HealthUpdate(msg) => events
             .register_damage_dealt(msg.target, msg.value)
             .unwrap_or(()),
-        game_protocol::Message::RegenerationHealthChanged(msg) => match msg.regeneration_rate {
+        game_messages::Message::RegenerationHealthChanged(msg) => match msg.regeneration_rate {
             Some(_) => events.register_combat_leave(msg.source).unwrap_or(()),
             None => events.register_combat_enter(msg.source).unwrap_or(()),
         },
-        game_protocol::Message::KnockedDown(msg) => events.register_combat_leave(msg.source).unwrap_or(()),
-        game_protocol::Message::UpdateFame(msg) => events
+        game_messages::Message::KnockedDown(msg) => events.register_combat_leave(msg.source).unwrap_or(()),
+        game_messages::Message::UpdateFame(msg) => events
             .register_fame_gain(msg.source, msg.fame as f32 / 10000.0)
             .unwrap_or(()),
     }
@@ -151,9 +151,9 @@ where
 mod tests {
     use super::*;
 
-    use game_protocol::message;
-    use game_protocol::Items;
-    use game_protocol::Message;
+    use game_messages::messages;
+    use game_messages::Items;
+    use game_messages::Message;
 
     mod helpers {
         use super::*;
@@ -185,7 +185,7 @@ mod tests {
         fn disabled(source: usize) -> Self;
     }
 
-    impl NamedTesting for message::NewCharacter {
+    impl NamedTesting for messages::NewCharacter {
         fn new_named(name: &str, source: usize) -> Self {
             Self {
                 source: source,
@@ -194,12 +194,12 @@ mod tests {
                 max_health: 10.0,
                 energy: 1.0,
                 max_energy: 1.0,
-                items: Items::from(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+                items: Items::from(vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
             }
         }
     }
 
-    impl NamedTesting for message::Join {
+    impl NamedTesting for messages::Join {
         fn new_named(name: &str, source: usize) -> Self {
             Self {
                 source: source,
@@ -212,25 +212,25 @@ mod tests {
         }
     }
 
-    impl Testing for message::NewCharacter {
+    impl Testing for messages::NewCharacter {
         fn new(source: usize) -> Self {
-            message::NewCharacter::new_named("CH1", source)
+            messages::NewCharacter::new_named("CH1", source)
         }
     }
 
-    impl Testing for message::Join {
+    impl Testing for messages::Join {
         fn new(source: usize) -> Self {
-            message::Join::new_named("MAIN_CH1", source)
+            messages::Join::new_named("MAIN_CH1", source)
         }
     }
 
-    impl Testing for message::Leave {
+    impl Testing for messages::Leave {
         fn new(source: usize) -> Self {
             Self { source: source }
         }
     }
 
-    impl Testing for message::HealthUpdate {
+    impl Testing for messages::HealthUpdate {
         fn new(source: usize) -> Self {
             Self {
                 source: 200,
@@ -240,7 +240,7 @@ mod tests {
         }
     }
 
-    impl Testing for message::UpdateFame {
+    impl Testing for messages::UpdateFame {
         fn new(source: usize) -> Self {
             Self {
                 source: source,
@@ -249,7 +249,7 @@ mod tests {
         }
     }
 
-    impl SwitchableTesting for message::RegenerationHealthChanged {
+    impl SwitchableTesting for messages::RegenerationHealthChanged {
         fn enabled(source: usize) -> Self {
             Self {
                 source: source,
@@ -280,7 +280,7 @@ mod tests {
         let mut meter = helpers::init_();
         register_message(
             &mut meter,
-            &Message::NewCharacter(message::NewCharacter::new(1)),
+            &Message::NewCharacter(messages::NewCharacter::new(1)),
         );
         assert_eq!(stats(&meter, StatType::Zone).len(), 1);
     }
@@ -290,7 +290,7 @@ mod tests {
         let mut meter = helpers::init_();
         register_message(
             &mut meter,
-            &Message::NewCharacter(message::NewCharacter::new(1)),
+            &Message::NewCharacter(messages::NewCharacter::new(1)),
         );
         assert_eq!(stats(&meter, StatType::Zone).len(), 1);
 
@@ -310,7 +310,7 @@ mod tests {
         let mut meter = helpers::init_();
         register_message(
             &mut meter,
-            &Message::NewCharacter(message::NewCharacter::new(1)),
+            &Message::NewCharacter(messages::NewCharacter::new(1)),
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -318,21 +318,21 @@ mod tests {
 
         register_message(
             &mut meter,
-            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(1)),
+            &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(1)),
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 0.0);
 
         register_message(
             &mut meter,
-            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+            &Message::HealthUpdate(messages::HealthUpdate::new(1)),
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
 
         register_message(
             &mut meter,
-            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+            &Message::HealthUpdate(messages::HealthUpdate::new(1)),
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 20.0);
@@ -343,7 +343,7 @@ mod tests {
         let mut meter = helpers::init_();
         register_message(
             &mut meter,
-            &Message::NewCharacter(message::NewCharacter::new(1)),
+            &Message::NewCharacter(messages::NewCharacter::new(1)),
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -352,11 +352,11 @@ mod tests {
 
         register_message(
             &mut meter,
-            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(1)),
+            &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(1)),
         );
         register_message(
             &mut meter,
-            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+            &Message::HealthUpdate(messages::HealthUpdate::new(1)),
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
@@ -367,7 +367,7 @@ mod tests {
         let mut meter = helpers::init_();
         register_message(
             &mut meter,
-            &Message::NewCharacter(message::NewCharacter::new(1)),
+            &Message::NewCharacter(messages::NewCharacter::new(1)),
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -376,11 +376,11 @@ mod tests {
 
         register_message(
             &mut meter,
-            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(1)),
+            &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(1)),
         );
         register_message(
             &mut meter,
-            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+            &Message::HealthUpdate(messages::HealthUpdate::new(1)),
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
@@ -395,7 +395,7 @@ mod tests {
         let mut meter = helpers::init_();
         register_message(
             &mut meter,
-            &Message::Join(message::Join::new(1)),
+            &Message::Join(messages::Join::new(1)),
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -404,19 +404,19 @@ mod tests {
 
         register_message(
             &mut meter,
-            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(1)),
+            &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(1)),
         );
         register_message(
             &mut meter,
-            &Message::HealthUpdate(message::HealthUpdate::new(1)),
+            &Message::HealthUpdate(messages::HealthUpdate::new(1)),
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
 
-        register_message(&mut meter, &Message::Leave(message::Leave::new(1)));
+        register_message(&mut meter, &Message::Leave(messages::Leave::new(1)));
         register_message(
             &mut meter,
-            &Message::Join(message::Join::new(2)),
+            &Message::Join(messages::Join::new(2)),
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -424,11 +424,11 @@ mod tests {
 
         register_message(
             &mut meter,
-            &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(2)),
+            &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(2)),
         );
         register_message(
             &mut meter,
-            &Message::HealthUpdate(message::HealthUpdate::new(2)),
+            &Message::HealthUpdate(messages::HealthUpdate::new(2)),
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
@@ -438,7 +438,7 @@ mod tests {
         ($meter:expr, $name:expr, $id:expr) => {
             register_message(
                 &mut $meter,
-                &Message::Join(message::Join::new_named($name, $id)),
+                &Message::Join(messages::Join::new_named($name, $id)),
             );
         };
     }
@@ -447,7 +447,7 @@ mod tests {
         ($meter:expr, $name:expr, $id:expr) => {
             register_message(
                 &mut $meter,
-                &Message::NewCharacter(message::NewCharacter::new_named($name, $id)),
+                &Message::NewCharacter(messages::NewCharacter::new_named($name, $id)),
             );
         };
     }
@@ -456,13 +456,13 @@ mod tests {
         ($meter:expr, $id:expr) => {
             register_message(
                 &mut $meter,
-                &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::disabled(
+                &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(
                     $id,
                 )),
             );
             register_message(
                 &mut $meter,
-                &Message::HealthUpdate(message::HealthUpdate::new($id)),
+                &Message::HealthUpdate(messages::HealthUpdate::new($id)),
             );
         };
     }
@@ -471,7 +471,7 @@ mod tests {
         ($meter:expr, $id:expr) => {
             register_message(
                 &mut $meter,
-                &Message::RegenerationHealthChanged(message::RegenerationHealthChanged::enabled(
+                &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::enabled(
                     $id,
                 )),
             );
@@ -492,7 +492,7 @@ mod tests {
         let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
 
-        register_message(&mut meter, &Message::Leave(message::Leave::new(1)));
+        register_message(&mut meter, &Message::Leave(messages::Leave::new(1)));
         let zone_stats = stats(&meter, StatType::Zone);
         assert!(zone_stats.iter().find(|s| s.player == "CH1").is_none());
     }
@@ -630,7 +630,7 @@ mod tests {
 
         register_message(
             &mut meter,
-            &Message::UpdateFame(message::UpdateFame::new(1)),
+            &Message::UpdateFame(messages::UpdateFame::new(1)),
         );
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
