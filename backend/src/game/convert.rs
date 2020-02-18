@@ -1,8 +1,9 @@
 use std::convert::From;
 
-use super::events;
 use crate::game_messages::messages;
-use crate::id_cache;
+
+use super::events;
+use super::id_cache;
 
 pub struct EventIntermediate<Msg> {
     id: id_cache::StaticId,

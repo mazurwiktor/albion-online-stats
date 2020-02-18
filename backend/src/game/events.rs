@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
-use crate::id_cache::StaticId;
 use crate::game_messages;
+
+use super::id_cache::StaticId;
 
 #[derive(Debug, PartialEq)]
 pub struct Player {
@@ -13,19 +14,19 @@ pub struct Player {
 pub struct Damage {
     pub source: StaticId,
     pub target: Option<StaticId>,
-    pub value: f32
+    pub value: f32,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Fame {
     pub source: StaticId,
-    pub value: f32
+    pub value: f32,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Items {
     pub source: StaticId,
-    pub value: game_messages::Items
+    pub value: game_messages::Items,
 }
 
 #[derive(Debug, PartialEq)]
@@ -37,5 +38,5 @@ pub enum Events {
     EnterCombat(Player),
     LeaveCombat(Player),
     UpdateFame(Fame),
-    UpdateItems(Items)
+    UpdateItems(Items),
 }

@@ -4,18 +4,20 @@
 //! Inconsistency list:
 //!     - player id is different in each zone
 
-use crate::game_events;
-use crate::game_events::convert::EventList;
 use crate::game_messages;
-use crate::id_cache;
+
+use super::events;
+use super::convert;
+use super::convert::EventList;
+use super::id_cache;
 
 #[derive(Debug, Default)]
-pub struct GameWorld {
+pub struct World {
     cache: id_cache::IdCache,
     main_player_id: Option<id_cache::StaticId>,
 }
 
-impl GameWorld {
+impl World {
     pub fn new() -> Self {
         Self {
             ..Default::default()
@@ -26,7 +28,7 @@ impl GameWorld {
     pub fn consume_message(
         &mut self,
         message: game_messages::Message,
-    ) -> Option<Vec<game_events::Events>> {
+    ) -> Option<Vec<events::Events>> {
         match message {
             game_messages::Message::NewCharacter(msg) => {
                 let mut result = vec![];
@@ -35,7 +37,7 @@ impl GameWorld {
                 let static_id = self.get_static_id(msg.source)?;
 
                 if self.main_player_id.is_none() {
-                    result.push(game_events::Events::ZoneChange)
+                    result.push(events::Events::ZoneChange)
                 }
 
                 result.append(&mut EventList::from(self.get_intermediate(static_id, msg)?).values());
@@ -49,7 +51,7 @@ impl GameWorld {
                 let static_id = self.get_static_id(msg.source)?;
 
                 if self.main_player_id.is_none() {
-                    result.push(game_events::Events::ZoneChange)
+                    result.push(events::Events::ZoneChange)
                 }
 
                 self.main_player_id = Some(static_id);
@@ -62,7 +64,7 @@ impl GameWorld {
                 let static_id = self.get_static_id(msg.source)?;
                 if let Some(main_player_id) = self.main_player_id {
                     if main_player_id == static_id {
-                        return Some(vec![game_events::Events::ZoneChange]);
+                        return Some(vec![events::Events::ZoneChange]);
                     }
                 }
                 None
@@ -103,8 +105,8 @@ impl GameWorld {
         &self,
         static_id: id_cache::StaticId,
         msg: Msg,
-    ) -> Option<game_events::convert::EventIntermediate<Msg>> {
-        Some(game_events::convert::EventIntermediate::new(
+    ) -> Option<convert::EventIntermediate<Msg>> {
+        Some(convert::EventIntermediate::new(
             static_id,
             self.cache.get_name(static_id)?,
             msg,
@@ -136,9 +138,9 @@ mod tests {
     }
 
     #[test]
-    /// game_messages::NewCharacter -> game_events::Events::PlayerAppeared
+    /// game_messages::NewCharacter -> events::Events::PlayerAppeared
     fn test_player_appeared() {
-        let mut world = GameWorld::new();
+        let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", NewCharacter);
 
@@ -152,7 +154,7 @@ mod tests {
     #[test]
     /// game_messages::Join -> Events::PlayerAppeared
     fn test_main_player_appeared() {
-        let mut world = GameWorld::new();
+        let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
 
@@ -166,7 +168,7 @@ mod tests {
     #[test]
     /// game_messages::HealthUpdate -> Events::DamageDone | Events::HealthReceived
     fn test_damage_done() {
-        let mut world = GameWorld::new();
+        let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
         assert!(world.consume_message(game_message.clone()).is_some());
@@ -206,7 +208,7 @@ mod tests {
     #[test]
     /// game_messages::Leave -> Events::ZoneChange
     fn test_zone_change() {
-        let mut world = GameWorld::new();
+        let mut world = World::new();
 
         let game_message = game_messages::Message::Leave(game_messages::messages::Leave {
             source: 1,
@@ -242,7 +244,7 @@ mod tests {
     #[test]
     /// game_messages::RegenerationHealthChanged.regeneration_rate -> Events::LeaveCombat
     fn test_combat_leave_via_regeneration_change() {
-        let mut world = GameWorld::new();
+        let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
         assert!(world.consume_message(game_message.clone()).is_some());
@@ -261,7 +263,7 @@ mod tests {
     #[test]
     /// game_messages::RegenerationHealthChanged.regeneration_rate -> Events::EnterCombat
     fn test_combat_enter_via_regeneration_change() {
-        let mut world = GameWorld::new();
+        let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
         assert!(world.consume_message(game_message.clone()).is_some());
@@ -280,7 +282,7 @@ mod tests {
     #[test]
     /// game_messages::KnockedDown -> Events::EnterCombat
     fn test_combat_enter_via_knockout() {
-        let mut world = GameWorld::new();
+        let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
         assert!(world.consume_message(game_message.clone()).is_some());
@@ -297,7 +299,7 @@ mod tests {
     #[test]
     /// game_messages::UpdateFame -> Events::FameUpdate
     fn test_fame_update() {
-        let mut world = GameWorld::new();
+        let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
         assert!(world.consume_message(game_message.clone()).is_some());
