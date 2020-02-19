@@ -10,6 +10,7 @@ mod traits;
 mod types;
 mod session;
 
+use crate::game::Events;
 use player::Player;
 
 pub use super::photon_messages;
@@ -44,6 +45,68 @@ impl Meter {
 
     pub fn configure(&mut self, config: MeterConfig) {
         self.config = config;
+    }
+
+    pub fn consume(&mut self, event: Events) -> Option<()> {
+        match event {
+            Events::PlayerAppeared(e) => {
+                let id = u32::from(e.id) as usize;
+                self.register_player(&e.name, id);
+
+                if let Some(items) = self.unconsumed_items.get(&id) {
+                    let i = items.clone();
+                    self.register_item_update(id, &i);
+                    self.unconsumed_items.remove(&id);
+                }
+            },
+            Events::ZoneChange => {
+                self.new_session();
+            },
+            Events::UpdateItems(e) => {
+                let player_id = u32::from(e.source) as usize;
+                let items = e.value;
+                let mut consumed = false;
+                for player in self.get_item_carriers_in_zone(player_id).unwrap_or(vec![]) {
+                    player.items_update(&items);
+                    consumed = true;
+                }
+        
+                if !consumed {
+                    info!("Storing not consumed items for player id: {}", player_id);
+                    self.unconsumed_items.insert(player_id, items.clone());
+                }
+            }
+            Events::DamageDone(e) => {
+                let player_id = u32::from(e.source) as usize;
+                for player in self.get_damage_dealers_in_zone(player_id)? {
+                    player.register_damage_dealt(f32::abs(e.value));
+                }
+            }
+            Events::EnterCombat(e) => {
+                let player_id = u32::from(e.id) as usize;
+                if self.combat_state() == CombatState::OutOfCombat {
+                    self.last_fight_session = Session::from(&self.last_fight_session);
+                }
+                for player in self.get_damage_dealers_in_zone(player_id)? {
+                    player.enter_combat();
+                }
+            }
+            Events::LeaveCombat(e) => {
+                let player_id = u32::from(e.id) as usize;
+                for player in self.get_damage_dealers_in_zone(player_id)? {
+                    player.leave_combat();
+                }
+            }
+            Events::UpdateFame(e) => {
+                let player_id = u32::from(e.source) as usize;
+                for player in self.get_fame_gatherers_in_zone(player_id)? {
+                    player.register_fame_gain(e.value);
+                }
+            }
+            _ => {}
+        }
+
+        Some(())
     }
 
     fn stats_filter(&self, _player: &(&String, &Player)) -> bool {
@@ -127,12 +190,7 @@ impl PlayerEvents for Meter {
         &mut self,
         player_id: usize,
     ) -> Option<Vec<&mut dyn FameGatherer>> {
-        let main_player_id = self.main_player_id?;
         let (zone, last_fight) = self.sessions_mut()?;
-        if player_id != main_player_id {
-            return None;
-        }
-
         let las_fight_session_player = last_fight.get_player_by_id(player_id)?;
         let zone_player = zone.get_player_by_id(player_id)?;
         Some(vec![zone_player, las_fight_session_player])
