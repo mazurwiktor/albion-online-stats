@@ -25,7 +25,7 @@ impl World {
     }
 
     /// Transforms inconsistent game message into corresponding list of game events
-    pub fn consume_message(
+    pub fn transform(
         &mut self,
         message: photon_messages::Message,
     ) -> Option<Vec<events::Events>> {
@@ -144,9 +144,9 @@ mod tests {
 
         let game_message = simulate_new_player!(1, "TestCharacter", NewCharacter);
 
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
         assert_contains!(
-            world.consume_message(game_message.clone()),
+            world.transform(game_message.clone()),
             "PlayerAppeared"
         );
     }
@@ -158,9 +158,9 @@ mod tests {
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
 
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
         assert_contains!(
-            world.consume_message(game_message.clone()),
+            world.transform(game_message.clone()),
             "PlayerAppeared"
         );
     }
@@ -171,9 +171,9 @@ mod tests {
         let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
         assert_contains!(
-            world.consume_message(game_message.clone()),
+            world.transform(game_message.clone()),
             "PlayerAppeared"
         );
 
@@ -185,9 +185,9 @@ mod tests {
                 ..Default::default()
             });
 
-        assert!(world.consume_message(game_message.clone()).is_some());
-        assert_contains!(world.consume_message(game_message.clone()), "DamageDone");
-        assert_contains!(world.consume_message(game_message.clone()), "-666");
+        assert!(world.transform(game_message.clone()).is_some());
+        assert_contains!(world.transform(game_message.clone()), "DamageDone");
+        assert_contains!(world.transform(game_message.clone()), "-666");
 
         let target = 1;
         let game_message =
@@ -197,12 +197,12 @@ mod tests {
                 ..Default::default()
             });
 
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
         assert_contains!(
-            world.consume_message(game_message.clone()),
+            world.transform(game_message.clone()),
             "HealthReceived"
         );
-        assert_contains!(world.consume_message(game_message.clone()), "666");
+        assert_contains!(world.transform(game_message.clone()), "666");
     }
 
     #[test]
@@ -215,13 +215,13 @@ mod tests {
             ..Default::default()
         });
 
-        assert!(world.consume_message(game_message.clone()).is_none());
+        assert!(world.transform(game_message.clone()).is_none());
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
 
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
         assert_contains!(
-            world.consume_message(game_message.clone()),
+            world.transform(game_message.clone()),
             "PlayerAppeared"
         );
 
@@ -230,15 +230,15 @@ mod tests {
             ..Default::default()
         });
 
-        assert_contains!(world.consume_message(game_message.clone()), "ZoneChange");
+        assert_contains!(world.transform(game_message.clone()), "ZoneChange");
 
         let game_message = simulate_new_player!(2, "TestCharacter", NewCharacter);
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
         let game_message = photon_messages::Message::Leave(photon_messages::messages::Leave {
             source: 1,
             ..Default::default()
         });
-        assert!(world.consume_message(game_message.clone()).is_none());
+        assert!(world.transform(game_message.clone()).is_none());
     }
 
     #[test]
@@ -247,7 +247,7 @@ mod tests {
         let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
 
         let game_message = photon_messages::Message::RegenerationHealthChanged(
             photon_messages::messages::RegenerationHealthChanged {
@@ -257,7 +257,7 @@ mod tests {
             },
         );
 
-        assert_contains!(world.consume_message(game_message.clone()), "LeaveCombat");
+        assert_contains!(world.transform(game_message.clone()), "LeaveCombat");
     }
 
     #[test]
@@ -266,7 +266,7 @@ mod tests {
         let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
 
         let game_message = photon_messages::Message::RegenerationHealthChanged(
             photon_messages::messages::RegenerationHealthChanged {
@@ -276,7 +276,7 @@ mod tests {
             },
         );
 
-        assert_contains!(world.consume_message(game_message.clone()), "EnterCombat");
+        assert_contains!(world.transform(game_message.clone()), "EnterCombat");
     }
 
     #[test]
@@ -285,7 +285,7 @@ mod tests {
         let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
 
         let game_message =
             photon_messages::Message::KnockedDown(photon_messages::messages::KnockedDown {
@@ -293,7 +293,7 @@ mod tests {
                 ..Default::default()
             });
 
-        assert_contains!(world.consume_message(game_message.clone()), "LeaveCombat");
+        assert_contains!(world.transform(game_message.clone()), "LeaveCombat");
     }
 
     #[test]
@@ -302,7 +302,7 @@ mod tests {
         let mut world = World::new();
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
-        assert!(world.consume_message(game_message.clone()).is_some());
+        assert!(world.transform(game_message.clone()).is_some());
 
         let game_message =
             photon_messages::Message::UpdateFame(photon_messages::messages::UpdateFame {
@@ -310,6 +310,6 @@ mod tests {
                 ..Default::default()
             });
 
-        assert_contains!(world.consume_message(game_message.clone()), "UpdateFame");
+        assert_contains!(world.transform(game_message.clone()), "UpdateFame");
     }
 }
