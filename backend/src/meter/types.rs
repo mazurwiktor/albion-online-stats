@@ -24,7 +24,7 @@ pub struct PlayerStatistics {
     pub main_player_stats: bool,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct PlayerStatisticsVec {
     _vec: Vec<PlayerStatistics>,
 }

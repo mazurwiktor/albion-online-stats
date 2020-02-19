@@ -17,7 +17,6 @@ pub use meter::GameStats;
 pub use meter::LastFightStats;
 pub use meter::MeterConfig;
 pub use meter::OverallStats;
-pub use meter::PlayerEvents;
 pub use meter::PlayerStatistics;
 pub use meter::PlayerStatisticsVec;
 pub use meter::ZoneStats;
