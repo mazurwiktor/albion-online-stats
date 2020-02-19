@@ -80,6 +80,20 @@ mod tests {
     }
 
     #[test]
+    fn test_if_id_is_unique_for_a_player() {
+        let mut cache = IdCache::new();
+
+        cache.save(DynamicId::from(1), "test");
+        assert_eq!(cache.get_static_id(DynamicId::from(1)), Some(StaticId(0)));
+
+        cache.save(DynamicId::from(2), "test2");
+        assert_eq!(cache.get_static_id(DynamicId::from(2)), Some(StaticId(1)));
+
+        cache.save(DynamicId::from(12345), "test3");
+        assert_eq!(cache.get_static_id(DynamicId::from(12345)), Some(StaticId(2)));
+    }
+
+    #[test]
     fn test_finding_player_name() {
         let mut cache = IdCache::new();
 
@@ -97,6 +111,10 @@ mod tests {
         assert_eq!(
             cache.get_name(StaticId::from(1)),
             Some(PlayerName("test2".to_owned()))
+        );
+        assert_eq!(
+            cache.get_name(StaticId::from(0)),
+            Some(PlayerName("test".to_owned()))
         );
     }
 }
