@@ -10,7 +10,8 @@ use packet_sniffer::UdpPacket;
 
 use photon_decode;
 use photon_decode::Photon;
-
+use crate::game;
+use crate::game::{Events};
 use crate::photon_messages;
 use crate::meter;
 pub use meter::GameStats;
@@ -78,7 +79,7 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
 
     let meter = Arc::new(Mutex::new(meter));
     let cloned_meter = meter.clone();
-
+    let mut world = game::World::new();
     if let Ok(interfaces) = packet_sniffer::network_interfaces() {
         thread::spawn(move || {
             let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = channel();
@@ -98,7 +99,7 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
                             .into_iter()
                             .filter_map(photon_messages::into_game_message)
                             .collect();
-                        register_messages(meter, &photon_messages);
+                        register_messages(meter, &photon_messages, &mut world);
                     }
                 }
             }
@@ -110,17 +111,16 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
     Ok(meter)
 }
 
-pub fn register_messages(meter: &mut meter::Meter, messages: &Vec<photon_messages::Message>) {
+pub fn register_messages(meter: &mut meter::Meter, messages: &Vec<photon_messages::Message>, world: &mut game::World) {
     messages
         .iter()
-        .for_each(|message| register_message(meter, &message));
+        .for_each(|message| register_message(meter, &message, world));
 }
 
-fn register_message<Events>(events: &mut Events, message: &photon_messages::Message)
-where
-    Events: PlayerEvents,
+fn register_message(events: &mut meter::Meter, message: &photon_messages::Message, world: &mut game::World)
 {
     info!("Found message {:?}", message);
+    // let events = world.transform(message);
     match message {
         photon_messages::Message::Leave(msg) => events.register_leave(msg.source).unwrap_or(()),
         photon_messages::Message::NewCharacter(msg) => {
@@ -278,9 +278,11 @@ mod tests {
     #[test]
     fn test_new_player_appears() {
         let mut meter = helpers::init_();
+        let mut world = game::World::new();
         register_message(
             &mut meter,
             &Message::NewCharacter(messages::NewCharacter::new(1)),
+            &mut world,
         );
         assert_eq!(stats(&meter, StatType::Zone).len(), 1);
     }
@@ -288,9 +290,11 @@ mod tests {
     #[test]
     fn test_new_player_stats() {
         let mut meter = helpers::init_();
+        let mut world = game::World::new();
         register_message(
             &mut meter,
             &Message::NewCharacter(messages::NewCharacter::new(1)),
+            &mut world,
         );
         assert_eq!(stats(&meter, StatType::Zone).len(), 1);
 
@@ -308,9 +312,11 @@ mod tests {
     #[test]
     fn test_damage_aggregation() {
         let mut meter = helpers::init_();
+        let mut world = game::World::new();
         register_message(
             &mut meter,
             &Message::NewCharacter(messages::NewCharacter::new(1)),
+            &mut world,
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -319,6 +325,7 @@ mod tests {
         register_message(
             &mut meter,
             &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(1)),
+            &mut world,
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 0.0);
@@ -326,6 +333,7 @@ mod tests {
         register_message(
             &mut meter,
             &Message::HealthUpdate(messages::HealthUpdate::new(1)),
+            &mut world,
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
@@ -333,6 +341,7 @@ mod tests {
         register_message(
             &mut meter,
             &Message::HealthUpdate(messages::HealthUpdate::new(1)),
+            &mut world,
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 20.0);
@@ -341,9 +350,11 @@ mod tests {
     #[test]
     fn test_new_player_damage() {
         let mut meter = helpers::init_();
+        let mut world = game::World::new();
         register_message(
             &mut meter,
             &Message::NewCharacter(messages::NewCharacter::new(1)),
+            &mut world,
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -353,10 +364,12 @@ mod tests {
         register_message(
             &mut meter,
             &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(1)),
+            &mut world,
         );
         register_message(
             &mut meter,
             &Message::HealthUpdate(messages::HealthUpdate::new(1)),
+            &mut world,
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
@@ -365,9 +378,11 @@ mod tests {
     #[test]
     fn test_new_player_damage_reset() {
         let mut meter = helpers::init_();
+        let mut world = game::World::new();
         register_message(
             &mut meter,
             &Message::NewCharacter(messages::NewCharacter::new(1)),
+            &mut world,
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -377,10 +392,12 @@ mod tests {
         register_message(
             &mut meter,
             &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(1)),
+            &mut world
         );
         register_message(
             &mut meter,
             &Message::HealthUpdate(messages::HealthUpdate::new(1)),
+            &mut world,
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
@@ -393,9 +410,11 @@ mod tests {
     #[test]
     fn test_zone_detection() {
         let mut meter = helpers::init_();
+        let mut world = game::World::new();
         register_message(
             &mut meter,
             &Message::Join(messages::Join::new(1)),
+            &mut world,
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -405,18 +424,21 @@ mod tests {
         register_message(
             &mut meter,
             &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(1)),
+            &mut world,
         );
         register_message(
             &mut meter,
             &Message::HealthUpdate(messages::HealthUpdate::new(1)),
+            &mut world,
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
 
-        register_message(&mut meter, &Message::Leave(messages::Leave::new(1)));
+        register_message(&mut meter, &Message::Leave(messages::Leave::new(1)), &mut world);
         register_message(
             &mut meter,
             &Message::Join(messages::Join::new(2)),
+            &mut world,
         );
 
         let zone_stats = stats(&meter, StatType::Zone);
@@ -425,55 +447,62 @@ mod tests {
         register_message(
             &mut meter,
             &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(2)),
+            &mut world,
         );
         register_message(
             &mut meter,
             &Message::HealthUpdate(messages::HealthUpdate::new(2)),
+            &mut world,
         );
         let zone_stats = stats(&meter, StatType::Zone);
         assert_eq!(zone_stats[0].damage, 10.0);
     }
 
     macro_rules! main_character_enters {
-        ($meter:expr, $name:expr, $id:expr) => {
+        ($meter:expr, $world:expr, $name:expr, $id:expr) => {
             register_message(
                 &mut $meter,
                 &Message::Join(messages::Join::new_named($name, $id)),
+                &mut $world,
             );
         };
     }
 
     macro_rules! character_enters {
-        ($meter:expr, $name:expr, $id:expr) => {
+        ($meter:expr, $world:expr, $name:expr, $id:expr) => {
             register_message(
                 &mut $meter,
                 &Message::NewCharacter(messages::NewCharacter::new_named($name, $id)),
+                &mut $world,
             );
         };
     }
 
     macro_rules! attack {
-        ($meter:expr, $id:expr) => {
+        ($meter:expr, $world:expr, $id:expr) => {
             register_message(
                 &mut $meter,
                 &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::disabled(
                     $id,
                 )),
+                &mut $world,
             );
             register_message(
                 &mut $meter,
                 &Message::HealthUpdate(messages::HealthUpdate::new($id)),
+                &mut $world,
             );
         };
     }
 
     macro_rules! combat_leave {
-        ($meter:expr, $id:expr) => {
+        ($meter:expr, $world:expr, $id:expr) => {
             register_message(
                 &mut $meter,
                 &Message::RegenerationHealthChanged(messages::RegenerationHealthChanged::enabled(
                     $id,
                 )),
+                &mut $world,
             );
         };
     }
@@ -481,18 +510,20 @@ mod tests {
     #[test]
     fn test_two_players_in_the_zone() {
         let mut meter = helpers::init_();
-        main_character_enters!(meter, "MAIN_CH1", 1);
+        let mut world = game::World::new();
+        let mut world = game::World::new();
+        main_character_enters!(meter, world, "MAIN_CH1", 1);
 
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
 
-        character_enters!(meter, "CH1", 2);
+        character_enters!(meter, world, "CH1", 2);
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
 
-        register_message(&mut meter, &Message::Leave(messages::Leave::new(1)));
+        register_message(&mut meter, &Message::Leave(messages::Leave::new(1)), &mut world);
         let zone_stats = stats(&meter, StatType::Zone);
         assert!(zone_stats.iter().find(|s| s.player == "CH1").is_none());
     }
@@ -500,24 +531,25 @@ mod tests {
     #[test]
     fn test_overall_damage() {
         let mut meter = helpers::init_();
-        main_character_enters!(meter, "MAIN_CH1", 1);
+        let mut world = game::World::new();
+        main_character_enters!(meter, world, "MAIN_CH1", 1);
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
 
-        attack!(meter, 1);
+        attack!(meter, world, 1);
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 10.0);
 
-        character_enters!(meter, "CH1", 2);
+        character_enters!(meter, world, "CH1", 2);
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 10.0);
 
-        attack!(meter, 1);
+        attack!(meter, world, 1);
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
@@ -528,12 +560,13 @@ mod tests {
     #[test]
     fn test_last_fight_damage() {
         let mut meter = helpers::init_();
-        main_character_enters!(meter, "MAIN_CH1", 1);
+        let mut world = game::World::new();
+        main_character_enters!(meter, world, "MAIN_CH1", 1);
         let zone_stats = stats(&meter, StatType::LastFight);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
 
-        attack!(meter, 1);
+        attack!(meter, world, 1);
         let zone_stats = stats(&meter, StatType::LastFight);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 10.0);
@@ -545,46 +578,38 @@ mod tests {
         // damage should be 0 when all players were out of combat and some player attacks
 
         let mut meter = helpers::init_();
-        main_character_enters!(meter, "MAIN_CH1", 1);
+        let mut world = game::World::new();
+        main_character_enters!(meter, world, "MAIN_CH1", 1);
         let zone_stats = stats(&meter, StatType::LastFight);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
 
-        attack!(meter, 1);
+        attack!(meter, world, 1);
         let zone_stats = stats(&meter, StatType::LastFight);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 10.0);
 
-        character_enters!(meter, "CH1", 2);
+        character_enters!(meter, world, "CH1", 2);
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
         assert_eq!(player_stats.damage, 0.0);
 
-        attack!(meter, 2);
+        attack!(meter, world, 2);
         let zone_stats = stats(&meter, StatType::LastFight);
         let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
         assert_eq!(player_stats.damage, 10.0);
 
-        character_enters!(meter, "CH2", 3);
+        character_enters!(meter, world, "CH2", 3);
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
         assert_eq!(player_stats.damage, 0.0);
 
-        attack!(meter, 3);
+        attack!(meter, world, 3);
         let zone_stats = stats(&meter, StatType::LastFight);
         let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
         assert_eq!(player_stats.damage, 10.0);
 
-        combat_leave!(meter, 1);
-        let zone_stats = stats(&meter, StatType::LastFight);
-        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
-        assert_eq!(player_stats.damage, 10.0);
-        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
-        assert_eq!(player_stats.damage, 10.0);
-        let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
-        assert_eq!(player_stats.damage, 10.0);
-
-        combat_leave!(meter, 2);
+        combat_leave!(meter, world, 1);
         let zone_stats = stats(&meter, StatType::LastFight);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 10.0);
@@ -593,7 +618,7 @@ mod tests {
         let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
         assert_eq!(player_stats.damage, 10.0);
 
-        combat_leave!(meter, 3);
+        combat_leave!(meter, world, 2);
         let zone_stats = stats(&meter, StatType::LastFight);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 10.0);
@@ -602,9 +627,18 @@ mod tests {
         let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
         assert_eq!(player_stats.damage, 10.0);
 
-        attack!(meter, 1);
+        combat_leave!(meter, world, 3);
+        let zone_stats = stats(&meter, StatType::LastFight);
+        let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH1").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
+        let player_stats = zone_stats.iter().find(|s| s.player == "CH2").unwrap();
+        assert_eq!(player_stats.damage, 10.0);
 
-        combat_leave!(meter, 3);
+        attack!(meter, world, 1);
+
+        combat_leave!(meter, world, 3);
         let zone_stats = stats(&meter, StatType::LastFight);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
         assert_eq!(player_stats.damage, 10.0);
@@ -617,7 +651,8 @@ mod tests {
     #[test]
     fn test_fame_statistics() {
         let mut meter = helpers::init_();
-        main_character_enters!(meter, "MAIN_CH1", 1);
+        let mut world = game::World::new();
+        main_character_enters!(meter, world, "MAIN_CH1", 1);
 
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
@@ -631,6 +666,7 @@ mod tests {
         register_message(
             &mut meter,
             &Message::UpdateFame(messages::UpdateFame::new(1)),
+            &mut world,
         );
         let zone_stats = stats(&meter, StatType::Zone);
         let player_stats = zone_stats.iter().find(|s| s.player == "MAIN_CH1").unwrap();
