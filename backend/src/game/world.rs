@@ -46,11 +46,12 @@ impl World {
                 self.assign_dynamic_id(msg.source, &msg.character_name);
                 let static_id = self.get_static_id(msg.source)?;
 
-                result.push(self.get_intermediate(static_id, msg)?.into());
-
                 if self.main_player_id.is_none() {
                     result.push(events::Events::ZoneChange)
                 }
+
+                result.push(self.get_intermediate(static_id, msg)?.into());
+
 
                 self.main_player_id = Some(static_id);
 
