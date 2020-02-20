@@ -44,9 +44,19 @@ impl Meter {
 
     pub fn consume(&mut self, event: Events) -> Option<()> {
         match event {
+            Events::MainPlayerAppeared(e) => {
+                let id = u32::from(e.id) as usize;
+                self.register_player(&e.name, id, true);
+
+                if let Some(items) = self.unconsumed_items.get(&id) {
+                    let i = items.clone();
+                    self.register_item_update(id, &i);
+                    self.unconsumed_items.remove(&id);
+                }
+            },
             Events::PlayerAppeared(e) => {
                 let id = u32::from(e.id) as usize;
-                self.register_player(&e.name, id);
+                self.register_player(&e.name, id, false);
 
                 if let Some(items) = self.unconsumed_items.get(&id) {
                     let i = items.clone();
@@ -114,7 +124,7 @@ impl Meter {
         Some(vec![zone_player, las_fight_session_player])
     }
 
-    fn register_player(&mut self, name: &str, id: usize) {
+    fn register_player(&mut self, name: &str, id: usize, main: bool) {
         if self.zone_session.is_none() {
             info!(
                 "New player ({}) registered without session, creating new session",
@@ -128,7 +138,7 @@ impl Meter {
             .unwrap_or(vec![])
             .is_empty()
         {
-            self.add_player(name, id, false);
+            self.add_player(name, id, main);
         }
     }
 

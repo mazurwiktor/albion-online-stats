@@ -65,7 +65,7 @@ impl From<EventIntermediate<messages::NewCharacter>> for EventList {
 
 impl From<EventIntermediate<messages::Join>> for events::Events {
     fn from(intermediate: EventIntermediate<messages::Join>) -> Self {
-        Self::PlayerAppeared(events::Player {
+        Self::MainPlayerAppeared(events::Player {
             id: intermediate.id,
             name: intermediate.message.character_name,
         })

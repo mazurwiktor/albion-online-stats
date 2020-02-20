@@ -31,6 +31,7 @@ pub struct Items {
 
 #[derive(Debug, PartialEq)]
 pub enum Events {
+    MainPlayerAppeared(Player),
     PlayerAppeared(Player),
     DamageDone(Damage),
     HealthReceived(Damage),
