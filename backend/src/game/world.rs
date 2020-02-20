@@ -10,11 +10,12 @@ use super::events;
 use super::convert;
 use super::convert::EventList;
 use super::id_cache;
+use super::player::{StaticId, DynamicId};
 
 #[derive(Debug, Default)]
 pub struct World {
     cache: id_cache::IdCache,
-    main_player_id: Option<id_cache::StaticId>,
+    main_player_id: Option<StaticId>,
 }
 
 impl World {
@@ -89,18 +90,18 @@ impl World {
         }
     }
     fn assign_dynamic_id(&mut self, id: usize, name: &str) {
-        let dynamic_id = id_cache::DynamicId::from(id as u32);
+        let dynamic_id = DynamicId::from(id as u32);
         self.cache.save(dynamic_id, name);
     }
 
-    fn get_static_id(&self, id: usize) -> Option<id_cache::StaticId> {
-        let dynamic_id = id_cache::DynamicId::from(id as u32);
-        self.cache.get_static_id(dynamic_id)
+    fn get_static_id(&self, id: usize) -> Option<StaticId> {
+        let dynamic_id = DynamicId::from(id as u32);
+        self.cache.get_static_id(dynamic_id)  // queue message if static id isn't known
     }
 
     fn get_intermediate<Msg>(
         &self,
-        static_id: id_cache::StaticId,
+        static_id: StaticId,
         msg: Msg,
     ) -> Option<convert::EventIntermediate<Msg>> {
         Some(convert::EventIntermediate::new(

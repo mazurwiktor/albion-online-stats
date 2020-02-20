@@ -3,18 +3,18 @@ use std::convert::From;
 use crate::photon_messages::messages;
 
 use super::events;
-use super::id_cache;
+use super::player::{StaticId, PlayerName};
 
 pub struct EventIntermediate<Msg> {
-    id: id_cache::StaticId,
-    name: id_cache::PlayerName,
+    id: StaticId,
+    name: PlayerName,
     message: Msg,
 }
 
 impl<Msg> EventIntermediate<Msg> {
     pub fn new(
-        id: id_cache::StaticId,
-        name: id_cache::PlayerName,
+        id: StaticId,
+        name: PlayerName,
         message: Msg,
     ) -> Self {
         Self {

@@ -1,18 +1,10 @@
 #![allow(dead_code)]
 
 use bimap::BiMap;
-use derive_more::{From, Into};
 
 use std::collections::HashMap;
 
-#[derive(Copy, Clone, Debug, PartialEq, From, Into, Default)]
-pub struct DynamicId(u32);
-
-#[derive(Copy, Clone, Debug, PartialEq, From, Into)]
-pub struct StaticId(u32);
-
-#[derive(Debug, PartialEq, From, Into, Default)]
-pub struct PlayerName(String);
+use super::player::{StaticId, DynamicId, PlayerName};
 
 #[derive(Debug, PartialEq, Default)]
 pub struct IdCache {
@@ -33,15 +25,15 @@ impl IdCache {
             let id = self.last_id;
             self.last_id += 1;
             self.name_to_static_id.insert(name.to_owned(), id);
-            self.dyn_id_to_name.insert(dynamic_id.0, name.to_owned());
+            self.dyn_id_to_name.insert(dynamic_id.into(), name.to_owned());
         }
 
-        self.dyn_id_to_name.insert(dynamic_id.0, name.to_owned());
+        self.dyn_id_to_name.insert(dynamic_id.into(), name.to_owned());
     }
 
     pub fn get_static_id(&self, dynamic_id: DynamicId) -> Option<StaticId> {
         self.dyn_id_to_name
-            .get_by_left(&dynamic_id.0)
+            .get_by_left(&dynamic_id.into())
             .map(|name| {
                 self.name_to_static_id
                     .get(name)
@@ -54,7 +46,7 @@ impl IdCache {
     pub fn get_name(&self, static_id: StaticId) -> Option<PlayerName> {
         self.name_to_static_id
             .iter()
-            .find(|(_k, v)| **v == static_id.0)
+            .find(|(_k, v)| **v == StaticId::into(static_id))
             .map(|v| v.0)
             .map(|v| v.clone().into())
     }
@@ -72,11 +64,11 @@ mod tests {
 
         cache.save(DynamicId::from(1), "test");
         assert!(cache.get_static_id(DynamicId::from(1)).is_some());
-        assert_eq!(cache.get_static_id(DynamicId::from(1)), Some(StaticId(0)));
+        assert_eq!(cache.get_static_id(DynamicId::from(1)), Some(StaticId::from(0)));
 
         cache.save(DynamicId::from(2), "test");
         assert!(cache.get_static_id(DynamicId::from(1)).is_none());
-        assert_eq!(cache.get_static_id(DynamicId::from(2)), Some(StaticId(0)));
+        assert_eq!(cache.get_static_id(DynamicId::from(2)), Some(StaticId::from(0)));
     }
 
     #[test]
@@ -84,13 +76,13 @@ mod tests {
         let mut cache = IdCache::new();
 
         cache.save(DynamicId::from(1), "test");
-        assert_eq!(cache.get_static_id(DynamicId::from(1)), Some(StaticId(0)));
+        assert_eq!(cache.get_static_id(DynamicId::from(1)), Some(StaticId::from(0)));
 
         cache.save(DynamicId::from(2), "test2");
-        assert_eq!(cache.get_static_id(DynamicId::from(2)), Some(StaticId(1)));
+        assert_eq!(cache.get_static_id(DynamicId::from(2)), Some(StaticId::from(1)));
 
         cache.save(DynamicId::from(12345), "test3");
-        assert_eq!(cache.get_static_id(DynamicId::from(12345)), Some(StaticId(2)));
+        assert_eq!(cache.get_static_id(DynamicId::from(12345)), Some(StaticId::from(2)));
     }
 
     #[test]
@@ -100,21 +92,21 @@ mod tests {
         assert!(cache.get_name(StaticId::from(1)).is_none());
 
         cache.save(DynamicId::from(1), "test");
-        assert_eq!(cache.get_static_id(DynamicId::from(1)), Some(StaticId(0)));
+        assert_eq!(cache.get_static_id(DynamicId::from(1)), Some(StaticId::from(0)));
         assert_eq!(
             cache.get_name(StaticId::from(0)),
-            Some(PlayerName("test".to_owned()))
+            Some(PlayerName::from("test".to_owned()))
         );
 
         cache.save(DynamicId::from(2), "test2");
-        assert_eq!(cache.get_static_id(DynamicId::from(2)), Some(StaticId(1)));
+        assert_eq!(cache.get_static_id(DynamicId::from(2)), Some(StaticId::from(1)));
         assert_eq!(
             cache.get_name(StaticId::from(1)),
-            Some(PlayerName("test2".to_owned()))
+            Some(PlayerName::from("test2".to_owned()))
         );
         assert_eq!(
             cache.get_name(StaticId::from(0)),
-            Some(PlayerName("test".to_owned()))
+            Some(PlayerName::from("test".to_owned()))
         );
     }
 }

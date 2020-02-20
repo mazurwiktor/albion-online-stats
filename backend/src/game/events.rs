@@ -2,7 +2,7 @@
 
 use crate::photon_messages;
 
-use super::id_cache::StaticId;
+use super::player::StaticId;
 
 #[derive(Debug, PartialEq)]
 pub struct Player {
