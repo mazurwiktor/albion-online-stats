@@ -11,10 +11,12 @@ use super::convert;
 use super::convert::EventList;
 use super::id_cache;
 use super::player::{StaticId, DynamicId};
+use super::unconsumed_messages::UnconsumedMessages;
 
 #[derive(Debug, Default)]
 pub struct World {
     cache: id_cache::IdCache,
+    unconsumed_messages: UnconsumedMessages,
     main_player_id: Option<StaticId>,
 }
 
@@ -33,18 +35,26 @@ impl World {
         match message {
             photon_messages::Message::NewCharacter(msg) => {
                 let mut result = vec![];
+                let dynamic_id = DynamicId::from(msg.source as u32);
+                self.assign_dynamic_id(dynamic_id, &msg.character_name);
 
-                self.assign_dynamic_id(msg.source, &msg.character_name);
                 let static_id = self.get_static_id(msg.source)?;
 
                 result.append(&mut EventList::from(self.get_intermediate(static_id, msg)?).values());
+
+                if let Some(messages) = self.unconsumed_messages.get_for_id(dynamic_id) {
+                    for message in messages {
+                        result.append(&mut self.transform(message).unwrap_or(vec![]));
+                    }
+                }
 
                 Some(result)
             }
             photon_messages::Message::Join(msg) => {
                 let mut result = vec![];
-                
-                self.assign_dynamic_id(msg.source, &msg.character_name);
+                let dynamic_id = DynamicId::from(msg.source as u32);
+
+                self.assign_dynamic_id(dynamic_id, &msg.character_name);
                 let static_id = self.get_static_id(msg.source)?;
 
                 if self.main_player_id.is_none() {
@@ -55,6 +65,12 @@ impl World {
 
 
                 self.main_player_id = Some(static_id);
+
+                if let Some(messages) = self.unconsumed_messages.get_for_id(dynamic_id) {
+                    for message in messages {
+                        result.append(&mut self.transform(message).unwrap_or(vec![]));
+                    }
+                }
 
                 Some(result)
             }
@@ -84,14 +100,18 @@ impl World {
                 Some(vec![self.get_intermediate(static_id, msg)?.into()])
             }
             photon_messages::Message::CharacterEquipmentChanged(msg) => {
-                let static_id = self.get_static_id(msg.source)?;
-                Some(vec![self.get_intermediate(static_id, msg)?.into()])
+                if let Some(static_id) = self.get_static_id(msg.source) {
+                    return Some(vec![self.get_intermediate(static_id, msg)?.into()]);
+                }
+                let id = DynamicId::from(msg.source as u32);
+                self.unconsumed_messages.add(
+                    photon_messages::messages::Message::CharacterEquipmentChanged(msg), id);
+                None
             }
         }
     }
-    fn assign_dynamic_id(&mut self, id: usize, name: &str) {
-        let dynamic_id = DynamicId::from(id as u32);
-        self.cache.save(dynamic_id, name);
+    fn assign_dynamic_id(&mut self, id: DynamicId, name: &str) {
+        self.cache.save(id, name);
     }
 
     fn get_static_id(&self, id: usize) -> Option<StaticId> {
