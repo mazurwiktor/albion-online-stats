@@ -69,7 +69,7 @@ pub fn reset(meter: &mut meter::Meter, stat_type: StatType) {
 
 pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
     CombinedLogger::init(vec![WriteLogger::new(
-        LevelFilter::Info,
+        LevelFilter::Debug,
         Config::default(),
         File::create("damage-meter.log").unwrap(),
     )])

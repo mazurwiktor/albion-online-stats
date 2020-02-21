@@ -6,12 +6,16 @@ use crate::photon_messages::into_game_message;
 use crate::photon_messages::Message;
 use crate::game::World;
 
+use log::*;
+
 static GAME_PORT : u16 = 5056;
 
 pub fn udp_packet_to_game_events(game_world: &mut World, photon: &mut Photon, packet: &UdpPacket) -> Vec<Event> {
     if ! is_packet_valid(packet) {
         return vec![]
     }
+
+    debug!("Raw payload: {:?}", &packet.payload);
 
     raw_to_photon_messages(photon, &packet.payload)
         .into_iter()
@@ -35,7 +39,4 @@ fn is_packet_valid(packet: &UdpPacket) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    
 }
