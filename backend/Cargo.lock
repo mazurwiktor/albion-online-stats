@@ -323,8 +323,6 @@ dependencies = [
 [[package]]
 name = "photon_decode"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2aecada6e930f101768a1f1659b1f9c9872cea3d479dfeae3031927f67093f1"
 dependencies = [
  "bytes",
 ]
