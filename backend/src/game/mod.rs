@@ -6,5 +6,6 @@ pub mod id_cache;
 mod unconsumed_messages;
 mod player;
 
+pub use player::StaticId;
 pub use events::*;
 pub use world::World;

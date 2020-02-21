@@ -8,3 +8,9 @@ pub struct StaticId(u32);
 
 #[derive(Debug, PartialEq, From, Into, Default)]
 pub struct PlayerName(String);
+
+impl StaticId {
+    pub fn inner(&self) -> u32 {
+        self.0
+    }
+}

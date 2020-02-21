@@ -10,6 +10,7 @@ mod game;
 mod core;
 mod translate;
 mod publisher;
+mod crosslang;
 
 use std::sync::{Mutex, Arc};
 use log::*;
@@ -25,7 +26,6 @@ use cpython::PyDict;
 
 use crate::core::StatType;
 use crate::core::InitializationError;
-
 
 struct PyMeter
 {
@@ -88,31 +88,6 @@ impl ToPyObject for core::PlayerStatisticsVec {
 
     fn to_py_object(&self, py: Python) -> Self::ObjectType {
         self.value().into_py_object(py)
-    }
-}
-
-impl ToPyObject for core::Items {
-    type ObjectType = PyDict;
-
-    fn into_py_object(self, py: Python) -> Self::ObjectType {
-        self.to_py_object(py)
-    }
-
-    fn to_py_object(&self, py: Python) -> Self::ObjectType {
-        let items = PyDict::new(py);
-
-        set_dict_item!(py, items, self, weapon);
-        set_dict_item!(py, items, self, offhand);
-        set_dict_item!(py, items, self, helmet);
-        set_dict_item!(py, items, self, armor);
-        set_dict_item!(py, items, self, boots);
-        set_dict_item!(py, items, self, bag);
-        set_dict_item!(py, items, self, cape);
-        set_dict_item!(py, items, self, mount);
-        set_dict_item!(py, items, self, potion);
-        set_dict_item!(py, items, self, food);
-        
-        items
     }
 }
 
