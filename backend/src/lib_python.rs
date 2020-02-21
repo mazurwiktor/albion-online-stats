@@ -5,15 +5,11 @@ extern crate cpython;
 extern crate lazy_static;
 
 mod photon_messages;
-mod meter;
 mod game;
-mod core;
 mod translate;
 mod publisher;
 mod crosslang;
 mod api;
-
-mod lib_python_legacy;
 
 use std::sync::Mutex;
 use log::*;
@@ -22,11 +18,8 @@ use cpython::PyResult;
 use cpython::Python;
 use cpython::ToPyObject;
 use cpython::PythonObject;
-use cpython::FromPyObject;
 use cpython::ObjectProtocol;
 use cpython::PyTuple;
-
-use lib_python_legacy::{stats, reset, StatType};
 
 lazy_static! {
     static ref PY_CALLBACKS: Mutex<Vec<cpython::PyObject>> = Mutex::new(Vec::new());
@@ -41,17 +34,17 @@ fn python_callbacks_subscriber(event: game::Event) {
             let py_args = [event.clone().into_py_object(py).into_object()];
             let args = PyTuple::new(py, &py_args[..]);
 
-            py_callback.call(py,  args, None);
+            if let Some(error) = py_callback.call(py,  args, None).err() {
+                error!("{:?}", error);
+            }
         }
     }
 }
 
 fn initialize(_py: Python) -> PyResult<u32> {
     api::initialize(vec![
-        Box::new(python_callbacks_subscriber),
-        Box::new(lib_python_legacy::meter_subscriber)
-    ]);
-    Ok(0)
+        Box::new(python_callbacks_subscriber)
+    ]).map_or(Ok(0), |_| {Ok(2)})
 }
 
 fn subscribe(_py: Python, callable: cpython::PyObject) -> PyResult<u32> {
@@ -66,8 +59,6 @@ fn subscribe(_py: Python, callable: cpython::PyObject) -> PyResult<u32> {
 py_module_initializer!(libaostats, initlibaostats, PyInit_libaostats, |py, m| {
     m.add(py, "__doc__", "This module is implemented in Rust")?;
     m.add(py, "initialize", py_fn!(py, initialize()))?;
-    m.add(py, "stats", py_fn!(py, stats(stat_type: StatType)))?;
-    m.add(py, "reset", py_fn!(py, reset(stat_type: StatType)))?;
     m.add(py, "subscribe", py_fn!(py, subscribe(callable: cpython::PyObject)))?;
     Ok(())
 });

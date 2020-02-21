@@ -8,7 +8,6 @@ use packet_sniffer::UdpPacket;
 use photon_decode::Photon;
 
 use crate::game::World;
-use crate::meter::Meter;
 use crate::publisher::Publisher;
 
 pub use crate::publisher::Subscribers;
