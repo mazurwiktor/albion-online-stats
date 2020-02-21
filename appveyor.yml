@@ -30,6 +30,10 @@ test_script:
   - ps: cd backend
   - cargo test
   - ps: cd ..
+  - pip install tox
+  - ps: cd frontend
+  - tox -e ut
+  - pd: cd ..
 build_script:
   - python -m venv env
   - ps: .\env\Scripts\activate.ps1
