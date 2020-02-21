@@ -8,6 +8,7 @@ pub mod photon_messages;
 mod meter;
 mod game;
 mod core;
+mod translate;
 
 use std::sync::{Mutex, Arc};
 use log::*;

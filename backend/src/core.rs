@@ -28,6 +28,8 @@ pub enum InitializationError {
     NetworkInterfaceListMissing,
 }
 
+use crate::translate::udp_packet_to_game_events;
+
 lazy_static! {
     static ref METER: Mutex<meter::Meter> = Mutex::new(meter::Meter::new());
 }
@@ -65,10 +67,6 @@ pub fn reset(meter: &mut meter::Meter, stat_type: StatType) {
     }
 }
 
-// pub fn into_game_event(game_world: &mut World packet_payload: &[u8]) -> game::Event {
-    
-// }
-
 pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
     CombinedLogger::init(vec![WriteLogger::new(
         LevelFilter::Info,
@@ -92,17 +90,13 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
             info!("Listening to network packets...");
             loop {
                 if let Ok(packet) = rx.recv() {
-                    if packet.destination_port != 5056 && packet.source_port != 5056 {
-                        continue;
-                    }
-                    if let Ok(ref mut meter) = cloned_meter.lock() {
-                        let photon_messages = photon
-                            .decode(&packet.payload)
-                            .into_iter()
-                            .filter_map(photon_messages::into_game_message)
-                            .collect();
-                        register_messages(meter, photon_messages, &mut world);
-                    }
+                    udp_packet_to_game_events(&mut world, &mut photon, &packet)
+                    .into_iter()
+                    .for_each(|e| {
+                        if let Ok(ref mut meter) = cloned_meter.lock() {
+                            meter.consume(e); 
+                        }
+                    });
                 }
             }
         });
