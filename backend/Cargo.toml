@@ -8,6 +8,7 @@ build = "build.rs"
 
 [lib]
 name = "libaostats"
+path = "src/lib_python.rs"
 crate-type = ["dylib"]
 
 [dependencies.cpython]

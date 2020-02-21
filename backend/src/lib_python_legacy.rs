@@ -1,17 +1,3 @@
-#[macro_use]
-extern crate cpython;
-
-#[macro_use]
-extern crate lazy_static;
-
-pub mod photon_messages;
-mod meter;
-mod game;
-mod core;
-mod translate;
-mod publisher;
-mod crosslang;
-
 use std::sync::{Mutex, Arc};
 use log::*;
 
@@ -23,6 +9,11 @@ use cpython::ToPyObject;
 use cpython::PythonObject;
 use cpython::FromPyObject;
 use cpython::PyDict;
+use cpython::ObjectProtocol;
+use cpython::PyTuple;
+
+use crate::core;
+use crate::meter;
 
 use crate::core::StatType;
 use crate::core::InitializationError;
@@ -148,7 +139,7 @@ pub fn reset(_py: Python, stat_type: StatType) -> PyResult<u32> {
     Ok(1)
 }
 
-fn initialize(_py: Python) -> PyResult<u32> {
+pub fn initialize(_py: Python) -> PyResult<u32> {
     if let Ok(ref mut py_meter) = METER.lock() {
         match core::initialize() {
             Ok(core_meter) => py_meter.initialize(core_meter),
@@ -168,10 +159,10 @@ fn initialize(_py: Python) -> PyResult<u32> {
     Ok(1)
 }
 
-py_module_initializer!(libaostats, initlibaostats, PyInit_libaostats, |py, m| {
-    m.add(py, "__doc__", "This module is implemented in Rust")?;
-    m.add(py, "initialize", py_fn!(py, initialize()))?;
-    m.add(py, "stats", py_fn!(py, stats(stat_type: StatType)))?;
-    m.add(py, "reset", py_fn!(py, reset(stat_type: StatType)))?;
-    Ok(())
-});
+fn test(py: Python, callable: cpython::PyObject) -> PyResult<u32> {
+    let py_args = ["test".to_owned().into_py_object(py).into_object()];
+    let args = PyTuple::new(py, &py_args[..]);
+
+    callable.call(py,  args, None)?;
+    Ok(0)
+}

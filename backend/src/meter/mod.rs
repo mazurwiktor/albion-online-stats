@@ -13,7 +13,7 @@ mod session;
 use crate::game::Event;
 use player::Player;
 
-pub use super::photon_messages;
+use super::photon_messages;
 pub use traits::*;
 pub use types::*;
 
