@@ -1,14 +1,15 @@
 use crate::game::Event;
 
-type Callback = dyn FnMut(Event);
+pub type Subscriber = dyn FnMut(Event);
+pub type Subscribers = Vec<Box<Subscriber>>;
 
 #[derive(Default)]
 pub struct Publisher {
-    subscribers: Vec<Box<Callback>>
+    subscribers: Subscribers
 }
 
 impl Publisher {
-    pub fn new(subscribers: Vec<Box<Callback>>) -> Self {
+    pub fn new(subscribers: Subscribers) -> Self {
         Self {subscribers, ..Default::default()}
     }
 
