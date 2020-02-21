@@ -205,11 +205,17 @@ def reset_stats():
     aostats.reset(StatType.Overall)
 
 
+def event_receiver(e):
+    print(f'Received event: {e}')
+
+
 def initialize():
     if TESTING_ENABLED:
         return InitializationResult.Ok
     cfg = config()
     try:
-        return INITIALIZATION_RESULT[aostats.initialize()]
+        result = aostats.initialize()
+        aostats.subscribe(event_receiver)
+        return INITIALIZATION_RESULT[result]
     except:
         pass

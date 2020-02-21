@@ -69,26 +69,26 @@ After first execution the app is going to create default configuration file name
     or alternatively using conda and skip installing requirements step
 
     ```shell
-    conda env create --file frontend/environment.yml
+    conda env create --file pyapp/environment.yml
     conda activate albion
     ```
 
 3. Install requirements (backend will be compiled during requirements installation)
 
     ```shell
-    pip install -v -r frontend/requirements.txt
+    pip install -v -r pyapp/requirements.txt
     ```
 
 4. Run the application
     ```shell
-    [sudo on linux] python frontend/albion-online-stats.py
+    [sudo on linux] python pyapp/albion-online-stats.py
     ```
 
 ## GUI testing
-- Seting TESTING variable runs frontend without backend dependency
+- Seting TESTING variable runs pyapp without backend dependency
 
     ```shell
-    TESTING=true python frontend/albion-online-stats.py
+    TESTING=true python pyapp/albion-online-stats.py
     ```
 
 # License
