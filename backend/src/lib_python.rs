@@ -29,7 +29,12 @@ use cpython::PyDict;
 use cpython::ObjectProtocol;
 use cpython::PyTuple;
 
-use lib_python_legacy::{initialize, stats, reset};
+use lib_python_legacy::{stats, reset};
+
+fn initialize(py: Python) -> PyResult<u32> {
+
+    Ok(0)
+}
 
 fn test(py: Python, callable: cpython::PyObject) -> PyResult<u32> {
     let py_args = ["test".to_owned().into_py_object(py).into_object()];

@@ -22,29 +22,16 @@ pub enum InitializationError {
     NetworkInterfaceListMissing,
 }
 
-pub fn initialize(subscribers: Subscribers) -> Result<Arc<Mutex<Meter>>, InitializationError> {
+pub fn initialize(subscribers: Subscribers) -> Result<(), InitializationError> {
     initialize_logging();
-
-    let meter = Meter::new();
-
-    let meter = Arc::new(Mutex::new(meter));
-    let cloned_meter = meter.clone();
-    let mut world = World::new();
     
     if let Ok(interfaces) = packet_sniffer::network_interfaces() {
         thread::spawn(move || {
             let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = channel();
 
             let mut photon = Photon::new();
-
-            let consume_by_meter = move |e| {
-                if let Ok(ref mut meter) = meter.lock() {
-                    meter.consume(e); 
-                }
-            };
-            let mut publisher = Publisher::new(vec![
-                Box::new(consume_by_meter)
-            ]);
+            let mut world = World::new();
+            let mut publisher = Publisher::new(subscribers);
 
             packet_sniffer::receive(interfaces, tx);
             info!("Listening to network packets...");
@@ -62,7 +49,7 @@ pub fn initialize(subscribers: Subscribers) -> Result<Arc<Mutex<Meter>>, Initial
         return Err(InitializationError::NetworkInterfaceListMissing);
     }
 
-    Ok(cloned_meter)
+    Ok(())
 }
 
 fn initialize_logging() {

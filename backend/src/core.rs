@@ -31,10 +31,6 @@ pub enum InitializationError {
 
 use crate::translate::udp_packet_to_game_events;
 
-lazy_static! {
-    static ref METER: Mutex<meter::Meter> = Mutex::new(meter::Meter::new());
-}
-
 pub fn stats(meter: &meter::Meter, stat_type: StatType) -> Vec<meter::PlayerStatistics> {
     match stat_type {
         StatType::Zone => meter

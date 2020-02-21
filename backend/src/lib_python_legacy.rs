@@ -14,6 +14,7 @@ use cpython::PyTuple;
 
 use crate::core;
 use crate::meter;
+use crate::game::Event;
 
 use crate::core::StatType;
 use crate::core::InitializationError;
@@ -157,6 +158,12 @@ pub fn initialize(_py: Python) -> PyResult<u32> {
     }
     error!("Failed to initialize meter");
     Ok(1)
+}
+
+pub fn consume_by_meter(event: Event) {
+    if let Ok(ref mut meter) = METER.lock() {
+        meter.consume(event); 
+    }
 }
 
 fn test(py: Python, callable: cpython::PyObject) -> PyResult<u32> {
