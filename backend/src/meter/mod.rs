@@ -10,7 +10,7 @@ mod traits;
 mod types;
 mod session;
 
-use crate::game::Events;
+use crate::game::Event;
 use player::Player;
 
 pub use super::photon_messages;
@@ -42,9 +42,9 @@ impl Meter {
         self.config = config;
     }
 
-    pub fn consume(&mut self, event: Events) -> Option<()> {
+    pub fn consume(&mut self, event: Event) -> Option<()> {
         match event {
-            Events::MainPlayerAppeared(e) => {
+            Event::MainPlayerAppeared(e) => {
                 let id = u32::from(e.id) as usize;
                 self.register_player(&e.name, id, true);
 
@@ -54,7 +54,7 @@ impl Meter {
                     self.unconsumed_items.remove(&id);
                 }
             },
-            Events::PlayerAppeared(e) => {
+            Event::PlayerAppeared(e) => {
                 let id = u32::from(e.id) as usize;
                 self.register_player(&e.name, id, false);
 
@@ -64,10 +64,10 @@ impl Meter {
                     self.unconsumed_items.remove(&id);
                 }
             },
-            Events::ZoneChange => {
+            Event::ZoneChange => {
                 self.new_session();
             },
-            Events::UpdateItems(e) => {
+            Event::UpdateItems(e) => {
                 let player_id = u32::from(e.source) as usize;
                 let items = e.value;
                 let mut consumed = false;
@@ -81,13 +81,13 @@ impl Meter {
                     self.unconsumed_items.insert(player_id, items.clone());
                 }
             }
-            Events::DamageDone(e) => {
+            Event::DamageDone(e) => {
                 let player_id = u32::from(e.source) as usize;
                 for player in self.get_players_in_the_zone(player_id)? {
                     player.register_damage_dealt(f32::abs(e.value));
                 }
             }
-            Events::EnterCombat(e) => {
+            Event::EnterCombat(e) => {
                 let player_id = u32::from(e.id) as usize;
                 if self.combat_state() == CombatState::OutOfCombat {
                     self.last_fight_session = Session::from(&self.last_fight_session);
@@ -96,13 +96,13 @@ impl Meter {
                     player.enter_combat();
                 }
             }
-            Events::LeaveCombat(e) => {
+            Event::LeaveCombat(e) => {
                 let player_id = u32::from(e.id) as usize;
                 for player in self.get_players_in_the_zone(player_id)? {
                     player.leave_combat();
                 }
             }
-            Events::UpdateFame(e) => {
+            Event::UpdateFame(e) => {
                 let player_id = u32::from(e.source) as usize;
                 for player in self.get_players_in_the_zone(player_id)? {
                     player.register_fame_gain(e.value);

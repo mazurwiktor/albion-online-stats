@@ -30,7 +30,7 @@ pub struct Items {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Events {
+pub enum Event {
     MainPlayerAppeared(Player),
     PlayerAppeared(Player),
     DamageDone(Damage),

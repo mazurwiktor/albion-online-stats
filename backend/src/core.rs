@@ -65,6 +65,10 @@ pub fn reset(meter: &mut meter::Meter, stat_type: StatType) {
     }
 }
 
+// pub fn into_game_event(game_world: &mut World packet_payload: &[u8]) -> game::Event {
+    
+// }
+
 pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
     CombinedLogger::init(vec![WriteLogger::new(
         LevelFilter::Info,

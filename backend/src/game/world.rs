@@ -31,7 +31,7 @@ impl World {
     pub fn transform(
         &mut self,
         message: photon_messages::Message,
-    ) -> Option<Vec<events::Events>> {
+    ) -> Option<Vec<events::Event>> {
         match message {
             photon_messages::Message::NewCharacter(msg) => {
                 let mut result = vec![];
@@ -58,7 +58,7 @@ impl World {
                 let static_id = self.get_static_id(msg.source)?;
 
                 if self.main_player_id.is_none() {
-                    result.push(events::Events::ZoneChange)
+                    result.push(events::Event::ZoneChange)
                 }
 
                 result.push(self.get_intermediate(static_id, msg)?.into());
@@ -78,7 +78,7 @@ impl World {
                 let static_id = self.get_static_id(msg.source)?;
                 if let Some(main_player_id) = self.main_player_id {
                     if main_player_id == static_id {
-                        return Some(vec![events::Events::ZoneChange]);
+                        return Some(vec![events::Event::ZoneChange]);
                     }
                 }
                 None
@@ -156,7 +156,7 @@ mod tests {
     }
 
     #[test]
-    /// photon_messages::NewCharacter -> events::Events::PlayerAppeared
+    /// photon_messages::NewCharacter -> events::Event::PlayerAppeared
     fn test_player_appeared() {
         let mut world = World::new();
 
@@ -170,7 +170,7 @@ mod tests {
     }
 
     #[test]
-    /// photon_messages::Join -> Events::PlayerAppeared
+    /// photon_messages::Join -> Event::PlayerAppeared
     fn test_main_player_appeared() {
         let mut world = World::new();
 
@@ -184,7 +184,7 @@ mod tests {
     }
 
     #[test]
-    /// photon_messages::HealthUpdate -> Events::DamageDone | Events::HealthReceived
+    /// photon_messages::HealthUpdate -> Event::DamageDone | Event::HealthReceived
     fn test_damage_done() {
         let mut world = World::new();
 
@@ -224,7 +224,7 @@ mod tests {
     }
 
     #[test]
-    /// photon_messages::Leave -> Events::ZoneChange
+    /// photon_messages::Leave -> Event::ZoneChange
     fn test_zone_change() {
         let mut world = World::new();
 
@@ -260,7 +260,7 @@ mod tests {
     }
 
     #[test]
-    /// photon_messages::RegenerationHealthChanged.regeneration_rate -> Events::LeaveCombat
+    /// photon_messages::RegenerationHealthChanged.regeneration_rate -> Event::LeaveCombat
     fn test_combat_leave_via_regeneration_change() {
         let mut world = World::new();
 
@@ -279,7 +279,7 @@ mod tests {
     }
 
     #[test]
-    /// photon_messages::RegenerationHealthChanged.regeneration_rate -> Events::EnterCombat
+    /// photon_messages::RegenerationHealthChanged.regeneration_rate -> Event::EnterCombat
     fn test_combat_enter_via_regeneration_change() {
         let mut world = World::new();
 
@@ -298,7 +298,7 @@ mod tests {
     }
 
     #[test]
-    /// photon_messages::KnockedDown -> Events::EnterCombat
+    /// photon_messages::KnockedDown -> Event::EnterCombat
     fn test_combat_enter_via_knockout() {
         let mut world = World::new();
 
@@ -315,7 +315,7 @@ mod tests {
     }
 
     #[test]
-    /// photon_messages::UpdateFame -> Events::FameUpdate
+    /// photon_messages::UpdateFame -> Event::FameUpdate
     fn test_fame_update() {
         let mut world = World::new();
 
