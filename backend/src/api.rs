@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::{Arc, Mutex};
 use std::thread;
 use log::*;
 use simplelog::*;
@@ -57,6 +56,5 @@ fn initialize_logging() {
         LevelFilter::Debug,
         Config::default(),
         File::create("damage-meter.log").unwrap(),
-    )])
-    .unwrap();
+    )]).unwrap();
 }

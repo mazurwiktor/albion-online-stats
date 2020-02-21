@@ -28,7 +28,6 @@ pub struct Meter {
     zone_session: Option<Session>,
     last_fight_session: Session,
     unconsumed_items: HashMap<usize, photon_messages::Items>,
-    config: MeterConfig,
 }
 
 impl Meter {
@@ -36,10 +35,6 @@ impl Meter {
         Self {
             ..Default::default()
         }
-    }
-
-    pub fn configure(&mut self, config: MeterConfig) {
-        self.config = config;
     }
 
     pub fn consume(&mut self, event: Event) -> Option<()> {

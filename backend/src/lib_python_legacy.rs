@@ -16,32 +16,10 @@ use crate::core;
 use crate::meter;
 use crate::game::Event;
 
-use crate::core::StatType;
-use crate::core::InitializationError;
-
-struct PyMeter
-{
-    value: Option<Arc<Mutex<meter::Meter>>>
-}
-
-impl PyMeter
-{
-    fn new() -> Self {
-        Self{value: None}
-    }
-
-    fn initialize(&mut self, value: Arc<Mutex<meter::Meter>>) {
-        self.value = Some(value);
-    }
-
-    fn get(&mut self) -> Option<Arc<Mutex<meter::Meter>>> {
-        self.value.clone()
-    }
-}
-
+pub use crate::meter::StatType;
 
 lazy_static! {
-    static ref METER: Mutex<PyMeter> = Mutex::new(PyMeter::new());
+    static ref METER: Mutex<meter::Meter> = Mutex::new(meter::Meter::new());
 }
 
 macro_rules! set_dict_item {
@@ -102,24 +80,20 @@ impl <'source> FromPyObject<'source> for StatType {
 
 pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyDict> {
     let stats = PyDict::new(py);
-    if let Ok(ref mut py_meter) = METER.lock() {
-        if let Some(m) = py_meter.get() {
-            if let Ok(ref mut meter) = m.lock() {
-                let mut main : Option<core::PlayerStatistics> = None;
-                stats.set_item(py, "players", core::stats(&meter, stat_type)
-                    .into_iter()
-                    .inspect(|s| {
-                        if s.main_player_stats {
-                            main = Some(s.clone());
-                        }
-                    })
-                    .filter(|s| !s.idle || s.fame != 0.0)
-                    .collect::<Vec<meter::PlayerStatistics>>()
-                    .into_py_object(py)).ok();
-                stats.set_item(py, "main", main.into_py_object(py)).ok();
-                return Ok(stats);
-            }
-        }
+    if let Ok(ref mut meter) = &mut METER.lock() {
+        let mut main : Option<core::PlayerStatistics> = None;
+        stats.set_item(py, "players", core::stats(&meter, stat_type)
+            .into_iter()
+            .inspect(|s| {
+                if s.main_player_stats {
+                    main = Some(s.clone());
+                }
+            })
+            .filter(|s| !s.idle || s.fame != 0.0)
+            .collect::<Vec<meter::PlayerStatistics>>()
+            .into_py_object(py)).ok();
+        stats.set_item(py, "main", main.into_py_object(py)).ok();
+        return Ok(stats);
     }
 
     error!("Failed to acquire locks on meter");
@@ -127,49 +101,17 @@ pub fn stats(py: Python, stat_type: StatType) -> PyResult<PyDict> {
 }
 
 pub fn reset(_py: Python, stat_type: StatType) -> PyResult<u32> {
-    if let Ok(ref mut py_meter) = METER.lock() {
-        if let Some(m) = py_meter.get() {
-            if let Ok(ref mut meter) = m.lock() {
-                core::reset(meter, stat_type);
-                return Ok(0);
-            }
-        }
+    if let Ok(ref mut meter) = &mut METER.lock() {
+        core::reset(meter, stat_type);
+        return Ok(0);
     }
 
     error!("Failed to acquire locks on meter");
     Ok(1)
 }
 
-pub fn initialize(_py: Python) -> PyResult<u32> {
-    if let Ok(ref mut py_meter) = METER.lock() {
-        match core::initialize() {
-            Ok(core_meter) => py_meter.initialize(core_meter),
-            Err(InitializationError::NetworkInterfaceListMissing) => return Ok(2)
-        };
-
-        if let Some(m) = py_meter.get() {
-            if let Ok(ref mut meter) = m.lock() {
-                meter.configure(core::MeterConfig {
-                    ..Default::default()
-                });
-                return Ok(0);
-            }
-        }
-    }
-    error!("Failed to initialize meter");
-    Ok(1)
-}
-
-pub fn consume_by_meter(event: Event) {
-    if let Ok(ref mut meter) = METER.lock() {
+pub fn meter_subscriber(event: Event) {
+    if let Ok(ref mut meter) = &mut METER.lock() {
         meter.consume(event); 
     }
-}
-
-fn test(py: Python, callable: cpython::PyObject) -> PyResult<u32> {
-    let py_args = ["test".to_owned().into_py_object(py).into_object()];
-    let args = PyTuple::new(py, &py_args[..]);
-
-    callable.call(py,  args, None)?;
-    Ok(0)
 }
