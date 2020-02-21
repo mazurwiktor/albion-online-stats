@@ -13,6 +13,7 @@ use photon_decode::Photon;
 use crate::game;
 use crate::photon_messages;
 use crate::meter;
+use crate::publisher::Publisher;
 pub use meter::GameStats;
 pub use meter::LastFightStats;
 pub use meter::MeterConfig;
@@ -80,11 +81,21 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
     let meter = Arc::new(Mutex::new(meter));
     let cloned_meter = meter.clone();
     let mut world = game::World::new();
+
     if let Ok(interfaces) = packet_sniffer::network_interfaces() {
         thread::spawn(move || {
             let (tx, rx): (Sender<UdpPacket>, Receiver<UdpPacket>) = channel();
 
             let mut photon = Photon::new();
+
+            let consume_by_meter = move |e| {
+                if let Ok(ref mut meter) = cloned_meter.lock() {
+                    meter.consume(e); 
+                }
+            };
+            let mut publisher = Publisher::new(vec![
+                Box::new(consume_by_meter)
+            ]);
 
             packet_sniffer::receive(interfaces, tx);
             info!("Listening to network packets...");
@@ -93,9 +104,7 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
                     udp_packet_to_game_events(&mut world, &mut photon, &packet)
                     .into_iter()
                     .for_each(|e| {
-                        if let Ok(ref mut meter) = cloned_meter.lock() {
-                            meter.consume(e); 
-                        }
+                        publisher.publish(&e);
                     });
                 }
             }
@@ -107,12 +116,14 @@ pub fn initialize() -> Result<Arc<Mutex<meter::Meter>>, InitializationError> {
     Ok(meter)
 }
 
+#[allow(dead_code)]
 pub fn register_messages(meter: &mut meter::Meter, messages: Vec<photon_messages::Message>, world: &mut game::World) {
     messages
         .into_iter()
         .for_each(|message| register_message(meter, message, world));
 }
 
+#[allow(dead_code)]
 fn register_message(meter: &mut meter::Meter, message: photon_messages::Message, world: &mut game::World)
 {
     info!("Found message {:?}", message);

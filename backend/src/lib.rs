@@ -9,6 +9,7 @@ mod meter;
 mod game;
 mod core;
 mod translate;
+mod publisher;
 
 use std::sync::{Mutex, Arc};
 use log::*;
