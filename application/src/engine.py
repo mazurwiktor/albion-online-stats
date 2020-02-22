@@ -1,25 +1,10 @@
-import os
-
-try:
-    import aostats
-except:
-    class aostats:
-        @staticmethod
-        def initialize(_):
-            return InitializationResult.NetworkInterfaceListMissing
-
-        @staticmethod
-        def stats(_):
-            return {
-                'players': [],
-                'main': None
-            }
-
 from .utils.config import config
 from .utils.number import Number
+from .environment import TEST_ENV_ENABLED
 
-TESTING_ENABLED = bool(os.getenv('TESTING'))
-
+from . import backend_proxy
+from .backend_proxy import InitializationResult, INITIALIZATION_RESULT
+from .stats import damage_stats
 
 class StatType:
     Unknown = 0
@@ -27,19 +12,57 @@ class StatType:
     Zone = 2
     Overall = 3
 
+class GameStats:
+    def __init__(self):
+        self.zone = damage_stats.DamageStats()
+        self.last_fight = damage_stats.DamageStats()
+        self.overall = []
 
-class InitializationResult:
-    Ok = 0
-    UnknownFailure = 1
-    NetworkInterfaceListMissing = 2
+    def register_event(self, event):
+        if event['name'] == 'MainPlayerAppeared':
+            self.zone.add_player(
+                event['value']['id'], event['value']['name'])
+        elif event['name'] == 'PlayerAppeared':
+            self.zone.add_player(
+                event['value']['id'], event['value']['name'])
+        elif event['name'] == 'DamageDone':
+            print("Damage done! {}".format(event))
+            self.zone.register_damage_done(
+                event['value']['id'], event['value']['value'])
+        elif event['name'] == 'HealthReceived':
+            pass
+        elif event['name'] == 'ZoneChange':
+            self.zone = damage_stats.DamageStats()
+        elif event['name'] == 'EnterCombat':
+            self.zone.enter_combat(
+                event['value']['id'])
+        elif event['name'] == 'LeaveCombat':
+            self.zone.leave_conbat(
+                event['value']['id'])
+        elif event['name'] == 'UpdateFame':
+            pass
+        elif event['name'] == 'UpdateItems':
+            self.zone.add_items(
+                event['value']['source'], event['value']['value'])
 
+    def reset(self, stat_type):
+        if stat_type == StatType.Zone:
+            self.zone = damage_stats.DamageStats()
+        elif stat_type == StatType.LastFight:
+            self.last_fight = damage_stats.DamageStats()
+        elif stat_type == StatType.Overall:
+            self.zone = damage_stats.DamageStats()
+            self.last_fight = []
 
-INITIALIZATION_RESULT = {
-    0: InitializationResult.Ok,
-    1: InitializationResult.UnknownFailure,
-    2: InitializationResult.NetworkInterfaceListMissing
-}
+    def damage_stats(self, stat_type):
+        if stat_type == StatType.Zone:
+            return self.zone.stats()
+        elif stat_type == StatType.LastFight:
+            return self.last_fight.stats()
+        elif stat_type == StatType.Overall:
+            return damage_stats.combined_stats(self.overall + self.zone.stats())
 
+game_stats = GameStats()
 
 class DamageStat:
     def __init__(self, name, items, damage, time_in_combat, dps, percentage, best_damage):
@@ -110,111 +133,37 @@ def with_percentage(session):
 
 
 def zone_stats(with_damage=False):
-    if TESTING_ENABLED:
-        session = {
-            'players': [
-                {'player': 'Arcane', 'damage': 200.0, 'time_in_combat': 12.0, 'dps': 142.4234, 'fame': 20.0, 'fame_per_hour': 30, 'items': {
-                    'weapon': 'T4_MAIN_ARCANESTAFF@3'
-                }},
-                {'player': 'Cursed', 'damage': 1100.0, 'time_in_combat': 12.0, 'dps': 222, 'items': {
-                    'weapon': 'T5_MAIN_CURSEDSTAFF@2'
-                }},
-                {'player': 'Fire', 'damage': 775.0, 'time_in_combat': 12.0, 'dps': 132, 'items': {
-                    'weapon': 'T5_MAIN_FIRESTAFF@1'
-                }},
-                {'player': 'Frost', 'damage': 2800.0, 'time_in_combat': 12.0, 'dps': 743, 'items': {
-                    'weapon': 'T5_MAIN_FROSTSTAFF@1'
-                }},
-                {'player': 'Holy', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 99, 'items': {
-                    'weapon': 'T6_MAIN_HOLYSTAFF'
-                }},
-                {'player': 'Nature', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 123, 'items': {
-                    'weapon': 'T8_MAIN_NATURESTAFF@3'
-                }},
-                {'player': 'Axe', 'damage': 2430.0, 'time_in_combat': 120.0, 'dps': 631, 'items': {
-                    'weapon': 'T8_MAIN_AXE'
-                }},
-                {'player': 'Dagger', 'damage': 1900.0, 'time_in_combat': 12.0, 'dps': 551, 'items': {
-                    'weapon': 'T8_MAIN_DAGGER@2'
-                }},
-                {'player': 'Hammer', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
-                    'weapon': 'T7_MAIN_HAMMER@2'
-                }},
-                {'player': 'Mace', 'damage': 500.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
-                    'weapon': 'T6_MAIN_MACE@2'
-                }},
-                {'player': 'Quarterstaff', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
-                    'weapon': 'T5_2H_IRONCLADEDSTAFF'
-                }},
-                {'player': 'Spear', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
-                    'weapon': 'T8_MAIN_SPEAR@2'
-                }},
-                {'player': 'Sword', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
-                    'weapon': 'T7_2H_CLAYMORE@1'
-                }},
-                {'player': 'Bow', 'damage': 250.0, 'time_in_combat': 12.0, 'dps': 13, 'items': {
-                    'weapon': 'T8_2H_BOW'
-                }},
-                {'player': 'Crossbow', 'damage': 1800.0, 'time_in_combat': 450.0, 'dps': 450, 'items': {
-                    'weapon': 'T8_2H_CROSSBOWLARGE@3'
-                }},
-            ],
-            'main': {'player': 'Crossbow', 'damage': 250.0, 'time_in_combat': 120000.0, 'dps': 13, 'items': {
-                'weapon': 'T8_2H_CROSSBOWLARGE@3'
-            }, 'fame': 2300000, 'fame_per_hour': 46000.0, 'seconds_in_game': 3000}
-        }
-    else:
-        session = aostats.stats(StatType.Zone)
-
-    return stats(session, with_damage)
+    return stats({
+        'players': game_stats.damage_stats(StatType.Zone), 
+        'main': {}}, 
+        with_damage)
 
 
 def overall_stats(with_damage=False):
-    if TESTING_ENABLED:
-        session = {'players': [
-            {'player': 'overall', 'damage': 1000.0,
-                'time_in_combat': 12.0, 'dps': 12.4234, 'items': {'weapon': 'T8_2H_CROSSBOWLARGE@3'}},
-        ], 'main': {}}
-    else:
-        session = aostats.stats(StatType.Overall)
-
-    return stats(session, with_damage)
+    return stats({
+        'players': game_stats.damage_stats(StatType.Overall), 
+        'main': {}}, 
+        with_damage)
 
 
 def last_fight_stats(with_damage=False):
-    if TESTING_ENABLED:
-        session = {'players': [
-            {'player': 'last', 'damage': 1000.0,
-                'time_in_combat': 12.0, 'dps': 12.4234, 'items': {'weapon': 'T8_2H_CROSSBOWLARGE@3'}},
-        ], 'main': {}}
-    else:
-        session = aostats.stats(StatType.LastFight)
-
-    return stats(session, with_damage)
+    return stats({
+        'players': game_stats.damage_stats(StatType.LastFight), 
+        'main': {}}, 
+        with_damage)
 
 
 def reset_zone_stats():
-    aostats.reset(StatType.Zone)
+    game_stats.reset(StatType.Zone)
 
 
 def reset_last_fight_stats():
-    aostats.reset(StatType.LastFight)
+    game_stats.reset(StatType.LastFight)
 
 
 def reset_stats():
-    aostats.reset(StatType.Overall)
-
-
-def event_receiver(e):
-    print(f'Received event: {e}')
-
+    game_stats.reset(StatType.Overall)
 
 def initialize():
-    if TESTING_ENABLED:
-        return InitializationResult.Ok
-    try:
-        result = aostats.initialize()
-        aostats.subscribe(event_receiver)
-        return INITIALIZATION_RESULT[result]
-    except:
-        pass
+    backend_proxy.initialize()
+    backend_proxy.subscribe(game_stats.register_event)
