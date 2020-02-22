@@ -1,2 +1,4 @@
-from .app import run
+from . import utils
+
+from .gui.app import run
 

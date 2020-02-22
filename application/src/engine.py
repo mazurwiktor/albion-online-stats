@@ -15,8 +15,8 @@ except:
                 'main': None
             }
 
-from .config import config
-from .number import Number
+from .utils.config import config
+from .utils.number import Number
 
 TESTING_ENABLED = bool(os.getenv('TESTING'))
 
@@ -212,7 +212,6 @@ def event_receiver(e):
 def initialize():
     if TESTING_ENABLED:
         return InitializationResult.Ok
-    cfg = config()
     try:
         result = aostats.initialize()
         aostats.subscribe(event_receiver)
