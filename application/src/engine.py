@@ -4,7 +4,9 @@ from .environment import TEST_ENV_ENABLED
 
 from . import backend_proxy
 from .backend_proxy import InitializationResult, INITIALIZATION_RESULT
-from .stats import damage_stats
+from .stats import damage_stats, fame_stats
+from .consts import events as ev_consts
+
 
 class StatType:
     Unknown = 0
@@ -12,60 +14,70 @@ class StatType:
     Zone = 2
     Overall = 3
 
-class GameStats:
+
+class GameStats():
     def __init__(self):
-        self.zone = damage_stats.DamageStats()
-        self.last_fight = damage_stats.DamageStats()
-        self.overall = []
+        self.zone = {
+            'damage': damage_stats.DamageStats(),
+            'fame': fame_stats.FameStats(),
+        }
+        self.last_fight = {
+            'damage': damage_stats.DamageStats(),
+            'fame': fame_stats.FameStats(),
+        }
+        self.history = {
+            'damage': damage_stats.DamageStats(),
+            'fame': damage_stats.DamageStats()
+        }
 
     def register_event(self, event):
-        if event['name'] == 'MainPlayerAppeared':
-            self.zone.add_player(
-                event['value']['id'], event['value']['name'])
-        elif event['name'] == 'PlayerAppeared':
-            self.zone.add_player(
-                event['value']['id'], event['value']['name'])
-        elif event['name'] == 'DamageDone':
-            self.zone.register_damage_done(
-                event['value']['source'], event['value']['value'])
-        elif event['name'] == 'HealthReceived':
-            pass
-        elif event['name'] == 'ZoneChange':
-            self.zone = damage_stats.DamageStats()
-        elif event['name'] == 'EnterCombat':
-            self.zone.enter_combat(
-                event['value']['id'])
-        elif event['name'] == 'LeaveCombat':
-            self.zone.leave_conbat(
-                event['value']['id'])
-            if not any(player.combat_state == player.CombatState.InCombat for player in self.zone.players):
-                self.last_fight = damage_stats.DamageStats()
+        if event[ev_consts.EvKeyName] == ev_consts.EvNameEnterCombat:
+            if self._are_everyone_in_session_out_of_combat():
+                self.last_fight['damage'] = damage_stats.DamageStats.from_other(
+                    self.zone['damage'])
+        elif event[ev_consts.EvKeyName] == ev_consts.EvNameZoneChange:
+            self.history['damage'].update(self.zone['damage'])
+            # self.history['fame'].update(self.zone['fame'])
 
-        elif event['name'] == 'UpdateFame':
-            pass
-        elif event['name'] == 'UpdateItems':
-            self.zone.add_items(
-                event['value']['source'], event['value']['value'])
+            self.zone['damage'] = damage_stats.DamageStats()
+            self.zone['fame'] = fame_stats.FameStats()
+            
+        self.zone['damage'].receive(event)
+        self.last_fight['damage'].receive(event)
+        self.zone['fame'].receive(event)
+        self.last_fight['fame'].receive(event)
 
     def reset(self, stat_type):
         if stat_type == StatType.Zone:
-            self.zone = damage_stats.DamageStats()
-            self.last_fight = damage_stats.DamageStats()
+            self.zone['damage'] = damage_stats.DamageStats()
+            self.last_fight['damage'] = damage_stats.DamageStats()
         elif stat_type == StatType.LastFight:
-            self.last_fight = damage_stats.DamageStats()
+            self.last_fight['damage'] = damage_stats.DamageStats()
         elif stat_type == StatType.Overall:
-            self.zone = damage_stats.DamageStats()
-            self.last_fight = []
+            self.zone['damage'] = damage_stats.DamageStats()
+            self.last_fight['damage'] = []
 
     def damage_stats(self, stat_type):
         if stat_type == StatType.Zone:
-            return self.zone.stats()
+            return self.zone['damage'].stats()
         elif stat_type == StatType.LastFight:
-            return self.last_fight.stats()
+            return self.last_fight['damage'].stats()
         elif stat_type == StatType.Overall:
-            return damage_stats.combined_stats(self.overall + self.zone.stats())
+            return self.history['damage'].combined(self.zone['damage']).stats()
+
+    def _are_everyone_in_session_out_of_combat(self):
+        return all(player.combat_state == damage_stats.CombatState.OutOfCombat for player in self.zone['damage'].players.values())
+
+    def _merged_stats(self, stats: dict):
+        result = {}
+
+        for stat in stats:
+            result.update(stat.stats())
+        
+        return result
 
 game_stats = GameStats()
+
 
 class DamageStat:
     def __init__(self, name, items, damage, time_in_combat, dps, percentage, best_damage):
@@ -137,22 +149,22 @@ def with_percentage(session):
 
 def zone_stats(with_damage=False):
     return stats({
-        'players': game_stats.damage_stats(StatType.Zone), 
-        'main': {}}, 
+        'players': game_stats.damage_stats(StatType.Zone),
+        'main': {}},
         with_damage)
 
 
 def overall_stats(with_damage=False):
     return stats({
-        'players': game_stats.damage_stats(StatType.Overall), 
-        'main': {}}, 
+        'players': game_stats.damage_stats(StatType.Overall),
+        'main': {}},
         with_damage)
 
 
 def last_fight_stats(with_damage=False):
     return stats({
-        'players': game_stats.damage_stats(StatType.LastFight), 
-        'main': {}}, 
+        'players': game_stats.damage_stats(StatType.LastFight),
+        'main': {}},
         with_damage)
 
 
@@ -166,6 +178,7 @@ def reset_last_fight_stats():
 
 def reset_stats():
     game_stats.reset(StatType.Overall)
+
 
 def initialize():
     backend_proxy.initialize()
