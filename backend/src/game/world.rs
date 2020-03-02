@@ -205,7 +205,7 @@ mod tests {
 
         assert!(world.transform(game_message.clone()).is_some());
         assert_contains!(world.transform(game_message.clone()), "DamageDone");
-        assert_contains!(world.transform(game_message.clone()), "-666");
+        assert_contains!(world.transform(game_message.clone()), "666");
 
         let target = 1;
         let game_message =

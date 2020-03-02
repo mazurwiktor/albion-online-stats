@@ -37,7 +37,7 @@ mod tests {
     pub fn test_call_in_the_thread(subscribers: Subscribers)
     {
         thread::spawn(move || {
-            let mut publisher = Publisher::new(subscribers);
+            let _ = Publisher::new(subscribers);
         });
     }
 
