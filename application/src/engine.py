@@ -4,7 +4,7 @@ from .environment import TEST_ENV_ENABLED
 
 from . import backend_proxy
 from .backend_proxy import InitializationResult, INITIALIZATION_RESULT
-from .stats import damage_stats, fame_stats
+from .stats import damage_stats, fame_stats, time_stats
 from .consts import events as ev_consts
 
 
@@ -20,14 +20,17 @@ class GameStats():
         self.zone = {
             'damage': damage_stats.DamageStats(),
             'fame': fame_stats.FameStats(),
+            'time': time_stats.TimeStats(),
         }
         self.last_fight = {
             'damage': damage_stats.DamageStats(),
             'fame': fame_stats.FameStats(),
+            'time': time_stats.TimeStats(),
         }
         self.history = {
             'damage': damage_stats.DamageStats(),
-            'fame': damage_stats.DamageStats()
+            'fame': fame_stats.FameStats(),
+            'time': time_stats.TimeStats(),
         }
 
     def register_event(self, event):
@@ -37,11 +40,13 @@ class GameStats():
                     self.zone['damage'])
         elif event[ev_consts.EvKeyName] == ev_consts.EvNameZoneChange:
             self.history['damage'].update(self.zone['damage'])
-            # self.history['fame'].update(self.zone['fame'])
+            self.history['fame'].update(self.zone['fame'])
+            self.history['time'].update(self.zone['time'])
 
             self.zone['damage'] = damage_stats.DamageStats()
             self.zone['fame'] = fame_stats.FameStats()
-            
+            self.zone['time'] = time_stats.TimeStats()
+
         self.zone['damage'].receive(event)
         self.last_fight['damage'].receive(event)
         self.zone['fame'].receive(event)
@@ -65,6 +70,22 @@ class GameStats():
         elif stat_type == StatType.Overall:
             return self.history['damage'].combined(self.zone['damage']).stats()
 
+    def fame_stats(self, stat_type):
+        if stat_type == StatType.Zone:
+            return self.zone['fame'].stats()
+        elif stat_type == StatType.LastFight:
+            return self.last_fight['fame'].stats()
+        elif stat_type == StatType.Overall:
+            return self.history['fame'].combined(self.zone['fame']).stats()
+
+    def time_stats(self, stat_type):
+        if stat_type == StatType.Zone:
+            return self.zone['time'].stats()
+        elif stat_type == StatType.LastFight:
+            return self.last_fight['time'].stats()
+        elif stat_type == StatType.Overall:
+            return self.history['time'].combined(self.zone['time']).stats()
+
     def _are_everyone_in_session_out_of_combat(self):
         return all(player.combat_state == damage_stats.CombatState.OutOfCombat for player in self.zone['damage'].players.values())
 
@@ -73,8 +94,9 @@ class GameStats():
 
         for stat in stats:
             result.update(stat.stats())
-        
+
         return result
+
 
 game_stats = GameStats()
 
@@ -148,23 +170,44 @@ def with_percentage(session):
 
 
 def zone_stats(with_damage=False):
+    fame = game_stats.fame_stats(StatType.Zone)
+    time = game_stats.time_stats(StatType.Zone)
+    fame['fame_per_hour'] = fame['fame'] / \
+        time['seconds_in_game'] if time['seconds_in_game'] > 0 else 0.0
     return stats({
         'players': game_stats.damage_stats(StatType.Zone),
-        'main': {}},
+        'main': {
+            **fame,
+            **time,
+        }},
         with_damage)
 
 
 def overall_stats(with_damage=False):
+    fame = game_stats.fame_stats(StatType.Overall)
+    time = game_stats.time_stats(StatType.Overall)
+    fame['fame_per_hour'] = fame['fame'] / \
+        time['seconds_in_game'] if time['seconds_in_game'] > 0 else 0.0
     return stats({
         'players': game_stats.damage_stats(StatType.Overall),
-        'main': {}},
+        'main': {
+            **fame,
+            **time,
+        }},
         with_damage)
 
 
 def last_fight_stats(with_damage=False):
+    fame = game_stats.fame_stats(StatType.LastFight)
+    time = game_stats.time_stats(StatType.LastFight)
+    fame['fame_per_hour'] = fame['fame'] / \
+        time['seconds_in_game'] if time['seconds_in_game'] > 0 else 0.0
     return stats({
         'players': game_stats.damage_stats(StatType.LastFight),
-        'main': {}},
+        'main': {
+            **fame,
+            **time,
+        }},
         with_damage)
 
 

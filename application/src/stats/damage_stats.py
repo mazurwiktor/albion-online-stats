@@ -13,6 +13,7 @@ from typing import Optional
 
 from . import time_utils
 from ..event_receiver import CombatEventReceiver
+from .statistics import Stats
 
 
 @dataclass
@@ -27,12 +28,16 @@ class CombatState:
 
 
 @dataclass
-class Player:
+class Player(Stats):
     name: str
     items: dict = field(default_factory=lambda: {'weapon': None})
     damage_done: float = 0.0
     combat_time: CombatTime = CombatTime()
     combat_state: CombatState = CombatState.OutOfCombat
+
+    @staticmethod
+    def new(self):
+        return Player()
 
     @staticmethod
     def from_other(other):
@@ -76,7 +81,7 @@ class Player:
         if self.time_in_combat == 0.0:
             return 0.0
 
-        return time_utils.as_seconds(self.damage_done / self.time_in_combat)
+        return time_utils.as_milliseconds(self.damage_done / self.time_in_combat)
 
     def stats(self):
         return {
@@ -87,11 +92,15 @@ class Player:
             'items': self.items}
 
 
-class DamageStats(CombatEventReceiver):
+class DamageStats(CombatEventReceiver, Stats):
     def __init__(self, players=None):
         if not players:
             players = {}
         self.players = players
+
+    @staticmethod
+    def new(self):
+        return DamageStats()
 
     @staticmethod
     def from_other(other):
@@ -133,20 +142,3 @@ class DamageStats(CombatEventReceiver):
 
     def on_items_update(self, id: int, items: dict):
         self.players[id].register_items(items)
-
-
-def combined_stats(stats_list):
-    combined = {}
-
-    for stats in stats_list:
-        print(stats)
-        if stats['player'] in combined:
-            current = combined[stats['player']]
-            current['damage'] += stats['damage']
-            current['time_in_combat'] += stats['time_in_combat']
-            current['dps'] += stats['dps']
-            current['items'] = stats['items']
-        else:
-            combined[stats['player']] = stats
-
-    return [s for s in combined.values()]

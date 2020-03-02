@@ -10,5 +10,8 @@ def delta(time):
     return (delta.seconds * 1000.0 + delta.microseconds / 1000.0)
 
 
-def as_seconds(time):
+def as_milliseconds(time):
     return time * 1000.0
+
+def as_seconds(time):
+    return int(time / 1000.0)
