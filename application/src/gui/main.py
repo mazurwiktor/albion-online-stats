@@ -16,7 +16,7 @@ from PySide2 import QtGui
 from PySide2 import QtCore
 
 from .dmg_list import DmgList
-from . import about
+from .modules import about
 from .. import engine
 from ..utils import assets
 from ..utils.config import config
