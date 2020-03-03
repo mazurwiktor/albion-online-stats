@@ -2,7 +2,7 @@ from ..engine import InitializationResult
 from ..engine import initialize
 from ..utils.config import config
 
-from .main import MainWidget
+from .modules.main import MainWidget
 from .styling import style
 from ..utils.version import current_version as get_current_version
 from ..utils.version import latest_url

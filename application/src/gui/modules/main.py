@@ -15,11 +15,11 @@ from PySide2.QtWidgets import QComboBox
 from PySide2 import QtGui
 from PySide2 import QtCore
 
-from .dmg_list import DmgList
-from .modules import about
-from .. import engine
-from ..utils import assets
-from ..utils.config import config
+from .list_view import List
+from . import about
+from ... import engine
+from ...utils import assets
+from ...utils.config import config
 
 
 class Mode:
@@ -31,54 +31,22 @@ class Mode:
     LAST_FIGHT = 'Stats (all): Last fight'
 
 
-class InteractiveBar(QWidget):
-    def __init__(self, table, clipboard):
-        QWidget.__init__(self)
-        self.mode = ModeWidget()
-        self.table = table
-        self.layout = QHBoxLayout()
-        self.about = about.About()
-        self.fame_per_hour = 0.0
+class CopyButton(QPushButton):
+    def __init__(self, clipboard, players, mode, fame):
+        QPushButton.__init__(self)
         self.clipboard = clipboard
+        self.players = players
+        self.mode = mode
+        self.fame = fame
 
-        self.layout.addWidget(self.mode)
-
-        self.copy_button = QPushButton(self)
-        self.copy_button.setIcon(QtGui.QIcon(assets.path('copy.png')))
-        self.copy_button.setToolTip("Copy to clipboard")
-        self.layout.addWidget(self.copy_button)
-        self.copy_button.clicked.connect(self.copy)
-
-        self.reset_button = QPushButton()
-        self.reset_button.setIcon(QtGui.QIcon(assets.path('reset.png')))
-        self.reset_button.setToolTip("Reset")
-        self.layout.addWidget(self.reset_button)
-        self.reset_button.clicked.connect(self.reset)
-
-        self.about_button = QPushButton(self)
-        self.about_button.setIcon(QtGui.QIcon(assets.path('about.png')))
-        self.about_button.setToolTip("About")
-        self.layout.addWidget(self.about_button)
-        self.about_button.clicked.connect(self.about.show)
-
-        if config()['window']['frameless']:
-            self.close_button = QPushButton(self)
-            self.close_button.setIcon(QtGui.QIcon(assets.path('close.png')))
-            self.close_button.setToolTip("Close")
-            self.layout.addWidget(self.close_button)
-            self.close_button.clicked.connect(self.close)
-
-        self.setLayout(self.layout)
+        self.clicked.connect(self.copy)
+        self.setIcon(QtGui.QIcon(assets.path('copy.png')))
+        self.setToolTip("Copy to clipboard")
 
     def copy(self):
-        model = self.table.model
-        items = sorted(
-            [model.item(i).player for i in range(model.rowCount())],
-            key=lambda i: i.damage,
-            reverse=True)
         clip = "{}, FPH: {}\nDMG: \n".format(
-            self.mode.currentText(), self.fame_per_hour)
-        for index, i in enumerate(items[:3]):
+            self.mode(), self.fame())
+        for index, i in enumerate(self.players()[:3]):
             clip += '{}. {}-{}/{}-{}%'.format(index+1,
                                               i.name, i.damage, i.dps, i.percentage)
             clip += "\n"
@@ -87,8 +55,16 @@ class InteractiveBar(QWidget):
         self.clipboard.clear(mode=self.clipboard.Clipboard)
         self.clipboard.setText(clip, mode=self.clipboard.Clipboard)
 
-    def set_fame_per_hour(self, fpm):
-        self.fame_per_hour = fpm
+
+class ResetButton(QPushButton):
+    def __init__(self, mode):
+        QPushButton.__init__(self)
+
+        self.mode = mode
+
+        self.setIcon(QtGui.QIcon(assets.path('reset.png')))
+        self.setToolTip("Reset")
+        self.clicked.connect(self.reset)
 
     def reset(self):
         reset = {
@@ -100,7 +76,72 @@ class InteractiveBar(QWidget):
             Mode.OVERALL: engine.reset_stats,
         }
 
-        reset[self.mode.currentText()]()
+        reset[self.mode()]()
+
+
+class AboutButton(QPushButton):
+    def __init__(self):
+        QPushButton.__init__(self)
+
+        self.about = about.About()
+        self.setIcon(QtGui.QIcon(assets.path('about.png')))
+        self.setToolTip("About")
+        self.clicked.connect(self.about.show)
+
+
+class CloseButton(QPushButton):
+    def __init__(self):
+        QPushButton.__init__(self)
+
+        self.setIcon(QtGui.QIcon(assets.path('close.png')))
+        self.setToolTip("Close")
+        self.clicked.connect(self.close)
+
+    def close(self):
+        sys.exit(0)
+
+
+class InteractiveBar(QWidget):
+    def __init__(self, table, clipboard):
+        QWidget.__init__(self)
+        self.mode = ModeWidget()
+        self.table = table
+        self.layout = QHBoxLayout()
+        self.fame_per_hour = 0.0
+
+        self.layout.addWidget(self.mode)
+
+        self.copy_button = CopyButton(
+            clipboard, self.get_players, self.get_mode, self.get_fame_per_hour)
+        self.layout.addWidget(self.copy_button)
+
+        self.reset_button = ResetButton(self.get_mode)
+        self.layout.addWidget(self.reset_button)
+
+        self.about_button = AboutButton()
+        self.layout.addWidget(self.about_button)
+
+        if config()['window']['frameless']:
+            self.close_button = CloseButton()
+            self.layout.addWidget(self.close_button)
+
+        self.setLayout(self.layout)
+
+    def get_mode(self):
+        return self.mode.currentText()
+
+    def get_fame_per_hour(self):
+        return self.fame_per_hour
+
+    def get_players(self):
+        model = self.table.model
+        return sorted(
+            [model.item(i).player for i in range(model.rowCount())],
+            key=lambda i: i.damage,
+            reverse=True)
+
+    def set_fame_per_hour(self, fpm):
+        self.fame_per_hour = fpm
 
     def close(self):
         sys.exit(0)
@@ -122,7 +163,7 @@ class MainWidget(QWidget):
         QWidget.__init__(self)
 
         self.mouse_pos = None
-        self.table = DmgList()
+        self.table = List()
         self.fame_label = QLabel()
         self.fame_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
         self.bar = InteractiveBar(self.table, clipboard)

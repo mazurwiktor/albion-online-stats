@@ -1,7 +1,7 @@
-from ..utils import assets
-from ..utils import names
-from ..utils import async_request
-from ..utils import weapon
+from ....utils import assets
+from ....utils import names
+from ....utils import async_request
+from ....utils import weapon
 
 from PIL import Image, ImageQt
 from PySide2 import QtCore
@@ -74,8 +74,6 @@ def player_style(items):
     else:
         return Style(bg='#42413c')
 
-# @functools.lru_cache(maxsize=None)
-
 
 def player_icon(weapon):
     url = f'https://albiononline2d.ams3.cdn.digitaloceanspaces.com/thumbnails/orig/{weapon}'
@@ -91,8 +89,8 @@ def player_icon(weapon):
         return None
 
 
-class DmgList(QListView):
-    class DmgItem(QtGui.QStandardItem):
+class List(QListView):
+    class Item(QtGui.QStandardItem):
         def __init__(self, player, parent):
             QtGui.QStandardItem .__init__(self)
             self.parent = parent
@@ -135,14 +133,14 @@ class DmgList(QListView):
             r = self.sourceModel().item(right.row())
             return l.player.percentage < r.player.percentage
 
-    class DmgItemModel(QStandardItemModel):
+    class ItemModel(QStandardItemModel):
         def __init__(self, view):
             QStandardItemModel .__init__(self, view)
 
     def __init__(self):
         QListView .__init__(self)
         self.setIconSize(QtCore.QSize(20, 20))
-        self.model = self.DmgItemModel(self)
+        self.model = self.ItemModel(self)
         self.proxy = self.SortProxyModel()
         self.proxy.setSourceModel(self.model)
 
@@ -161,7 +159,7 @@ class DmgList(QListView):
             if found:
                 found.update(player)
             else:
-                self.model.appendRow(self.DmgItem(player, self))
+                self.model.appendRow(self.Item(player, self))
             visible_names.append(player.name)
         for i in range(self.model.rowCount()):
             item = self.model.item(i)
