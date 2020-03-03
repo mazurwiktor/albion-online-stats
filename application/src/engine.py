@@ -224,5 +224,6 @@ def reset_stats():
 
 
 def initialize():
-    backend_proxy.initialize()
+    initialization_result = backend_proxy.initialize()
     backend_proxy.subscribe(game_stats.register_event)
+    return initialization_result
