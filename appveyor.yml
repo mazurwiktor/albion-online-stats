@@ -30,15 +30,15 @@ test_script:
   - ps: cd backend
   - cargo test
   - ps: cd ..
-  - python3 -m pip install tox
+  - python -m pip install tox
   - ps: cd application
   - tox -e ut
   - pd: cd ..
 build_script:
-  - python3 -m venv env
+  - python -m venv env
   - ps: .\env\Scripts\activate.ps1
-  - python3 -m pip install dataclasses
-  - python3 -m pip install -v -r application\requirements.txt
+  - python -m pip install dataclasses
+  - python -m pip install -v -r application\requirements.txt
   - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data application\src\assets;src\assets application\albion-online-stats.py
   - ps: deactivate
 after_build:

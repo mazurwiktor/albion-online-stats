@@ -9,7 +9,7 @@ jobs:
       script:
         -  ls /usr/bin/pyth*
         - sudo apt-get install python3-venv
-        - python3 -m venv env
+        - python3.7 -m venv env
         - . env/bin/activate
         - pip install -v -r application/requirements.txt
         - pyinstaller -F -w -i assets/albion-stats-icon.ico --add-data application/src/assets:src/assets application/albion-online-stats.py
