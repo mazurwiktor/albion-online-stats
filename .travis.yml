@@ -6,7 +6,8 @@ jobs:
     - os: linux
       dist: xenial
       python: 3.7
-      script: 
+      script:
+        -  ls /usr/bin/pyth*
         - sudo apt-get install python3-venv
         - python3 -m venv env
         - . env/bin/activate
