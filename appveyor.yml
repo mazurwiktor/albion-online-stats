@@ -32,7 +32,7 @@ test_script:
   - ps: cd ..
   - python -m pip install tox
   - ps: cd application
-  - tox -e ut
+  - python -m tox -e ut
   - pd: cd ..
 build_script:
   - python -m venv env
