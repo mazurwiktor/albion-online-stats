@@ -30,7 +30,6 @@ test_script:
   - ps: cd backend
   - cargo test
   - ps: cd ..
-  - python -m pip install dataclasses
   - python -m pip install tox
   - ps: cd application
   - python -m tox -e ut
