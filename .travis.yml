@@ -5,6 +5,7 @@ jobs:
   include:
     - os: linux
       dist: xenial
+      python: 3.7
       script: 
         - sudo apt-get install python3-venv
         - python3 -m venv env
