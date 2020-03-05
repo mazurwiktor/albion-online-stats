@@ -7,6 +7,7 @@ jobs:
       dist: xenial
       python: 3.7
       script:
+        - sudo apt-get update
         - sudo apt-get install python3.7
         - sudo apt-get install python3-venv
         - python3.7 -m venv env
