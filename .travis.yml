@@ -9,7 +9,7 @@ jobs:
       script:
         - sudo add-apt-repository ppa:deadsnakes/ppa -y
         - sudo apt-get update
-        - sudo apt-get install python3.7
+        - sudo apt-get install -y python3.7 libpython3.7-dev
         - python3.7 -m ensurepip
         - python3.7 -m pip install venv
         - python3.7 -m venv env
