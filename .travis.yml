@@ -6,9 +6,11 @@ jobs:
     - os: linux
       dist: xenial
       python: 3.7
-      script: 
-        - sudo apt-get install python3-venv
-        - python3 -m venv env
+      script:
+        - sudo add-apt-repository ppa:deadsnakes/ppa -y
+        - sudo apt-get update && sudo apt upgrade
+        - sudo apt-get install -y python3.7 libpython3.7-dev python3.7-venv
+        - python3.7 -m venv env
         - . env/bin/activate
         - pip install -v -r application/requirements.txt
         - pyinstaller -F -w -i assets/albion-stats-icon.ico --add-data application/src/assets:src/assets application/albion-online-stats.py
