@@ -4,6 +4,7 @@ rust:
 jobs:
   include:
     - os: linux
+      dist: xenial
       script: 
         - sudo apt-get install python3-venv
         - python3 -m venv env
