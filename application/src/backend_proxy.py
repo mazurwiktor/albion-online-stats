@@ -64,7 +64,7 @@ def _testing_call_sequence(callback):
 
     import threading
     import time
-    
+
     sequence = {}
     sequence[environment.TestType.Simple] = [
         {'name': 'ZoneChange'},

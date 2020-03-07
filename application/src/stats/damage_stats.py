@@ -9,11 +9,12 @@
 
 from dataclasses import field
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 
 from . import time_utils
 from ..event_receiver import CombatEventReceiver
 from .statistics import Stats
+from .list_item import PlayerListItem, StandalonePlayerListItem, to_player_list_items
 
 
 @dataclass
@@ -120,6 +121,13 @@ class DamageStats(CombatEventReceiver, Stats):
         stats.update(other)
 
         return stats
+
+    def player_list(self) -> List[PlayerListItem]:
+        return to_player_list_items([
+            StandalonePlayerListItem(
+                player.name, player.items, player.damage_done, player.dps)
+            for player in self.players.values()
+        ])
 
     def stats(self):
         return [player.stats() for player in self.players.values()]

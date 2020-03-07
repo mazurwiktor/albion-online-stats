@@ -20,13 +20,16 @@ def update_loop():
         _requests_threads[item.key].join()
         del _requests_threads[item.key]
 
+
 _update_thread = threading.Thread(target=update_loop, daemon=True)
 _update_thread.start()
+
 
 def _async_req(url):
     req = requests.get(url)
 
     _queue.put(Item(key=url, value=req))
+
 
 def get(url):
 

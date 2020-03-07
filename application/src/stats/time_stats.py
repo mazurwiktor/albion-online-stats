@@ -7,7 +7,7 @@ from .statistics import Stats
 
 @dataclass
 class TimeStats(Stats):
-    time : float = field(default_factory=lambda: time_utils.now())
+    time: float = field(default_factory=lambda: time_utils.now())
 
     @classmethod
     def new(self):

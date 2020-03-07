@@ -20,7 +20,7 @@ from . import about
 from ... import engine
 from ...utils import assets
 from ...utils.config import config
-
+from ...stats.list_item import PlayerListItem
 
 class Mode:
     DMG_CURRENT_ZONE = 'Stats (dmg): Current zone'
@@ -32,10 +32,10 @@ class Mode:
 
 
 class CopyButton(QPushButton):
-    def __init__(self, clipboard, players, mode, fame):
+    def __init__(self, clipboard, players : PlayerListItem, mode, fame):
         QPushButton.__init__(self)
         self.clipboard = clipboard
-        self.players = players
+        self.players : PlayerListItem = players
         self.mode = mode
         self.fame = fame
 
@@ -48,7 +48,7 @@ class CopyButton(QPushButton):
             self.mode(), self.fame())
         for index, i in enumerate(self.players()[:3]):
             clip += '{}. {}-{}/{}-{}%'.format(index+1,
-                                              i.name, i.damage, i.dps, i.percentage)
+                                              i.name, i.value, i.value_per_second, i.percentage)
             clip += "\n"
         clip += "(AOStats https://git.io/JeBD1)"
 
@@ -90,12 +90,14 @@ class AboutButton(QPushButton):
 
 
 class CloseButton(QPushButton):
-    def __init__(self):
+    def __init__(self, is_visible):
         QPushButton.__init__(self)
 
         self.setIcon(QtGui.QIcon(assets.path('close.png')))
         self.setToolTip("Close")
         self.clicked.connect(self.close)
+        if not is_visible:
+            self.hide()
 
     def close(self):
         sys.exit(0)
@@ -112,33 +114,22 @@ class InteractiveBar(QWidget):
         self.layout.addWidget(self.mode)
 
         self.copy_button = CopyButton(
-            clipboard, self.get_players, self.get_mode, self.get_fame_per_hour)
+            clipboard, self.table.get_player_list_items, self.mode.get_mode, self.get_fame_per_hour)
         self.layout.addWidget(self.copy_button)
 
-        self.reset_button = ResetButton(self.get_mode)
+        self.reset_button = ResetButton(self.mode.get_mode)
         self.layout.addWidget(self.reset_button)
 
         self.about_button = AboutButton()
         self.layout.addWidget(self.about_button)
 
-        if config()['window']['frameless']:
-            self.close_button = CloseButton()
-            self.layout.addWidget(self.close_button)
-
+        self.close_button = CloseButton(config()['window']['frameless'])
+        self.layout.addWidget(self.close_button)
+        
         self.setLayout(self.layout)
-
-    def get_mode(self):
-        return self.mode.currentText()
 
     def get_fame_per_hour(self):
         return self.fame_per_hour
-
-    def get_players(self):
-        model = self.table.model
-        return sorted(
-            [model.item(i).player for i in range(model.rowCount())],
-            key=lambda i: i.damage,
-            reverse=True)
 
     def set_fame_per_hour(self, fpm):
         self.fame_per_hour = fpm
@@ -157,6 +148,8 @@ class ModeWidget(QComboBox):
         self.addItem(Mode.OVERALL)
         self.addItem(Mode.LAST_FIGHT)
 
+    def get_mode(self):
+        return self.currentText()
 
 class MainWidget(QWidget):
     def __init__(self, clipboard):
@@ -181,8 +174,8 @@ class MainWidget(QWidget):
         timer.start(500)
 
     def refresh(self):
-        damage_session, fame_stat, elapsed = self.session()
-        self.table.update(damage_session)
+        player_list_items, fame_stat, elapsed = self.session()
+        self.table.update(player_list_items)
         self.bar.set_fame_per_hour(fame_stat.fame_per_hour)
         self.fame_label.setText("<b>{}</b> | Fame <b>{}</b> | FPH <b>{}</b>".format(
             datetime.timedelta(seconds=elapsed), fame_stat.fame, fame_stat.fame_per_hour))

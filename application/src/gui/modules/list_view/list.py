@@ -23,6 +23,9 @@ from io import BytesIO
 import collections
 import functools
 import re
+from typing import List
+
+from ....stats.list_item import PlayerListItem
 
 Style = collections.namedtuple('Style', 'bg')
 
@@ -103,12 +106,12 @@ class List(QListView):
         def update(self, player):
             self.player = player
             self.setText("{} {} ({}, {}%)".format(
-                self.player.name, self.player.damage, self.player.dps, self.player.percentage
+                self.player.name, self.player.value, self.player.value_per_second, self.player.percentage
             ))
             self.refresh()
 
         def refresh(self):
-            value = round(self.player.damage / self.player.best_damage, 2)
+            value = round(self.player.value / self.player.best_value, 2)
             QRectF = QtCore.QRectF(self.parent.rect())
             gradient = QtGui.QLinearGradient(
                 QRectF.topLeft(), QRectF.topRight())
@@ -146,7 +149,7 @@ class List(QListView):
 
         self.setModel(self.proxy)
 
-    def update(self, players):
+    def update(self, players: List[PlayerListItem]):
         if not players:
             self.model.clear()
             return
@@ -167,3 +170,9 @@ class List(QListView):
                 self.model.removeRow(i)
 
         self.proxy.sort(0, QtCore.Qt.DescendingOrder)
+
+    def get_player_list_items(self) -> List[PlayerListItem]:
+        return sorted(
+            [self.model.item(i).player for i in range(self.model.rowCount())],
+            key=lambda i: i.value,
+            reverse=True)

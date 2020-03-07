@@ -21,8 +21,10 @@ version = '%s'
 """ % (CFG_VERSION)
 
 
-_script_path = sys.argv[0]  # pyinstaller creates tmpdir for python files, thus this is the way to get executable path
+# pyinstaller creates tmpdir for python files, thus this is the way to get executable path
+_script_path = sys.argv[0]
 _config = None
+
 
 def config():
     global _script_path

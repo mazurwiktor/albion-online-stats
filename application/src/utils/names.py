@@ -4,6 +4,7 @@ from . import assets
 
 _mappings = None
 
+
 def map_name(name):
     global _mappings
 
@@ -12,4 +13,3 @@ def map_name(name):
             _mappings = json.loads(m.read())
 
     return _mappings[name] if name in _mappings else name
-

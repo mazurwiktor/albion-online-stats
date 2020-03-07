@@ -2,6 +2,7 @@ import json
 
 from . import assets
 
+
 class WeaponType:
     Arcane = 'arcanestaff'
     Axe = 'axe'
@@ -19,7 +20,9 @@ class WeaponType:
     Spear = 'spear'
     Sword = 'sword'
 
+
 _mappings = None
+
 
 def map_weapon(weapon):
     global _mappings
@@ -29,6 +32,7 @@ def map_weapon(weapon):
             _mappings = json.loads(m.read())
 
     return _mappings[weapon] if weapon in _mappings else None
+
 
 def get_weapon_type(items):
     weapon = map_weapon(items['weapon'])
@@ -65,4 +69,3 @@ def get_weapon_type(items):
         return WeaponType.Sword
     else:
         return None
-    
