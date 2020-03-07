@@ -84,11 +84,22 @@ After first execution the app is going to create default configuration file name
     [sudo on linux] python application/albion-online-stats.py
     ```
 
+## Debugging
+
+Setting `BACKEND_LOG_LEVEL` to `DEBUG` value enables more advanced debug information
+
+E.g
+
+```shell
+BACKEND_LOG_LEVEL=DEBUG python application/albion-online-stats.py
+```
+
+
 ## GUI testing
 - Seting TESTING variable runs application without backend dependency
 
     ```shell
-    TESTING=true python application/albion-online-stats.py
+    TESTING=simple python application/albion-online-stats.py
     ```
 
 # License
