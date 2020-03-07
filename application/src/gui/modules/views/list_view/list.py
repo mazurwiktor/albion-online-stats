@@ -1,9 +1,10 @@
-from ....utils import assets
-from ....utils import names
-from ....utils import async_request
-from ....utils import weapon
-
+from io import BytesIO
+import collections
+import functools
+import re
+from typing import List
 from PIL import Image, ImageQt
+
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2.QtCore import Qt
@@ -19,13 +20,11 @@ from PySide2.QtWidgets import QProgressBar
 from PySide2.QtWidgets import QPushButton
 from PySide2.QtWidgets import QVBoxLayout
 
-from io import BytesIO
-import collections
-import functools
-import re
-from typing import List
-
-from ....stats.list_item import PlayerListItem
+from .....stats.list_item import PlayerListItem
+from .....utils import assets
+from .....utils import async_request
+from .....utils import names
+from .....utils import weapon
 
 Style = collections.namedtuple('Style', 'bg')
 

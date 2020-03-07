@@ -60,7 +60,7 @@ class GameStats():
             self.last_fight['damage'] = damage_stats.DamageStats()
         elif stat_type == StatType.Overall:
             self.zone['damage'] = damage_stats.DamageStats()
-            self.last_fight['damage'] = []
+            self.last_fight['damage'] = damage_stats.DamageStats()
 
     def damage_stats(self, stat_type):
         if stat_type == StatType.Zone:
@@ -124,7 +124,8 @@ def get_stats(stat_type: StatType, with_damage: bool):
     time = game_stats.time_stats(stat_type)['seconds_in_game']
     fame = FameStat(Number(fame['fame']), Number(
         fame['fame'] / time if time > 0.0 else 0.0))
-    players = game_stats.damage_stats(stat_type)
+    players = list(filter(lambda p: p.value !=
+                          0.0 if with_damage else True, game_stats.damage_stats(stat_type)))
 
     return players, fame, time
 
