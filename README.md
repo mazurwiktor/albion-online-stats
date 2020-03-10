@@ -32,12 +32,14 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 After first execution the app is going to create default configuration file named `albion-online-stats.cfg`. Feel free to edit it according to your needs.
 
 ## Is This Allowed
- ```Our position is quite simple. As long as you just look and analyze we are ok with it. The moment you modify or manipulate something or somehow interfere with our services we will react (e.g. perma-ban, take legal action, whatever```
+<s> ```Our position is quite simple. As long as you just look and analyze we are ok with it. The moment you modify or manipulate something or somehow interfere with our services we will react (e.g. perma-ban, take legal action, whatever```
 
 ~MadDave, Technical Lead at Sandbox Interactive for Albion Online, [source](https://forum.albiononline.com/index.php/Thread/51604-Is-it-allowed-to-scan-your-internet-trafic-and-pick-up-logs/?postID=512670#post512670)
 
-* copied from [Albion Online Data](https://www.albion-online-data.com/)
+* copied from [Albion Online Data](https://www.albion-online-data.com/)</s>
 
+
+Current statement of SBI about this app is unclear. See https://github.com/mazurwiktor/albion-online-stats/issues/19
 
 ## Donate
 
