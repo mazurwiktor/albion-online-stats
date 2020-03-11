@@ -44,7 +44,7 @@ fn python_callbacks_subscriber(event: game::Event) {
 fn initialize(_py: Python) -> PyResult<u32> {
     api::initialize(vec![
         Box::new(python_callbacks_subscriber)
-    ]).map_or(Ok(0), |_| {Ok(2)})
+    ]).map_or(Ok(2), |_| {Ok(0)})
 }
 
 fn subscribe(_py: Python, callable: cpython::PyObject) -> PyResult<u32> {

@@ -1,7 +1,7 @@
 **/target
 **/*.rs.bk
 **/target
-damage-meter.log
+backend.log
 *.so
 .vscode
 

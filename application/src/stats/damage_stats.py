@@ -33,7 +33,7 @@ class Player(Stats):
     name: str
     items: dict = field(default_factory=lambda: {'weapon': None})
     damage_done: float = 0.0
-    combat_time: CombatTime = CombatTime()
+    combat_time: CombatTime = field(default_factory=lambda: CombatTime())
     combat_state: CombatState = CombatState.OutOfCombat
 
     @staticmethod
@@ -47,6 +47,8 @@ class Player(Stats):
     def update(self, other):
         self.name = other.name
         self.damage_done += other.damage_done
+        self.combat_state = other.combat_state
+        self.combat_time.entered_combat = other.combat_time.entered_combat
         self.combat_time.time_in_combat += other.combat_time.time_in_combat
         self.items = other.items
 
