@@ -107,25 +107,24 @@ class FameStat:
         self.fame_per_hour = fame_per_hour
 
 
-def zone_stats(with_damage=False):
-    return get_stats(StatType.Zone, with_damage)
+def zone_stats():
+    return get_stats(StatType.Zone)
 
 
-def overall_stats(with_damage=False):
-    return get_stats(StatType.Overall, with_damage)
+def overall_stats():
+    return get_stats(StatType.Overall)
 
 
-def last_fight_stats(with_damage=False):
-    return get_stats(StatType.LastFight, with_damage)
+def last_fight_stats():
+    return get_stats(StatType.LastFight)
 
 
-def get_stats(stat_type: StatType, with_damage: bool):
+def get_stats(stat_type: StatType):
     fame = game_stats.fame_stats(stat_type)
     time = game_stats.time_stats(stat_type)['seconds_in_game']
     fame = FameStat(Number(fame['fame']), Number(
         fame['fame'] / time if time > 0.0 else 0.0))
-    players = list(filter(lambda p: p.value !=
-                          0.0 if with_damage else True, game_stats.damage_stats(stat_type)))
+    players = game_stats.damage_stats(stat_type)
 
     return players, fame, time
 

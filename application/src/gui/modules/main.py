@@ -50,7 +50,6 @@ class ViewTypeWidget(QComboBox):
     def __init__(self):
         QComboBox.__init__(self)
         self.addItem(ViewType.DMG)
-        self.addItem(ViewType.DMG_ALL)
 
     def get_view_type(self):
         return self.currentText()
@@ -130,14 +129,9 @@ class MainWidget(QWidget):
     def damage_stats(self):
         stats = {
             ViewType.DMG: {
-                StatsType.ZONE: functools.partial(engine.zone_stats, with_damage=True),
-                StatsType.LAST_FIGHT: functools.partial(engine.last_fight_stats, with_damage=True),
-                StatsType.OVERALL: functools.partial(engine.overall_stats, with_damage=True),
-            },
-            ViewType.DMG_ALL: {
-                StatsType.ZONE: functools.partial(engine.zone_stats, with_damage=False),
-                StatsType.LAST_FIGHT: functools.partial(engine.last_fight_stats, with_damage=False),
-                StatsType.OVERALL: functools.partial(engine.overall_stats, with_damage=False),
+                StatsType.ZONE: functools.partial(engine.zone_stats),
+                StatsType.LAST_FIGHT: functools.partial(engine.last_fight_stats),
+                StatsType.OVERALL: functools.partial(engine.overall_stats),
             }
         }
 
