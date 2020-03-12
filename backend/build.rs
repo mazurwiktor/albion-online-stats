@@ -11,7 +11,9 @@ enum ParamType
     Float,
     String,
     Items,
-    StringList
+    StringList,
+    NumberList,
+    ListOfNumberList,
 }
 
 impl ParamType {
@@ -22,6 +24,8 @@ impl ParamType {
             ParamType::String => "String",
             ParamType::Items => "Items",
             ParamType::StringList => "Vec<String>",
+            ParamType::NumberList => "Vec<u32>",
+            ParamType::ListOfNumberList => "Vec<Vec<u32>>",
         }
     }
 
@@ -32,6 +36,8 @@ impl ParamType {
             ParamType::String => "decode_string!",
             ParamType::Items => "decode_number_vec!",
             ParamType::StringList => "decode_string_vec!",
+            ParamType::NumberList => "decode_number_vec!",
+            ParamType::ListOfNumberList => "decode_vec_of_number_vec!",
         }
     }
 }

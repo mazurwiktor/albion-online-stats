@@ -152,6 +152,130 @@
                     "param_type": "Items"
                 }
             ]
+        },
+        {
+            "name": "PartyInvitation",
+            "code": 210,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartyJoined",
+            "code": 211,
+            "params": [
+                {
+                    "name": "party_id",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "party_structures",
+                    "id": 4,
+                    "param_type": "ListOfNumberList"
+                },
+                {
+                    "name": "character_names",
+                    "id": 5,
+                    "param_type": "StringList"
+                }
+            ]
+        },
+        {
+            "name": "PartyDisbanded",
+            "code": 212,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartyPlayerJoined",
+            "code": 213,
+            "params": [
+                {
+                    "name": "party_id",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "party_structure",
+                    "id": 1,
+                    "param_type": "NumberList"
+                },
+                {
+                    "name": "name",
+                    "id": 2,
+                    "param_type": "String"
+                }
+            ]
+        },
+        {
+            "name": "PartyChangedOrder",
+            "code": 214,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartyPlayerLeft",
+            "code": 215,
+            "params": [
+                {
+                    "name": "party_id",
+                    "id": 0,
+                    "param_type": "Number"
+                },
+                {
+                    "name": "party_structure",
+                    "id": 1,
+                    "param_type": "NumberList"
+                }
+            ]
+        },
+        {
+            "name": "PartyLeaderChanged",
+            "code": 216,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartyLootSettingChangedPlayer",
+            "code": 217,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartySilverGained",
+            "code": 218,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartyPlayerUpdated",
+            "code": 219,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartyInvitationPlayerBusy",
+            "code": 220,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartyMarkedObjectsUpdated",
+            "code": 221,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartyOnClusterPartyJoined",
+            "code": 222,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartySetRoleFlag",
+            "code": 223,
+            "params": [
+            ]
         }
     ],
     "responses": [

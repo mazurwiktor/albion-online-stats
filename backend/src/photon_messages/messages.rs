@@ -114,6 +114,34 @@ macro_rules! decode_float {
     };
 }
 
+
+macro_rules! decode_vec_of_number_vec {
+    ($val:expr, $index:expr, $name:expr) => {
+        if let Some(p) = $val.get(&$index) {
+            match p {
+                Value::Array(v) => {
+                    let mut ret = vec![];
+                    for i in v {
+                        let mut params = Parameters::new();
+                        params.insert(0, i.clone());
+                        let item = decode_number_vec!(params, 0, $name)?;
+                        ret.push(item);
+                    }
+
+                    Some(ret)
+                },
+                _ => {
+                    error!("Failed to decode {}", $name);
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    };
+}
+
+
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Leave {
     pub source: usize,
@@ -259,6 +287,218 @@ impl CharacterEquipmentChanged {
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyInvitation {
+
+}
+
+impl PartyInvitation {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyInvitation parameters: {:?}", val);
+
+
+        Some(Message::PartyInvitation(PartyInvitation {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyJoined {
+    pub party_id: usize,
+    pub party_structures: Vec<Vec<u32>>,
+    pub character_names: Vec<String>,
+
+}
+
+impl PartyJoined {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyJoined parameters: {:?}", val);
+        let party_id = decode_number!(val, 0, "PartyJoined::party_id")?;
+        let party_structures = decode_vec_of_number_vec!(val, 4, "PartyJoined::party_structures")?;
+        let character_names = decode_string_vec!(val, 5, "PartyJoined::character_names")?;
+
+
+        Some(Message::PartyJoined(PartyJoined { party_id, party_structures, character_names,  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyDisbanded {
+
+}
+
+impl PartyDisbanded {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyDisbanded parameters: {:?}", val);
+
+
+        Some(Message::PartyDisbanded(PartyDisbanded {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyPlayerJoined {
+    pub party_id: usize,
+    pub party_structure: Vec<u32>,
+    pub name: String,
+
+}
+
+impl PartyPlayerJoined {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyPlayerJoined parameters: {:?}", val);
+        let party_id = decode_number!(val, 0, "PartyPlayerJoined::party_id")?;
+        let party_structure = decode_number_vec!(val, 1, "PartyPlayerJoined::party_structure")?;
+        let name = decode_string!(val, 2, "PartyPlayerJoined::name")?;
+
+
+        Some(Message::PartyPlayerJoined(PartyPlayerJoined { party_id, party_structure, name,  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyChangedOrder {
+
+}
+
+impl PartyChangedOrder {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyChangedOrder parameters: {:?}", val);
+
+
+        Some(Message::PartyChangedOrder(PartyChangedOrder {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyPlayerLeft {
+    pub party_id: usize,
+    pub party_structure: Vec<u32>,
+
+}
+
+impl PartyPlayerLeft {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyPlayerLeft parameters: {:?}", val);
+        let party_id = decode_number!(val, 0, "PartyPlayerLeft::party_id")?;
+        let party_structure = decode_number_vec!(val, 1, "PartyPlayerLeft::party_structure")?;
+
+
+        Some(Message::PartyPlayerLeft(PartyPlayerLeft { party_id, party_structure,  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyLeaderChanged {
+
+}
+
+impl PartyLeaderChanged {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyLeaderChanged parameters: {:?}", val);
+
+
+        Some(Message::PartyLeaderChanged(PartyLeaderChanged {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyLootSettingChangedPlayer {
+
+}
+
+impl PartyLootSettingChangedPlayer {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyLootSettingChangedPlayer parameters: {:?}", val);
+
+
+        Some(Message::PartyLootSettingChangedPlayer(PartyLootSettingChangedPlayer {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartySilverGained {
+
+}
+
+impl PartySilverGained {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartySilverGained parameters: {:?}", val);
+
+
+        Some(Message::PartySilverGained(PartySilverGained {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyPlayerUpdated {
+
+}
+
+impl PartyPlayerUpdated {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyPlayerUpdated parameters: {:?}", val);
+
+
+        Some(Message::PartyPlayerUpdated(PartyPlayerUpdated {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyInvitationPlayerBusy {
+
+}
+
+impl PartyInvitationPlayerBusy {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyInvitationPlayerBusy parameters: {:?}", val);
+
+
+        Some(Message::PartyInvitationPlayerBusy(PartyInvitationPlayerBusy {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyMarkedObjectsUpdated {
+
+}
+
+impl PartyMarkedObjectsUpdated {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyMarkedObjectsUpdated parameters: {:?}", val);
+
+
+        Some(Message::PartyMarkedObjectsUpdated(PartyMarkedObjectsUpdated {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartyOnClusterPartyJoined {
+
+}
+
+impl PartyOnClusterPartyJoined {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartyOnClusterPartyJoined parameters: {:?}", val);
+
+
+        Some(Message::PartyOnClusterPartyJoined(PartyOnClusterPartyJoined {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct PartySetRoleFlag {
+
+}
+
+impl PartySetRoleFlag {
+    pub fn parse(val: Parameters) -> Option<Message> {
+        info!("PartySetRoleFlag parameters: {:?}", val);
+
+
+        Some(Message::PartySetRoleFlag(PartySetRoleFlag {  }))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct Join {
     pub source: usize,
     pub character_name: String,
@@ -293,6 +533,20 @@ pub enum Message {
     NewCharacter(NewCharacter),
     UpdateFame(UpdateFame),
     CharacterEquipmentChanged(CharacterEquipmentChanged),
+    PartyInvitation(PartyInvitation),
+    PartyJoined(PartyJoined),
+    PartyDisbanded(PartyDisbanded),
+    PartyPlayerJoined(PartyPlayerJoined),
+    PartyChangedOrder(PartyChangedOrder),
+    PartyPlayerLeft(PartyPlayerLeft),
+    PartyLeaderChanged(PartyLeaderChanged),
+    PartyLootSettingChangedPlayer(PartyLootSettingChangedPlayer),
+    PartySilverGained(PartySilverGained),
+    PartyPlayerUpdated(PartyPlayerUpdated),
+    PartyInvitationPlayerBusy(PartyInvitationPlayerBusy),
+    PartyMarkedObjectsUpdated(PartyMarkedObjectsUpdated),
+    PartyOnClusterPartyJoined(PartyOnClusterPartyJoined),
+    PartySetRoleFlag(PartySetRoleFlag),
     Join(Join),
 }
 
@@ -311,6 +565,20 @@ pub fn into_game_message(photon_message: photon_decode::Message) -> Option<Messa
                 Some(photon_decode::Value::Short(24)) => NewCharacter::parse(parameters),
                 Some(photon_decode::Value::Short(72)) => UpdateFame::parse(parameters),
                 Some(photon_decode::Value::Short(79)) => CharacterEquipmentChanged::parse(parameters),
+                Some(photon_decode::Value::Short(210)) => PartyInvitation::parse(parameters),
+                Some(photon_decode::Value::Short(211)) => PartyJoined::parse(parameters),
+                Some(photon_decode::Value::Short(212)) => PartyDisbanded::parse(parameters),
+                Some(photon_decode::Value::Short(213)) => PartyPlayerJoined::parse(parameters),
+                Some(photon_decode::Value::Short(214)) => PartyChangedOrder::parse(parameters),
+                Some(photon_decode::Value::Short(215)) => PartyPlayerLeft::parse(parameters),
+                Some(photon_decode::Value::Short(216)) => PartyLeaderChanged::parse(parameters),
+                Some(photon_decode::Value::Short(217)) => PartyLootSettingChangedPlayer::parse(parameters),
+                Some(photon_decode::Value::Short(218)) => PartySilverGained::parse(parameters),
+                Some(photon_decode::Value::Short(219)) => PartyPlayerUpdated::parse(parameters),
+                Some(photon_decode::Value::Short(220)) => PartyInvitationPlayerBusy::parse(parameters),
+                Some(photon_decode::Value::Short(221)) => PartyMarkedObjectsUpdated::parse(parameters),
+                Some(photon_decode::Value::Short(222)) => PartyOnClusterPartyJoined::parse(parameters),
+                Some(photon_decode::Value::Short(223)) => PartySetRoleFlag::parse(parameters),
 
                 _ => None
             }

@@ -10,6 +10,7 @@ use super::events;
 use super::convert;
 use super::convert::EventList;
 use super::id_cache;
+use super::party::{Party};
 use super::player::{StaticId, DynamicId};
 use super::unconsumed_messages::UnconsumedMessages;
 
@@ -18,6 +19,7 @@ pub struct World {
     cache: id_cache::IdCache,
     unconsumed_messages: UnconsumedMessages,
     main_player_id: Option<StaticId>,
+    party: Party
 }
 
 impl World {
@@ -60,7 +62,7 @@ impl World {
                 if self.main_player_id.is_none() {
                     result.push(events::Event::ZoneChange)
                 }
-
+                self.party.set_main_player_name(&msg.character_name);
                 result.push(self.get_intermediate(static_id, msg)?.into());
 
 
@@ -107,7 +109,53 @@ impl World {
                 self.unconsumed_messages.add(
                     photon_messages::messages::Message::CharacterEquipmentChanged(msg), id);
                 None
-            }
+            },
+            photon_messages::Message::PartyInvitation(_) => {
+                None
+            },
+            photon_messages::Message::PartyJoined(msg) => {
+                let evt = self.party.joined(msg)?;
+                Some(vec![evt])
+            },
+            photon_messages::Message::PartyDisbanded(_) => {
+                let evt = self.party.disbanded()?;
+                Some(vec![evt])
+            },
+            photon_messages::Message::PartyPlayerJoined(msg) => {
+                let evt = self.party.single_player_joined(msg)?;
+                Some(vec![evt])
+            },
+            photon_messages::Message::PartyChangedOrder(_) => {
+                None
+            },
+            photon_messages::Message::PartyPlayerLeft(msg) => {
+                let evt = self.party.player_left(msg)?;
+                Some(vec![evt])
+            },
+            photon_messages::Message::PartyLeaderChanged(_) => {
+                None
+            },
+            photon_messages::Message::PartyLootSettingChangedPlayer(_) => {
+                None
+            },
+            photon_messages::Message::PartySilverGained(_) => {
+                None
+            },
+            photon_messages::Message::PartyPlayerUpdated(_) => {
+                None
+            },
+            photon_messages::Message::PartyInvitationPlayerBusy(_) => {
+                None
+            },
+            photon_messages::Message::PartyMarkedObjectsUpdated(_) => {
+                None
+            },
+            photon_messages::Message::PartyOnClusterPartyJoined(_) => {
+                None
+            },
+            photon_messages::Message::PartySetRoleFlag(_) => {
+                None
+            },
         }
     }
     fn assign_dynamic_id(&mut self, id: DynamicId, name: &str) {

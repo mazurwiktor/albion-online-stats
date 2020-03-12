@@ -3,6 +3,7 @@ pub mod convert;
 pub mod world;
 pub mod id_cache;
 
+mod party;
 mod unconsumed_messages;
 mod player;
 

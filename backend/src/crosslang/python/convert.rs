@@ -49,6 +49,10 @@ impl ToPyObject for Event {
             Event::HealthReceived(e) => {
                 event.set_item(py, "name", "HealthReceived".into_py_object(py)).unwrap_or(());
                 event.set_item(py, "value", e.into_py_object(py)).unwrap_or(());
+            },
+            Event::UpdateParty(e) => {
+                event.set_item(py, "name", "UpdateParty".into_py_object(py)).unwrap_or(());
+                event.set_item(py, "value", e.into_py_object(py)).unwrap_or(());
             }
         }
 
@@ -108,6 +112,17 @@ impl ToPyObject for events::Items {
         event.into_object()
     }
 }
+
+impl ToPyObject for events::Party {
+    type ObjectType = PyObject;
+    fn to_py_object(&self, py: Python) -> Self::ObjectType {
+        let event = PyDict::new(py);
+
+        event.set_item(py, "player_names", self.player_names.clone().into_py_object(py)).unwrap_or(());
+        event.into_object()
+    }
+}
+
 
 macro_rules! set_dict_item {
     ($py:ident, $dict:ident, $from:ident, $field_name:ident) => {

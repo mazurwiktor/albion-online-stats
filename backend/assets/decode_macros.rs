@@ -108,3 +108,31 @@ macro_rules! decode_float {
         }
     };
 }
+
+
+macro_rules! decode_vec_of_number_vec {
+    ($val:expr, $index:expr, $name:expr) => {
+        if let Some(p) = $val.get(&$index) {
+            match p {
+                Value::Array(v) => {
+                    let mut ret = vec![];
+                    for i in v {
+                        let mut params = Parameters::new();
+                        params.insert(0, i.clone());
+                        let item = decode_number_vec!(params, 0, $name)?;
+                        ret.push(item);
+                    }
+
+                    Some(ret)
+                },
+                _ => {
+                    error!("Failed to decode {}", $name);
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    };
+}
+

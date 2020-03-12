@@ -30,6 +30,11 @@ pub struct Items {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Party {
+    pub player_names: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Event {
     MainPlayerAppeared(Player),
     PlayerAppeared(Player),
@@ -40,4 +45,5 @@ pub enum Event {
     LeaveCombat(Player),
     UpdateFame(Fame),
     UpdateItems(Items),
+    UpdateParty(Party),
 }
