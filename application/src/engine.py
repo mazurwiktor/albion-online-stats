@@ -6,7 +6,8 @@ from . import backend_proxy
 from .backend_proxy import InitializationResult, INITIALIZATION_RESULT
 from .stats import damage_stats, fame_stats, time_stats
 from .consts import events as ev_consts
-
+from .event_receiver import VisibilityEventReceiver
+from .stats.visibility import Visibility
 
 class StatType:
     Unknown = 0
@@ -33,6 +34,8 @@ class GameStats():
             'time': time_stats.TimeStats(),
         }
 
+        self.visibility = Visibility()
+
     def register_event(self, event):
         if event[ev_consts.EvKeyName] == ev_consts.EvNameEnterCombat:
             if self._are_everyone_in_session_out_of_combat():
@@ -51,6 +54,7 @@ class GameStats():
         self.last_fight['damage'].receive(event)
         self.zone['fame'].receive(event)
         self.last_fight['fame'].receive(event)
+        self.visibility.receive(event)
 
     def reset(self, stat_type):
         if stat_type == StatType.Zone:
@@ -64,11 +68,11 @@ class GameStats():
 
     def damage_stats(self, stat_type):
         if stat_type == StatType.Zone:
-            return self.zone['damage'].player_list()
+            return self.zone['damage'].player_list(self.visibility)
         elif stat_type == StatType.LastFight:
-            return self.last_fight['damage'].player_list()
+            return self.last_fight['damage'].player_list(self.visibility)
         elif stat_type == StatType.Overall:
-            return self.history['damage'].combined(self.zone['damage']).player_list()
+            return self.history['damage'].combined(self.zone['damage']).player_list(self.visibility)
 
     def fame_stats(self, stat_type):
         if stat_type == StatType.Zone:

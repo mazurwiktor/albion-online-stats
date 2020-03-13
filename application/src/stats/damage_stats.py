@@ -12,10 +12,10 @@ from dataclasses import dataclass
 from typing import Optional, List
 
 from . import time_utils
-from ..event_receiver import CombatEventReceiver
+from ..event_receiver import CombatEventReceiver, VisibilityEventReceiver
 from .statistics import Stats
 from .list_item import PlayerListItem, StandalonePlayerListItem, to_player_list_items
-
+from .visibility import Visibility
 
 @dataclass
 class CombatTime:
@@ -124,11 +124,11 @@ class DamageStats(CombatEventReceiver, Stats):
 
         return stats
 
-    def player_list(self) -> List[PlayerListItem]:
+    def player_list(self, visibility: Visibility) -> List[PlayerListItem]:
         return to_player_list_items([
             StandalonePlayerListItem(
                 player.name, player.items, player.damage_done, player.dps)
-            for player in self.players.values()
+            for player in self.players.values() if visibility.test(player.name)
         ])
 
     def stats(self):
