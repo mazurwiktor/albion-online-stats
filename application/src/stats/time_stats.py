@@ -23,4 +23,5 @@ class TimeStats(Stats):
         return TimeStats(time=other.time)
 
     def update(self, other):
-        self.time = other.time
+        if other.time < self.time:
+            self.time = other.time
