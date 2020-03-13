@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 import re
-
+from src.utils.config import config
 
 from ..event_receiver import VisibilityEventReceiver
 
@@ -18,6 +18,13 @@ class Visibility(VisibilityEventReceiver):
         self.visible_players = visible_players
 
     def test(self, name):
+        if config()['app']['visibility']:  # Note: only for testing purposes
+            return True
+
         pattern = re.compile('|'.join(self.visible_players) + '|{}'.format(
             self.main_player_name) if self.visible_players else self.main_player_name)
         return self.main_player_name and bool(pattern.match(name))
+
+    @property
+    def is_main_player_visible(self) -> bool:
+        return self.main_player_name is not ""

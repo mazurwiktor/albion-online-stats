@@ -145,6 +145,9 @@ def reset_stats():
     game_stats.reset(StatType.Overall)
 
 
+def is_ready():
+    return game_stats.visibility.is_main_player_visible
+
 def initialize():
     initialization_result = backend_proxy.initialize()
     backend_proxy.subscribe(game_stats.register_event)

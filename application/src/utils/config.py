@@ -2,16 +2,20 @@ import os
 import sys
 import toml
 
-CFG_VERSION = '0.6'
+CFG_VERSION = '0.7'
 
 default = """
 [window]
 width = 300
 height = 220
 font-size = '10px'
-opacity = 0.8
-frameless = true
-always_on_top = true
+
+# Note: do not change!
+# options bellow are here only for testing purposes
+# SBI politics doesn't allow opacity frameless and always on top applications!
+opacity = 1.0
+frameless = false
+always_on_top = false
 
 [app]
 

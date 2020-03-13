@@ -16,5 +16,8 @@ class PlayerStats(QLabel):
         self.update(0, 0.0, 0.0)
 
     def update(self, elapsed, fame, fame_per_hour):
-        self.setText("<b>{}</b> | Fame <b>{}</b> | FPH <b>{}</b>".format(
-            datetime.timedelta(seconds=elapsed), fame, fame_per_hour))
+        if engine.is_ready():
+            self.setText("<b>{}</b> | Fame <b>{}</b> | FPH <b>{}</b>".format(
+                datetime.timedelta(seconds=elapsed), fame, fame_per_hour))
+        else:
+            self.setText("Not ready: waiting for zone change")
