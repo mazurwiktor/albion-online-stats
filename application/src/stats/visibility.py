@@ -18,7 +18,7 @@ class Visibility(VisibilityEventReceiver):
         self.visible_players = visible_players
 
     def test(self, name):
-        if config()['app']['visibility']:  # Note: only for testing purposes
+        if 'visibility' in config()['app']:  # Note: only for testing purposes
             return True
 
         pattern = re.compile('|'.join(self.visible_players) + '|{}'.format(
