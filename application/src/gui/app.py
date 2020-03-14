@@ -38,7 +38,7 @@ def run():
     widget.resize(WIDTH, HEIGHT)
     widget.move(0, geometry.height() - HEIGHT - 280)
 
-    widget.setWindowTitle('Damage Meter')
+    widget.setWindowTitle('Albion Online Stats')
 
     if window_config['always_on_top']:
         widget.setWindowFlag(Qt.WindowStaysOnTopHint)
