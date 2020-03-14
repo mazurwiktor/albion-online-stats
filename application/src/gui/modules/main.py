@@ -50,6 +50,7 @@ class ViewTypeWidget(QComboBox):
     def __init__(self):
         QComboBox.__init__(self)
         self.addItem(ViewType.DMG)
+        self.setEnabled(False)
 
     def get_view_type(self):
         return self.currentText()
