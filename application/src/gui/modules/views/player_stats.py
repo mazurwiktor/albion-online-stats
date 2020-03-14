@@ -4,16 +4,16 @@ from PySide2.QtWidgets import QLabel
 from PySide2 import QtGui
 from PySide2 import QtCore
 
-from ....utils import assets
-from ....stats.list_item import PlayerListItem
-from .... import engine
+from src.utils import assets, number
+from src.stats.list_item import PlayerListItem
+from src import engine
 
 
 class PlayerStats(QLabel):
     def __init__(self):
         QLabel.__init__(self)
 
-        self.update(0, 0.0, 0.0)
+        self.update(0, number.Number(0.0), number.Number(0.0))
 
     def update(self, elapsed, fame, fame_per_hour):
         if engine.is_ready():
