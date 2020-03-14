@@ -1,37 +1,48 @@
+from typing import Iterable
+from dataclasses import dataclass
+
 from .utils.config import config
 from .utils.number import Number
 from .environment import TEST_ENV_ENABLED
 
 from . import backend_proxy
 from .backend_proxy import InitializationResult, INITIALIZATION_RESULT
-from .stats import damage_stats, fame_stats, time_stats
+from .stats import damage_stats, fame_stats, time_stats, combat_state
 from .consts import events as ev_consts
 from .event_receiver import VisibilityEventReceiver
 from .stats.visibility import Visibility
 
+
+@dataclass(frozen=True)
+class VisibilityType:
+    LastFight = 'last_fight'
+    Zone = 'zone'
+    Overall = 'history'
+
+
+@dataclass(frozen=True)
 class StatType:
-    Unknown = 0
-    LastFight = 1
-    Zone = 2
-    Overall = 3
+    Damage = 'Damage'
+    Fame = 'Fame'
+    Time = 'Time'
 
 
 class GameStats():
     def __init__(self):
         self.zone = {
-            'damage': damage_stats.DamageStats(),
-            'fame': fame_stats.FameStats(),
-            'time': time_stats.TimeStats(),
+            StatType.Damage: damage_stats.DamageStats(),
+            StatType.Fame: fame_stats.FameStats(),
+            StatType.Time: time_stats.TimeStats(),
         }
         self.last_fight = {
-            'damage': damage_stats.DamageStats(),
-            'fame': fame_stats.FameStats(),
-            'time': time_stats.TimeStats(),
+            StatType.Damage: damage_stats.DamageStats(),
+            StatType.Fame: fame_stats.FameStats(),
+            StatType.Time: time_stats.TimeStats(),
         }
         self.history = {
-            'damage': damage_stats.DamageStats(),
-            'fame': fame_stats.FameStats(),
-            'time': time_stats.TimeStats(),
+            StatType.Damage: damage_stats.DamageStats(),
+            StatType.Fame: fame_stats.FameStats(),
+            StatType.Time: time_stats.TimeStats(),
         }
 
         self.visibility = Visibility()
@@ -39,59 +50,68 @@ class GameStats():
     def register_event(self, event):
         if event[ev_consts.EvKeyName] == ev_consts.EvNameEnterCombat:
             if self._are_everyone_in_session_out_of_combat():
-                self.last_fight['damage'] = damage_stats.DamageStats.from_other(
-                    self.zone['damage'])
+                self._construct_new_stats([VisibilityType.LastFight])
+
         elif event[ev_consts.EvKeyName] == ev_consts.EvNameZoneChange:
-            self.history['damage'].update(self.zone['damage'])
-            self.history['fame'].update(self.zone['fame'])
-            self.history['time'].update(self.zone['time'])
+            self.history[StatType.Damage].update(self.zone[StatType.Damage])
+            self.history[StatType.Fame].update(self.zone[StatType.Fame])
+            self.history[StatType.Time].update(self.zone[StatType.Time])
+            
+            self._construct_new_stats([VisibilityType.Zone])
 
-            self.zone['damage'] = damage_stats.DamageStats()
-            self.zone['fame'] = fame_stats.FameStats()
-            self.zone['time'] = time_stats.TimeStats()
-
-        self.zone['damage'].receive(event)
-        self.last_fight['damage'].receive(event)
-        self.zone['fame'].receive(event)
-        self.last_fight['fame'].receive(event)
+        self.zone[StatType.Damage].receive(event)
+        self.last_fight[StatType.Damage].receive(event)
+        self.zone[StatType.Fame].receive(event)
+        self.last_fight[StatType.Fame].receive(event)
         self.visibility.receive(event)
 
     def reset(self, stat_type):
-        if stat_type == StatType.Zone:
-            self.zone['damage'] = damage_stats.DamageStats()
-            self.last_fight['damage'] = damage_stats.DamageStats()
-        elif stat_type == StatType.LastFight:
-            self.last_fight['damage'] = damage_stats.DamageStats()
-        elif stat_type == StatType.Overall:
-            self.zone['damage'] = damage_stats.DamageStats()
-            self.last_fight['damage'] = damage_stats.DamageStats()
+        if stat_type == VisibilityType.Zone:
+            for t in (StatType.Damage, StatType.Time, StatType.Fame):
+                self.history[t].update(self.zone[t])
+            self._construct_new_stats((VisibilityType.Zone, VisibilityType.LastFight))
+        elif stat_type == VisibilityType.LastFight:
+            self._construct_new_stats([VisibilityType.LastFight])
+        elif stat_type == VisibilityType.Overall:
+            self._construct_new_stats((VisibilityType.Zone, VisibilityType.Overall, VisibilityType.LastFight))
 
     def damage_stats(self, stat_type):
-        if stat_type == StatType.Zone:
-            return self.zone['damage'].player_list(self.visibility)
-        elif stat_type == StatType.LastFight:
-            return self.last_fight['damage'].player_list(self.visibility)
-        elif stat_type == StatType.Overall:
-            return self.history['damage'].combined(self.zone['damage']).player_list(self.visibility)
+        if stat_type == VisibilityType.Zone:
+            return self.zone[StatType.Damage].player_list(self.visibility)
+        elif stat_type == VisibilityType.LastFight:
+            return self.last_fight[StatType.Damage].player_list(self.visibility)
+        elif stat_type == VisibilityType.Overall:
+            return self.history[StatType.Damage].combined(self.zone[StatType.Damage]).player_list(self.visibility)
 
     def fame_stats(self, stat_type):
-        if stat_type == StatType.Zone:
-            return self.zone['fame'].stats()
-        elif stat_type == StatType.LastFight:
-            return self.last_fight['fame'].stats()
-        elif stat_type == StatType.Overall:
-            return self.history['fame'].combined(self.zone['fame']).stats()
+        if stat_type == VisibilityType.Zone:
+            return self.zone[StatType.Fame].stats()
+        elif stat_type == VisibilityType.LastFight:
+            return self.last_fight[StatType.Fame].stats()
+        elif stat_type == VisibilityType.Overall:
+            return self.history[StatType.Fame].combined(self.zone[StatType.Fame]).stats()
 
     def time_stats(self, stat_type):
-        if stat_type == StatType.Zone:
-            return self.zone['time'].stats()
-        elif stat_type == StatType.LastFight:
-            return self.last_fight['time'].stats()
-        elif stat_type == StatType.Overall:
-            return self.history['time'].combined(self.zone['time']).stats()
+        if stat_type == VisibilityType.Zone:
+            return self.zone[StatType.Time].stats()
+        elif stat_type == VisibilityType.LastFight:
+            return self.last_fight[StatType.Time].stats()
+        elif stat_type == VisibilityType.Overall:
+            return self.history[StatType.Time].combined(self.zone[StatType.Time]).stats()
+
+    def _construct_new_stats(self, scope: Iterable[str]):
+        types = (StatType.Damage, StatType.Time, StatType.Fame)
+        for s in scope:
+            for t in types:
+                if t == StatType.Time:
+                    getattr(self, s)[t] = time_stats.TimeStats()
+                elif t == StatType.Damage:
+                    getattr(self, s)[t] = damage_stats.DamageStats.from_other(getattr(self, s)[t])
+                elif t == StatType.Fame:
+                    getattr(self, s)[t] = fame_stats.FameStats()
 
     def _are_everyone_in_session_out_of_combat(self):
-        return all(player.combat_state == damage_stats.CombatState.OutOfCombat for player in self.zone['damage'].players.values())
+        return all(player.combat_state == combat_state.CombatState.OutOfCombat for player in self.zone[StatType.Damage].player_list(self.visibility))
 
     def _merged_stats(self, stats: dict):
         result = {}
@@ -112,18 +132,18 @@ class FameStat:
 
 
 def zone_stats():
-    return get_stats(StatType.Zone)
+    return get_stats(VisibilityType.Zone)
 
 
 def overall_stats():
-    return get_stats(StatType.Overall)
+    return get_stats(VisibilityType.Overall)
 
 
 def last_fight_stats():
-    return get_stats(StatType.LastFight)
+    return get_stats(VisibilityType.LastFight)
 
 
-def get_stats(stat_type: StatType):
+def get_stats(stat_type: VisibilityType):
     fame = game_stats.fame_stats(stat_type)
     time = game_stats.time_stats(stat_type)['seconds_in_game']
     fame = FameStat(Number(fame['fame']), Number(
@@ -134,19 +154,20 @@ def get_stats(stat_type: StatType):
 
 
 def reset_zone_stats():
-    game_stats.reset(StatType.Zone)
+    game_stats.reset(VisibilityType.Zone)
 
 
 def reset_last_fight_stats():
-    game_stats.reset(StatType.LastFight)
+    game_stats.reset(VisibilityType.LastFight)
 
 
 def reset_stats():
-    game_stats.reset(StatType.Overall)
+    game_stats.reset(VisibilityType.Overall)
 
 
 def is_ready():
     return game_stats.visibility.is_main_player_visible
+
 
 def initialize():
     initialization_result = backend_proxy.initialize()

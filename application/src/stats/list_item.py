@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List
 
 from ..utils.number import Number
-
+from .combat_state import CombatState
 
 @dataclass
 class StandalonePlayerListItem:
@@ -10,6 +10,7 @@ class StandalonePlayerListItem:
     items: dict
     value: float
     value_per_second: float
+    combat_state: CombatState
 
 
 @dataclass
@@ -20,6 +21,7 @@ class PlayerListItem:
     value_per_second: Number
     best_value: Number
     percentage: Number
+    combat_state: CombatState
 
 
 def to_player_list_items(standalone_list: List[StandalonePlayerListItem]) -> List[PlayerListItem]:
@@ -42,6 +44,7 @@ def to_player_list_items(standalone_list: List[StandalonePlayerListItem]) -> Lis
             Number(item.value_per_second),
             Number(best),
             Number(percentage),
+            item.combat_state
         ))
 
     return combined_list

@@ -16,16 +16,12 @@ from ..event_receiver import CombatEventReceiver, VisibilityEventReceiver
 from .statistics import Stats
 from .list_item import PlayerListItem, StandalonePlayerListItem, to_player_list_items
 from .visibility import Visibility
+from .combat_state import CombatState
 
 @dataclass
 class CombatTime:
     entered_combat: Optional[float] = None
     time_in_combat: float = 0.0
-
-
-class CombatState:
-    InCombat = 1
-    OutOfCombat = 2
 
 
 @dataclass
@@ -127,12 +123,9 @@ class DamageStats(CombatEventReceiver, Stats):
     def player_list(self, visibility: Visibility) -> List[PlayerListItem]:
         return to_player_list_items([
             StandalonePlayerListItem(
-                player.name, player.items, player.damage_done, player.dps)
+                player.name, player.items, player.damage_done, player.dps, player.combat_state)
             for player in self.players.values() if visibility.test(player.name)
         ])
-
-    def stats(self):
-        return [player.stats() for player in self.players.values()]
 
     def on_player_appeared(self, id: int, name: str):
         if id not in self.players:

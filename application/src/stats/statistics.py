@@ -14,10 +14,6 @@ class Stats(abc.ABC):
     def update(self, other):
         pass
 
-    @abc.abstractmethod
-    def stats(self):
-        pass
-
     def combined(self, other):
         stats = self.new()
         stats.update(self)
