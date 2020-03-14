@@ -6,12 +6,12 @@
 
 use crate::photon_messages;
 
-use super::events;
 use super::convert;
 use super::convert::EventList;
+use super::events;
 use super::id_cache;
-use super::party::{Party};
-use super::player::{StaticId, DynamicId};
+use super::party::Party;
+use super::player::{DynamicId, StaticId};
 use super::unconsumed_messages::UnconsumedMessages;
 
 #[derive(Debug, Default)]
@@ -19,7 +19,7 @@ pub struct World {
     cache: id_cache::IdCache,
     unconsumed_messages: UnconsumedMessages,
     main_player_id: Option<StaticId>,
-    party: Party
+    party: Party,
 }
 
 impl World {
@@ -30,19 +30,14 @@ impl World {
     }
 
     /// Transforms inconsistent game message into corresponding list of game events
-    pub fn transform(
-        &mut self,
-        message: photon_messages::Message,
-    ) -> Option<Vec<events::Event>> {
+    pub fn transform(&mut self, message: photon_messages::Message) -> Option<Vec<events::Event>> {
         match message {
             photon_messages::Message::NewCharacter(msg) => {
                 let mut result = vec![];
                 let dynamic_id = DynamicId::from(msg.source as u32);
                 self.assign_dynamic_id(dynamic_id, &msg.character_name);
 
-                let static_id = self.get_static_id(msg.source)?;
-
-                result.append(&mut EventList::from(self.get_intermediate(static_id, msg)?).values());
+                result.append(&mut EventList::from(self.get_intermediate(msg)?).values()?);
 
                 if let Some(messages) = self.unconsumed_messages.get_for_id(dynamic_id) {
                     for message in messages {
@@ -63,8 +58,7 @@ impl World {
                     result.push(events::Event::ZoneChange)
                 }
                 self.party.set_main_player_name(&msg.character_name);
-                result.push(self.get_intermediate(static_id, msg)?.into());
-
+                result.append(&mut EventList::from(self.get_intermediate(msg)?).values()?);
 
                 self.main_player_id = Some(static_id);
 
@@ -86,76 +80,54 @@ impl World {
                 None
             }
             photon_messages::Message::HealthUpdate(msg) => {
-                let static_id = self.get_static_id(msg.target)?;
-                Some(vec![self.get_intermediate(static_id, msg)?.into()])
+                EventList::from(self.get_intermediate(msg)?).values()
             }
             photon_messages::Message::RegenerationHealthChanged(msg) => {
-                let static_id = self.get_static_id(msg.source)?;
-                Some(vec![self.get_intermediate(static_id, msg)?.into()])
+                EventList::from(self.get_intermediate(msg)?).values()
             }
             photon_messages::Message::KnockedDown(msg) => {
-                let static_id = self.get_static_id(msg.source)?;
-                Some(vec![self.get_intermediate(static_id, msg)?.into()])
+                EventList::from(self.get_intermediate(msg)?).values()
             }
             photon_messages::Message::UpdateFame(msg) => {
-                let static_id = self.get_static_id(msg.source)?;
-                Some(vec![self.get_intermediate(static_id, msg)?.into()])
+                EventList::from(self.get_intermediate(msg)?).values()
             }
             photon_messages::Message::CharacterEquipmentChanged(msg) => {
-                if let Some(static_id) = self.get_static_id(msg.source) {
-                    return Some(vec![self.get_intermediate(static_id, msg)?.into()]);
+                if let Some(_) = self.get_static_id(msg.source) {
+                    return EventList::from(self.get_intermediate(msg)?).values();
                 }
                 let id = DynamicId::from(msg.source as u32);
                 self.unconsumed_messages.add(
-                    photon_messages::messages::Message::CharacterEquipmentChanged(msg), id);
+                    photon_messages::messages::Message::CharacterEquipmentChanged(msg),
+                    id,
+                );
                 None
-            },
-            photon_messages::Message::PartyInvitation(_) => {
-                None
-            },
+            }
+            photon_messages::Message::PartyInvitation(_) => None,
             photon_messages::Message::PartyJoined(msg) => {
                 let evt = self.party.joined(msg)?;
                 Some(vec![evt])
-            },
+            }
             photon_messages::Message::PartyDisbanded(_) => {
                 let evt = self.party.disbanded()?;
                 Some(vec![evt])
-            },
+            }
             photon_messages::Message::PartyPlayerJoined(msg) => {
                 let evt = self.party.single_player_joined(msg)?;
                 Some(vec![evt])
-            },
-            photon_messages::Message::PartyChangedOrder(_) => {
-                None
-            },
+            }
+            photon_messages::Message::PartyChangedOrder(_) => None,
             photon_messages::Message::PartyPlayerLeft(msg) => {
                 let evt = self.party.player_left(msg)?;
                 Some(vec![evt])
-            },
-            photon_messages::Message::PartyLeaderChanged(_) => {
-                None
-            },
-            photon_messages::Message::PartyLootSettingChangedPlayer(_) => {
-                None
-            },
-            photon_messages::Message::PartySilverGained(_) => {
-                None
-            },
-            photon_messages::Message::PartyPlayerUpdated(_) => {
-                None
-            },
-            photon_messages::Message::PartyInvitationPlayerBusy(_) => {
-                None
-            },
-            photon_messages::Message::PartyMarkedObjectsUpdated(_) => {
-                None
-            },
-            photon_messages::Message::PartyOnClusterPartyJoined(_) => {
-                None
-            },
-            photon_messages::Message::PartySetRoleFlag(_) => {
-                None
-            },
+            }
+            photon_messages::Message::PartyLeaderChanged(_) => None,
+            photon_messages::Message::PartyLootSettingChangedPlayer(_) => None,
+            photon_messages::Message::PartySilverGained(_) => None,
+            photon_messages::Message::PartyPlayerUpdated(_) => None,
+            photon_messages::Message::PartyInvitationPlayerBusy(_) => None,
+            photon_messages::Message::PartyMarkedObjectsUpdated(_) => None,
+            photon_messages::Message::PartyOnClusterPartyJoined(_) => None,
+            photon_messages::Message::PartySetRoleFlag(_) => None,
         }
     }
     fn assign_dynamic_id(&mut self, id: DynamicId, name: &str) {
@@ -164,17 +136,13 @@ impl World {
 
     fn get_static_id(&self, id: usize) -> Option<StaticId> {
         let dynamic_id = DynamicId::from(id as u32);
-        self.cache.get_static_id(dynamic_id)  // queue message if static id isn't known
+        self.cache.get_static_id(dynamic_id) // queue message if static id isn't known
     }
 
-    fn get_intermediate<Msg>(
-        &self,
-        static_id: StaticId,
-        msg: Msg,
-    ) -> Option<convert::EventIntermediate<Msg>> {
+    fn get_intermediate<Msg>(&self, msg: Msg) -> Option<convert::EventIntermediate<Msg>> {
         Some(convert::EventIntermediate::new(
-            static_id,
-            self.cache.get_name(static_id)?,
+            self.cache.get_dyn_id_to_static_id_map(),
+            self.cache.get_static_id_to_name_map(),
             msg,
         ))
     }
@@ -211,10 +179,7 @@ mod tests {
         let game_message = simulate_new_player!(1, "TestCharacter", NewCharacter);
 
         assert!(world.transform(game_message.clone()).is_some());
-        assert_contains!(
-            world.transform(game_message.clone()),
-            "PlayerAppeared"
-        );
+        assert_contains!(world.transform(game_message.clone()), "PlayerAppeared");
     }
 
     #[test]
@@ -225,10 +190,7 @@ mod tests {
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
 
         assert!(world.transform(game_message.clone()).is_some());
-        assert_contains!(
-            world.transform(game_message.clone()),
-            "PlayerAppeared"
-        );
+        assert_contains!(world.transform(game_message.clone()), "PlayerAppeared");
     }
 
     #[test]
@@ -238,14 +200,14 @@ mod tests {
 
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
         assert!(world.transform(game_message.clone()).is_some());
-        assert_contains!(
-            world.transform(game_message.clone()),
-            "PlayerAppeared"
-        );
+        assert_contains!(world.transform(game_message.clone()), "PlayerAppeared");
+        let game_message = simulate_new_player!(2, "TestCharacter2", NewCharacter);
+        assert!(world.transform(game_message.clone()).is_some());
 
         let target = 1;
         let game_message =
             photon_messages::Message::HealthUpdate(photon_messages::messages::HealthUpdate {
+                source: 2,
                 target,
                 value: -666.0,
                 ..Default::default()
@@ -258,16 +220,14 @@ mod tests {
         let target = 1;
         let game_message =
             photon_messages::Message::HealthUpdate(photon_messages::messages::HealthUpdate {
+                source: 2,
                 target,
                 value: 666.0,
                 ..Default::default()
             });
 
         assert!(world.transform(game_message.clone()).is_some());
-        assert_contains!(
-            world.transform(game_message.clone()),
-            "HealthReceived"
-        );
+        assert_contains!(world.transform(game_message.clone()), "HealthReceived");
         assert_contains!(world.transform(game_message.clone()), "666");
     }
 
@@ -286,10 +246,7 @@ mod tests {
         let game_message = simulate_new_player!(1, "TestCharacter", Join);
 
         assert!(world.transform(game_message.clone()).is_some());
-        assert_contains!(
-            world.transform(game_message.clone()),
-            "PlayerAppeared"
-        );
+        assert_contains!(world.transform(game_message.clone()), "PlayerAppeared");
 
         let game_message = photon_messages::Message::Leave(photon_messages::messages::Leave {
             source: 1,
