@@ -11,6 +11,8 @@ from dataclasses import field
 from dataclasses import dataclass
 from typing import Optional, List
 
+from locked_dict.locked_dict import LockedDict
+
 from . import time_utils
 from ..event_receiver import CombatEventReceiver, VisibilityEventReceiver
 from .statistics import Stats

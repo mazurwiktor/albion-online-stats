@@ -1,5 +1,6 @@
 from typing import Iterable
 from dataclasses import dataclass
+from queue import Queue
 
 from .utils.config import config
 from .utils.number import Number
@@ -56,7 +57,7 @@ class GameStats():
             self.history[StatType.Damage].update(self.zone[StatType.Damage])
             self.history[StatType.Fame].update(self.zone[StatType.Fame])
             self.history[StatType.Time].update(self.zone[StatType.Time])
-            
+
             self._construct_new_stats([VisibilityType.Zone])
 
         self.zone[StatType.Damage].receive(event)
@@ -69,11 +70,13 @@ class GameStats():
         if stat_type == VisibilityType.Zone:
             for t in (StatType.Damage, StatType.Time, StatType.Fame):
                 self.history[t].update(self.zone[t])
-            self._construct_new_stats((VisibilityType.Zone, VisibilityType.LastFight))
+            self._construct_new_stats(
+                (VisibilityType.Zone, VisibilityType.LastFight))
         elif stat_type == VisibilityType.LastFight:
             self._construct_new_stats([VisibilityType.LastFight])
         elif stat_type == VisibilityType.Overall:
-            self._construct_new_stats((VisibilityType.Zone, VisibilityType.Overall, VisibilityType.LastFight))
+            self._construct_new_stats(
+                (VisibilityType.Zone, VisibilityType.Overall, VisibilityType.LastFight))
 
     def damage_stats(self, stat_type):
         if stat_type == VisibilityType.Zone:
@@ -106,7 +109,8 @@ class GameStats():
                 if t == StatType.Time:
                     getattr(self, s)[t] = time_stats.TimeStats()
                 elif t == StatType.Damage:
-                    getattr(self, s)[t] = damage_stats.DamageStats.from_other(getattr(self, s)[t])
+                    getattr(self, s)[t] = damage_stats.DamageStats.from_other(
+                        getattr(self, s)[t])
                 elif t == StatType.Fame:
                     getattr(self, s)[t] = fame_stats.FameStats()
 
@@ -123,6 +127,7 @@ class GameStats():
 
 
 game_stats = GameStats()
+event_queue = Queue()
 
 
 class FameStat:
@@ -143,14 +148,32 @@ def last_fight_stats():
     return get_stats(VisibilityType.LastFight)
 
 
+cached_players = ()  # do not compute values if there is nothing in queue
+
+
 def get_stats(stat_type: VisibilityType):
+    global cached_players
+    new_events = False
+
+    while not event_queue.empty():
+        new_events = True
+        game_stats.register_event(event_queue.get_nowait())
+
     fame = game_stats.fame_stats(stat_type)
     time = game_stats.time_stats(stat_type)['seconds_in_game']
     fame = FameStat(Number(fame['fame']), Number(
         (fame['fame'] / time) * 60 * 60 if time > 0.0 else 0.0))
-    players = game_stats.damage_stats(stat_type)
 
-    return players, fame, time
+    if not new_events and cached_players:
+        return (cached_players, fame, time)
+
+    players = game_stats.damage_stats(stat_type)
+    
+    return (players, fame, time)
+
+
+def queue_an_event(event):
+    event_queue.put(event)
 
 
 def reset_zone_stats():
@@ -171,5 +194,5 @@ def is_ready():
 
 def initialize():
     initialization_result = backend_proxy.initialize()
-    backend_proxy.subscribe(game_stats.register_event)
+    backend_proxy.subscribe(queue_an_event)
     return initialization_result
