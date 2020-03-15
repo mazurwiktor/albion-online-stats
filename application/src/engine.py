@@ -147,7 +147,7 @@ def get_stats(stat_type: VisibilityType):
     fame = game_stats.fame_stats(stat_type)
     time = game_stats.time_stats(stat_type)['seconds_in_game']
     fame = FameStat(Number(fame['fame']), Number(
-        fame['fame'] / time if time > 0.0 else 0.0))
+        (fame['fame'] / time) * 60 * 60 if time > 0.0 else 0.0))
     players = game_stats.damage_stats(stat_type)
 
     return players, fame, time
