@@ -134,7 +134,7 @@ class DamageStats(CombatEventReceiver, Stats):
     def on_damage_done(self, id: int, damage: float):
         self.players[id].register_damage_done(damage)
 
-    def on_health_received(self):
+    def on_health_received(self, id: int, damage: float):
         pass
 
     def on_enter_combat(self, id: int):
