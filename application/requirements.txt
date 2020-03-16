@@ -2,6 +2,5 @@ pyside2~=5.13
 pyinstaller
 toml~=0.10
 requests~=2.22
-locked-dict
 Pillow~=6.2
 ./backend
