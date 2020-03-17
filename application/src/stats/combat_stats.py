@@ -84,7 +84,7 @@ class Player(Stats):
         return time_utils.as_milliseconds(self.damage_done / self.time_in_combat)
 
 
-class DamageStats(CombatEventReceiver, Stats):
+class CombatStats(CombatEventReceiver, Stats):
     def __init__(self, players=None):
         if not players:
             players = {}
@@ -92,11 +92,11 @@ class DamageStats(CombatEventReceiver, Stats):
 
     @staticmethod
     def new(self):
-        return DamageStats()
+        return CombatStats()
 
     @staticmethod
     def from_other(other):
-        return DamageStats({k: Player.from_other(v) for (k, v) in other.players.items()})
+        return CombatStats({k: Player.from_other(v) for (k, v) in other.players.items()})
 
     def update(self, other):
         for (id, player) in other.players.items():
@@ -107,7 +107,7 @@ class DamageStats(CombatEventReceiver, Stats):
                 self.players[id].update(player)
 
     def combined(self, other):
-        stats = DamageStats()
+        stats = CombatStats()
         stats.update(self)
         stats.update(other)
 
