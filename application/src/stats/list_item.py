@@ -10,7 +10,7 @@ class StandalonePlayerListItem:
     items: dict
     value: float
     value_per_second: float
-    combat_state: CombatState
+    combat_state: int
 
 
 @dataclass
@@ -21,7 +21,7 @@ class PlayerListItem:
     value_per_second: Number
     best_value: Number
     percentage: Number
-    combat_state: CombatState
+    combat_state: int
 
 
 def to_player_list_items(standalone_list: List[StandalonePlayerListItem]) -> List[PlayerListItem]:

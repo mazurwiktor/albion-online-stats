@@ -1,1 +1,1 @@
-from libaostats import *
+from libaostats import *  # type: ignore

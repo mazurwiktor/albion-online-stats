@@ -57,7 +57,7 @@ class CombatEventReceiver(EventReceiver):
                 value[consts.EvKeySource], value[consts.EvKeyValue])
         elif event_name == consts.EvNameHealthReceived:
             self.on_health_received(
-                value[consts.EvKeySource], value[consts.EvKeyValue])
+                value[consts.EvKeySource], value[consts.EvKeyTarget], value[consts.EvKeyValue])
         elif event_name == consts.EvNameEnterCombat:
             self.on_enter_combat(value[consts.EvKeyId])
         elif event_name == consts.EvNameLeaveCombat:
@@ -75,7 +75,7 @@ class CombatEventReceiver(EventReceiver):
         pass
 
     @abc.abstractmethod
-    def on_health_received(self, id: int, health: float):
+    def on_health_received(self, id: int, target_id: int, health: float):
         pass
 
     @abc.abstractmethod

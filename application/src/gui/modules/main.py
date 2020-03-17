@@ -50,7 +50,7 @@ class ViewTypeWidget(QComboBox):
     def __init__(self):
         QComboBox.__init__(self)
         self.addItem(ViewType.DMG)
-        self.setEnabled(False)
+        self.addItem(ViewType.HEALING_DONE)
 
     def get_view_type(self):
         return self.currentText()
@@ -120,7 +120,6 @@ class MainWidget(QWidget):
         if any(region.contains(self.mouse_pos) for region in invalid_regions):
             return
 
-
         if event.buttons() & Qt.LeftButton:
             diff = event.pos() - self.mouse_pos
             newpos = self.pos() + diff
@@ -130,9 +129,14 @@ class MainWidget(QWidget):
     def damage_stats(self):
         stats = {
             ViewType.DMG: {
-                StatsType.ZONE: functools.partial(engine.zone_stats),
-                StatsType.LAST_FIGHT: functools.partial(engine.last_fight_stats),
-                StatsType.OVERALL: functools.partial(engine.overall_stats),
+                StatsType.ZONE: functools.partial(engine.zone_stats, engine.CombatStatType.Damage),
+                StatsType.LAST_FIGHT: functools.partial(engine.last_fight_stats, engine.CombatStatType.Damage),
+                StatsType.OVERALL: functools.partial(engine.overall_stats, engine.CombatStatType.Damage),
+            },
+            ViewType.HEALING_DONE: {
+                StatsType.ZONE: functools.partial(engine.zone_stats, engine.CombatStatType.Healing),
+                StatsType.LAST_FIGHT: functools.partial(engine.last_fight_stats, engine.CombatStatType.Healing),
+                StatsType.OVERALL: functools.partial(engine.overall_stats, engine.CombatStatType.Healing),
             }
         }
 

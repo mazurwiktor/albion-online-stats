@@ -1,2 +1,3 @@
 class ViewType:
-    DMG = 'Stats (damage)'
+    DMG: str = 'Stats (damage done)'
+    HEALING_DONE: str = 'Stats (healing done)'

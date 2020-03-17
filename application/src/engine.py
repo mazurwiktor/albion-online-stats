@@ -16,41 +16,47 @@ from .stats.visibility import Visibility
 
 @dataclass(frozen=True)
 class VisibilityType:
-    LastFight = 'last_fight'
-    Zone = 'zone'
-    Overall = 'history'
+    LastFight: str = 'last_fight'
+    Zone: str = 'zone'
+    Overall: str = 'history'
 
 
 @dataclass(frozen=True)
 class StatType:
-    Combat = 'Combat'
-    Fame = 'Fame'
-    Time = 'Time'
+    Combat: str = 'Combat'
+    Fame: str = 'Fame'
+    Time: str = 'Time'
+
+
+@dataclass(frozen=True)
+class CombatStatType:
+    Damage: str = 'Damage'
+    Healing: str = 'Healing'
 
 
 class GameStats():
     def __init__(self):
+        self.visibility = Visibility()
+
         self.zone = {
-            StatType.Combat: combat_stats.CombatStats(),
+            StatType.Combat: combat_stats.CombatStats(self.visibility),
             StatType.Fame: fame_stats.FameStats(),
             StatType.Time: time_stats.TimeStats(),
         }
         self.last_fight = {
-            StatType.Combat: combat_stats.CombatStats(),
+            StatType.Combat: combat_stats.CombatStats(self.visibility),
             StatType.Fame: fame_stats.FameStats(),
             StatType.Time: time_stats.TimeStats(),
         }
         self.history = {
-            StatType.Combat: combat_stats.CombatStats(),
+            StatType.Combat: combat_stats.CombatStats(self.visibility),
             StatType.Fame: fame_stats.FameStats(),
             StatType.Time: time_stats.TimeStats(),
         }
 
-        self.visibility = Visibility()
-
     def register_event(self, event):
         if event[ev_consts.EvKeyName] == ev_consts.EvNameEnterCombat:
-            if self._are_everyone_in_session_out_of_combat():
+            if self.zone[StatType.Combat].party_combat_state() == combat_state.CombatState.OutOfCombat:
                 self._construct_new_stats([VisibilityType.LastFight])
 
         elif event[ev_consts.EvKeyName] == ev_consts.EvNameZoneChange:
@@ -78,13 +84,21 @@ class GameStats():
             self._construct_new_stats(
                 (VisibilityType.Zone, VisibilityType.Overall, VisibilityType.LastFight))
 
-    def combat_stats(self, stat_type):
+    def get_damage_stats(self, stat_type):
         if stat_type == VisibilityType.Zone:
-            return self.zone[StatType.Combat].player_list(self.visibility)
+            return self.zone[StatType.Combat].players_damage()
         elif stat_type == VisibilityType.LastFight:
-            return self.last_fight[StatType.Combat].player_list(self.visibility)
+            return self.last_fight[StatType.Combat].players_damage()
         elif stat_type == VisibilityType.Overall:
-            return self.history[StatType.Combat].combined(self.zone[StatType.Combat]).player_list(self.visibility)
+            return self.history[StatType.Combat].combined(self.zone[StatType.Combat]).players_damage()
+
+    def get_healing_stats(self, stat_type):
+        if stat_type == VisibilityType.Zone:
+            return self.zone[StatType.Combat].players_healing()
+        elif stat_type == VisibilityType.LastFight:
+            return self.last_fight[StatType.Combat].players_healing()
+        elif stat_type == VisibilityType.Overall:
+            return self.history[StatType.Combat].combined(self.zone[StatType.Combat]).players_healing()
 
     def fame_stats(self, stat_type):
         if stat_type == VisibilityType.Zone:
@@ -114,9 +128,6 @@ class GameStats():
                 elif t == StatType.Fame:
                     getattr(self, s)[t] = fame_stats.FameStats()
 
-    def _are_everyone_in_session_out_of_combat(self):
-        return all(player.combat_state == combat_state.CombatState.OutOfCombat for player in self.zone[StatType.Combat].player_list(self.visibility))
-
     def _merged_stats(self, stats: dict):
         result = {}
 
@@ -127,7 +138,7 @@ class GameStats():
 
 
 game_stats = GameStats()
-event_queue : Queue = Queue()
+event_queue: Queue = Queue()
 
 
 class FameStat:
@@ -136,23 +147,23 @@ class FameStat:
         self.fame_per_hour = fame_per_hour
 
 
-def zone_stats():
-    return get_stats(VisibilityType.Zone)
+def zone_stats(combat_stat_type: str):
+    return get_stats(VisibilityType.Zone, combat_stat_type)
 
 
-def overall_stats():
-    return get_stats(VisibilityType.Overall)
+def overall_stats(combat_stat_type: str):
+    return get_stats(VisibilityType.Overall, combat_stat_type)
 
 
-def last_fight_stats():
-    return get_stats(VisibilityType.LastFight)
+def last_fight_stats(combat_stat_type: str):
+    return get_stats(VisibilityType.LastFight, combat_stat_type)
 
 
 cached_players = ()  # do not compute values if there is nothing in queue
+cached_players_type = None
 
-
-def get_stats(stat_type: VisibilityType):
-    global cached_players
+def get_stats(stat_type: str, combat_stat_type: str):
+    global cached_players, cached_players_type
     new_events = False
 
     while not event_queue.empty():
@@ -164,12 +175,17 @@ def get_stats(stat_type: VisibilityType):
     fame = FameStat(Number(fame['fame']), Number(
         (fame['fame'] / time) * 60 * 60 if time > 0.0 else 0.0))
 
-    if not new_events and cached_players:
+    if not new_events and cached_players and cached_players_type != stat_type:
         return (cached_players, fame, time)
 
-    players = game_stats.combat_stats(stat_type)
-    
-    return (players, fame, time)
+    cached_players = {
+        CombatStatType.Damage: lambda stat_type : game_stats.get_damage_stats(stat_type),
+        CombatStatType.Healing: lambda stat_type : game_stats.get_healing_stats(stat_type)
+    }[combat_stat_type](stat_type)
+
+    cached_players_type = stat_type
+
+    return (cached_players, fame, time)
 
 
 def queue_an_event(event):

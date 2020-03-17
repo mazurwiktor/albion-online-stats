@@ -118,6 +118,18 @@ def _testing_call_sequence(callback):
         {'name': 'UpdateFame', 'value': {'value': 1000}},
     ]
 
+    sequence[environment.TestType.Healing] = [
+        {'name': 'ZoneChange'},
+        *add_player(0, 'Arcane', 'T4_MAIN_ARCANESTAFF@3',
+                    event_name='MainPlayerAppeared'),
+        *add_player(1, 'Fire', 'T5_MAIN_FIRESTAFF@1'),
+        {'name': 'EnterCombat', 'value': {'id': 0, 'name': 'Arcane'}},
+        {'name': 'UpdateParty', 'value': {'player_names': ['Arcane', 'Fire']}},
+        {'name': 'HealthReceived', 'value': {'source': 0, 'target': 1, 'value': 100.0}},
+        {'name': 'HealthReceived', 'value': {'source': 0, 'target': 0, 'value': 100.0}},
+        {'name': 'HealthReceived', 'value': {'source': 1, 'target': 0, 'value': 100.0}},
+    ]
+
     def run_sequence():
         for v in sequence[environment.test_type]:
             if 'sleep' in v:

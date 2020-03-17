@@ -6,11 +6,13 @@ TEST_ENV_ENABLED = bool(os.getenv('TESTING'))
 class TestType:
     Simple = 'simple'
     ZoneChange = 'zone_change'
+    Healing = 'healing'
 
 
 _test_types = {
     TestType.Simple: TestType.Simple,
-    TestType.ZoneChange: TestType.ZoneChange
+    TestType.ZoneChange: TestType.ZoneChange,
+    TestType.Healing: TestType.Healing
 }
 
 if TEST_ENV_ENABLED:

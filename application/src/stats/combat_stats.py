@@ -9,7 +9,7 @@
 
 from dataclasses import field
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Callable, Iterable
 
 from . import time_utils
 from ..event_receiver import CombatEventReceiver, VisibilityEventReceiver
@@ -25,25 +25,46 @@ class CombatTime:
     time_in_combat: float = 0.0
 
 
+class Party:
+    def __init__(self, get_visible_players):
+        self.get_visible_players = get_visible_players
+
+    def combat_state(self) -> int:
+        return CombatState.OutOfCombat if all(
+            player.combat_state == CombatState.InCombat for player in self.get_visible_players()) else CombatState.InCombat
+
+    def time_in_combat(self) -> float:
+        longest = 0.0
+
+        for player in self.get_visible_players():
+            if player.time_in_combat > longest:
+                longest = player.time_in_combat
+
+        return longest
+
+
 @dataclass
 class Player(Stats):
     name: str
+    party: Party
     items: dict = field(default_factory=lambda: {'weapon': None})
     damage_done: float = 0.0
+    healing_done: float = 0.0
     combat_time: CombatTime = field(default_factory=lambda: CombatTime())
     combat_state: int = CombatState.OutOfCombat
 
     @staticmethod
     def new(self):
-        return Player()
+        raise Exception("Should never happen")
 
     @staticmethod
     def from_other(other):
-        return Player(other.name, other.items)
+        return Player(other.name, other.party, items=other.items)
 
     def update(self, other):
         self.name = other.name
         self.damage_done += other.damage_done
+        self.healing_done += other.healing_done
         self.combat_state = other.combat_state
         self.combat_time.entered_combat = other.combat_time.entered_combat
         self.combat_time.time_in_combat += other.combat_time.time_in_combat
@@ -58,6 +79,12 @@ class Player(Stats):
 
         self.damage_done += value
 
+    def register_healing_done(self, value):
+        if self.party.combat_state() == CombatState.OutOfCombat:
+            return
+
+        self.healing_done += value
+
     def enter_combat(self):
         self.combat_time.entered_combat = time_utils.now()
         self.combat_state = CombatState.InCombat
@@ -67,6 +94,14 @@ class Player(Stats):
             self.combat_time.time_in_combat += time_utils.delta(
                 self.combat_time.entered_combat)
         self.combat_state = CombatState.OutOfCombat
+
+    def into_damage_list_item(self) -> StandalonePlayerListItem:
+        return StandalonePlayerListItem(
+            self.name, self.items, self.damage_done, self.dps, self.combat_state)
+
+    def into_healing_list_item(self) -> StandalonePlayerListItem:
+        return StandalonePlayerListItem(
+            self.name, self.items, self.healing_done, self.hps, self.combat_state)
 
     @property
     def time_in_combat(self):
@@ -83,20 +118,31 @@ class Player(Stats):
 
         return time_utils.as_milliseconds(self.damage_done / self.time_in_combat)
 
+    @property
+    def hps(self):
+        time_in_combat = self.party.time_in_combat()
+
+        if time_in_combat == 0.0:
+            return 0.0
+
+        return time_utils.as_milliseconds(self.healing_done / time_in_combat)
+
 
 class CombatStats(CombatEventReceiver, Stats):
-    def __init__(self, players=None):
+    def __init__(self, visibility, players=None):
+        self.visibility = visibility
+        self.party = Party(self.visible_players)
         if not players:
             players = {}
         self.players = players
 
     @staticmethod
     def new(self):
-        return CombatStats()
+        raise Exception("Should never happen")
 
     @staticmethod
     def from_other(other):
-        return CombatStats({k: Player.from_other(v) for (k, v) in other.players.items()})
+        return CombatStats(other.visibility, {k: Player.from_other(v) for (k, v) in other.players.items()})
 
     def update(self, other):
         for (id, player) in other.players.items():
@@ -107,28 +153,37 @@ class CombatStats(CombatEventReceiver, Stats):
                 self.players[id].update(player)
 
     def combined(self, other):
-        stats = CombatStats()
+        stats = CombatStats(self.visibility)
         stats.update(self)
         stats.update(other)
 
         return stats
 
-    def player_list(self, visibility: Visibility) -> List[PlayerListItem]:
-        return to_player_list_items([
-            StandalonePlayerListItem(
-                player.name, player.items, player.damage_done, player.dps, player.combat_state)
-            for player in self.players.values() if visibility.test(player.name)
-        ])
+    def players_damage(self) -> List[PlayerListItem]:
+        return to_player_list_items([player.into_damage_list_item()
+                                     for player in self.visible_players()
+                                     ])
+
+    def players_healing(self) -> List[PlayerListItem]:
+        return to_player_list_items([player.into_healing_list_item()
+                                     for player in self.visible_players()
+                                     ])
+
+    def party_combat_state(self):
+        return self.party.combat_state()
+
+    def visible_players(self) -> Iterable[Player]:
+        return (player for player in self.players.values() if self.visibility.test(player.name))
 
     def on_player_appeared(self, id: int, name: str):
         if id not in self.players:
-            self.players[id] = Player(name)
+            self.players[id] = Player(name, self.party)
 
     def on_damage_done(self, id: int, damage: float):
         self.players[id].register_damage_done(damage)
 
-    def on_health_received(self, id: int, damage: float):
-        pass
+    def on_health_received(self, id: int, target_id: int, health: float):
+        self.players[id].register_healing_done(health)
 
     def on_enter_combat(self, id: int):
         self.players[id].enter_combat()
