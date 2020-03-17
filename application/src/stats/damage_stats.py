@@ -18,6 +18,7 @@ from .list_item import PlayerListItem, StandalonePlayerListItem, to_player_list_
 from .visibility import Visibility
 from .combat_state import CombatState
 
+
 @dataclass
 class CombatTime:
     entered_combat: Optional[float] = None
@@ -81,14 +82,6 @@ class Player(Stats):
             return 0.0
 
         return time_utils.as_milliseconds(self.damage_done / self.time_in_combat)
-
-    def stats(self):
-        return {
-            'player': self.name,
-            'damage': self.damage_done,
-            'time_in_combat': self.time_in_combat,
-            'dps': self.dps,
-            'items': self.items}
 
 
 class DamageStats(CombatEventReceiver, Stats):
