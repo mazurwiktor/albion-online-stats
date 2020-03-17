@@ -20,4 +20,4 @@ if TEST_ENV_ENABLED:
         raise Exception('Unavailable GUI test type, avaliable values: {}'.format(
             ','.join(_test_types.keys())))
 
-    TEST_TYPE = _test_types[os.getenv('TESTING').lower()]
+    TEST_TYPE = _test_types[test_type.lower()]

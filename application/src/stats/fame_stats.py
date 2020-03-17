@@ -13,11 +13,11 @@ class FameStats(FameEventReceiver, Stats):
         return FameStats()
 
     @classmethod
-    def from_other(other: Stats):
-        return FameStats(fame=other.fame)
+    def from_other(other: Stats):  # type: ignore
+        return FameStats(fame=other.fame) # type: ignore
 
-    def update(self, other: Stats):
-        self.fame += other.fame
+    def update(self, other: Stats): # type: ignore
+        self.fame += other.fame # type: ignore
 
     def on_fame_update(self, value: float):
         self.fame += value

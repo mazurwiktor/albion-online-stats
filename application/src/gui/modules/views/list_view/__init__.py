@@ -1,1 +1,1 @@
-from .list import List as List
+from .list import ListItemView

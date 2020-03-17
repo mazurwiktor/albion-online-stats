@@ -127,7 +127,7 @@ class GameStats():
 
 
 game_stats = GameStats()
-event_queue = Queue()
+event_queue : Queue = Queue()
 
 
 class FameStat:

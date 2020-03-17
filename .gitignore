@@ -17,3 +17,4 @@ env
 *.egg
 __pycache__
 albion-online-stats.cfg
+.mypy_cache

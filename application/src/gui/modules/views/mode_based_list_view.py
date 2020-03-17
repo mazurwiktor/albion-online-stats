@@ -3,22 +3,14 @@
 
 from typing import Callable
 
-from PySide2.QtWidgets import QHBoxLayout
-# from PySide2.QtWidgets import QPushButton
-from PySide2.QtWidgets import QVBoxLayout
-
-# from PySide2.QtWidgets import QLabel
-
-
-# from PySide2 import QtGui
-# from PySide2 import QtCore
-
-from PySide2.QtWidgets import QComboBox
-from PySide2.QtWidgets import QWidget
+from PySide2.QtWidgets import QHBoxLayout  # type: ignore
+from PySide2.QtWidgets import QVBoxLayout  # type: ignore
+from PySide2.QtWidgets import QComboBox  # type: ignore
+from PySide2.QtWidgets import QWidget  # type: ignore
 
 from ....stats.list_item import PlayerListItem
 
-from .list_view import List
+from .list_view import ListItemView
 from .stats_type import StatsType
 from .player_stats import PlayerStats
 from .copy_button import CopyButton
@@ -68,7 +60,7 @@ class ModeBasedListView(QWidget):
         self.session_bar = SessionBar(clipboard)
         self.layout.addWidget(self.session_bar)
 
-        self.list_view = List()
+        self.list_view = ListItemView()
         self.layout.addWidget(self.list_view)
 
         self.setLayout(self.layout)

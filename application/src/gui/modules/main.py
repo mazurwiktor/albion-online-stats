@@ -1,14 +1,14 @@
 import sys
 import functools
 
-from PySide2 import QtGui
-from PySide2.QtCore import Qt
-from PySide2.QtCore import QTimer
-from PySide2.QtWidgets import QComboBox
-from PySide2.QtWidgets import QHBoxLayout
-from PySide2.QtWidgets import QPushButton
-from PySide2.QtWidgets import QVBoxLayout
-from PySide2.QtWidgets import QWidget
+from PySide2 import QtGui  # type: ignore
+from PySide2.QtCore import Qt  # type: ignore
+from PySide2.QtCore import QTimer  # type: ignore
+from PySide2.QtWidgets import QComboBox  # type: ignore
+from PySide2.QtWidgets import QHBoxLayout  # type: ignore
+from PySide2.QtWidgets import QPushButton  # type: ignore
+from PySide2.QtWidgets import QVBoxLayout  # type: ignore
+from PySide2.QtWidgets import QWidget  # type: ignore
 
 from ... import engine
 

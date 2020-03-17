@@ -7,9 +7,9 @@ import collections
 Item = collections.namedtuple('Item', 'key value')
 
 
-_queue = queue.Queue()
+_queue : queue.Queue = queue.Queue()
 _requests = {}
-_requests_threads = {}
+_requests_threads : dict = {}
 
 
 def update_loop():

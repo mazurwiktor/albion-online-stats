@@ -1,3 +1,10 @@
+import os
+import sys
+
+from PySide2.QtCore import Qt  # type: ignore
+from PySide2.QtWidgets import QApplication  # type: ignore
+from PySide2.QtWidgets import QMessageBox  # type: ignore
+
 from ..engine import InitializationResult
 from ..engine import initialize
 from ..utils.config import config
@@ -7,12 +14,6 @@ from .styling import style
 from ..utils.version import current_version as get_current_version
 from ..utils.version import latest_url
 from ..utils.version import latest_version as get_latest_version
-from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QApplication
-from PySide2.QtWidgets import QMessageBox
-
-import os
-import sys
 
 sys.path.append(os.path.dirname(os.path.abspath('__file__')))
 

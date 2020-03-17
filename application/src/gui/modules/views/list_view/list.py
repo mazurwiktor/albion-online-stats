@@ -3,22 +3,22 @@ import collections
 import functools
 import re
 from typing import List
-from PIL import Image, ImageQt
+from PIL import Image, ImageQt  # type: ignore
 
-from PySide2 import QtCore
-from PySide2 import QtGui
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QStandardItem
-from PySide2.QtGui import QStandardItemModel
-from PySide2.QtWidgets import QApplication
-from PySide2.QtWidgets import QComboBox
-from PySide2.QtWidgets import QHBoxLayout
-from PySide2.QtWidgets import QLabel
-from PySide2.QtWidgets import QListView
-from PySide2.QtWidgets import QMessageBox
-from PySide2.QtWidgets import QProgressBar
-from PySide2.QtWidgets import QPushButton
-from PySide2.QtWidgets import QVBoxLayout
+from PySide2 import QtCore  # type: ignore
+from PySide2 import QtGui  # type: ignore
+from PySide2.QtCore import Qt  # type: ignore
+from PySide2.QtGui import QStandardItem  # type: ignore
+from PySide2.QtGui import QStandardItemModel  # type: ignore
+from PySide2.QtWidgets import QApplication  # type: ignore
+from PySide2.QtWidgets import QComboBox  # type: ignore
+from PySide2.QtWidgets import QHBoxLayout  # type: ignore
+from PySide2.QtWidgets import QLabel  # type: ignore
+from PySide2.QtWidgets import QListView  # type: ignore
+from PySide2.QtWidgets import QMessageBox  # type: ignore
+from PySide2.QtWidgets import QProgressBar  # type: ignore
+from PySide2.QtWidgets import QPushButton  # type: ignore
+from PySide2.QtWidgets import QVBoxLayout  # type: ignore
 
 from .....stats.list_item import PlayerListItem
 from .....utils import assets
@@ -91,7 +91,7 @@ def player_icon(weapon):
         return None
 
 
-class List(QListView):
+class ListItemView(QListView):
     class Item(QtGui.QStandardItem):
         def __init__(self, player, parent):
             QtGui.QStandardItem .__init__(self)

@@ -1,7 +1,7 @@
 try:
-    import aostats
+    import aostats # type: ignore
 except:
-    class aostats:
+    class aostats:  # type: ignore
         @staticmethod
         def initialize(_):
             return InitializationResult.NetworkInterfaceListMissing

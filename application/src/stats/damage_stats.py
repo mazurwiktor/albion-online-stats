@@ -30,7 +30,7 @@ class Player(Stats):
     items: dict = field(default_factory=lambda: {'weapon': None})
     damage_done: float = 0.0
     combat_time: CombatTime = field(default_factory=lambda: CombatTime())
-    combat_state: CombatState = CombatState.OutOfCombat
+    combat_state: int = CombatState.OutOfCombat
 
     @staticmethod
     def new(self):
