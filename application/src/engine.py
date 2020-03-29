@@ -60,7 +60,7 @@ class GameStats():
                 self._construct_new_stats([VisibilityType.LastFight])
 
         elif event[ev_consts.EvKeyName] == ev_consts.EvNameZoneChange:
-            self.history[StatType.Combat].update(self.zone[StatType.Combat])
+            self.history[StatType.Combat].update_non_idle(self.zone[StatType.Combat])
             self.history[StatType.Fame].update(self.zone[StatType.Fame])
             self.history[StatType.Time].update(self.zone[StatType.Time])
 
@@ -128,14 +128,6 @@ class GameStats():
                 elif t == StatType.Fame:
                     getattr(self, s)[t] = fame_stats.FameStats()
 
-    def _merged_stats(self, stats: dict):
-        result = {}
-
-        for stat in stats:
-            result.update(stat.stats())
-
-        return result
-
 
 game_stats = GameStats()
 event_queue: Queue = Queue()
@@ -160,10 +152,11 @@ def last_fight_stats(combat_stat_type: str):
 
 
 cached_players = ()  # do not compute values if there is nothing in queue
-cached_players_type = None
+cached_stat_type = None
+cached_combat_stat_type = None
 
 def get_stats(stat_type: str, combat_stat_type: str):
-    global cached_players, cached_players_type
+    global cached_players, cached_stat_type, cached_combat_stat_type
     new_events = False
 
     while not event_queue.empty():
@@ -175,7 +168,7 @@ def get_stats(stat_type: str, combat_stat_type: str):
     fame = FameStat(Number(fame['fame']), Number(
         (fame['fame'] / time) * 60 * 60 if time > 0.0 else 0.0))
 
-    if not new_events and cached_players and cached_players_type != stat_type:
+    if not new_events and cached_players and cached_stat_type == stat_type and cached_combat_stat_type == combat_stat_type:
         return (cached_players, fame, time)
 
     cached_players = {
@@ -183,7 +176,8 @@ def get_stats(stat_type: str, combat_stat_type: str):
         CombatStatType.Healing: lambda stat_type : game_stats.get_healing_stats(stat_type)
     }[combat_stat_type](stat_type)
 
-    cached_players_type = stat_type
+    cached_stat_type = stat_type
+    cached_combat_stat_type = combat_stat_type
 
     return (cached_players, fame, time)
 

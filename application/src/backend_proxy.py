@@ -95,6 +95,10 @@ def _testing_call_sequence(callback):
         *deal_damage(12, 'Sword', 80.0),
         *deal_damage(13, 'Bow', 221.0),
         {'name': 'UpdateFame', 'value': {'value': 2000}},
+        {'name': 'ZoneChange'},
+        *add_player(1, 'Cursed', 'T5_MAIN_CURSEDSTAFF@2'),
+        *deal_damage(1, 'Cursed', 80.0),
+        {'name': 'ZoneChange'},
     ]
 
     sequence[environment.TestType.ZoneChange] = [

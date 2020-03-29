@@ -52,6 +52,16 @@ class Player(Stats):
     healing_done: float = 0.0
     combat_time: CombatTime = field(default_factory=lambda: CombatTime())
     combat_state: int = CombatState.OutOfCombat
+    active: bool  = False
+
+    def activate(self):
+        self.active = True
+    
+    def is_active(self) -> bool:
+        return self.active
+
+    def has_stats(self) -> bool:
+        return bool(self.damage_done or self.healing_done)
 
     @staticmethod
     def new(self):
@@ -69,6 +79,7 @@ class Player(Stats):
         self.combat_time.entered_combat = other.combat_time.entered_combat
         self.combat_time.time_in_combat += other.combat_time.time_in_combat
         self.items = other.items
+        self.active = other.active or self.active
 
     def register_items(self, value):
         self.items = value
@@ -78,12 +89,14 @@ class Player(Stats):
             return
 
         self.damage_done += value
+        self.activate()
 
     def register_healing_done(self, value):
         if self.party.combat_state() == CombatState.OutOfCombat:
             return
 
         self.healing_done += value
+        self.activate()
 
     def enter_combat(self):
         self.combat_time.entered_combat = time_utils.now()
@@ -152,6 +165,13 @@ class CombatStats(CombatEventReceiver, Stats):
                 self.players[id] = Player.from_other(player)
                 self.players[id].update(player)
 
+    def update_non_idle(self, other):
+        self.update(other)
+        self.players = dict(filter(lambda elem: elem[1].has_stats(), self.players.items()))
+
+        for player in self.players.values():
+            player.activate()
+
     def combined(self, other):
         stats = CombatStats(self.visibility)
         stats.update(self)
@@ -173,11 +193,13 @@ class CombatStats(CombatEventReceiver, Stats):
         return self.party.combat_state()
 
     def visible_players(self) -> Iterable[Player]:
-        return (player for player in self.players.values() if self.visibility.test(player.name))
+        return (player for player in self.players.values() if player.is_active() and self.visibility.test(player.name))
 
     def on_player_appeared(self, id: int, name: str):
         if id not in self.players:
             self.players[id] = Player(name, self.party)
+
+        self.players[id].activate()
 
     def on_damage_done(self, id: int, damage: float):
         self.players[id].register_damage_done(damage)
