@@ -45,10 +45,10 @@ def config():
             cfg = toml.load(cfg_file)
             if cfg['config']['version'] != CFG_VERSION:
                 raise Exception('Version changed')
-            return cfg
-    except(Exception) as e:
+            _config = cfg
+    except(Exception) as _:
         with open(conf_file, "w") as cfg_file:
             cfg_file.write(default)
-            return toml.loads(default)
+            _config = toml.loads(default)
 
-    return {}
+    return _config
