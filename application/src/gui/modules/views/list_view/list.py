@@ -1,9 +1,7 @@
-from io import BytesIO
 import collections
 import functools
 import re
 from typing import List
-from PIL import Image, ImageQt  # type: ignore
 
 from PySide2 import QtCore  # type: ignore
 from PySide2 import QtGui  # type: ignore
@@ -22,9 +20,10 @@ from PySide2.QtWidgets import QVBoxLayout  # type: ignore
 
 from .....stats.list_item import PlayerListItem
 from .....utils import assets
-from .....utils import async_request
 from .....utils import names
 from .....utils import weapon
+
+from .icon import get_weapon_icon as player_icon
 
 Style = collections.namedtuple('Style', 'bg')
 
@@ -75,20 +74,6 @@ def player_style(items):
         return Style(bg='#b59d00')
     else:
         return Style(bg='#42413c')
-
-
-def player_icon(weapon):
-    url = f'https://albiononline2d.ams3.cdn.digitaloceanspaces.com/thumbnails/orig/{weapon}'
-    try:
-        r = async_request.get(url)
-        img = Image.open(BytesIO(r.content))
-
-        img_qt = ImageQt.ImageQt(img)
-        pix = QtGui.QPixmap.fromImage(img_qt)
-
-        return QtGui.QIcon(pix)
-    except Exception:
-        return None
 
 
 class ListItemView(QListView):
