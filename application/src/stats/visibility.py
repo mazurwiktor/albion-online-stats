@@ -1,3 +1,5 @@
+import functools
+
 from dataclasses import dataclass, field
 from typing import List
 import re
@@ -18,13 +20,26 @@ class Visibility(VisibilityEventReceiver):
         self.visible_players = visible_players
 
     def test(self, name):
-        if 'visibility' in config()['app']:  # Note: only for testing purposes
+        if _is_visible_by_config():  # Note: only for testing purposes
             return True
 
-        pattern = re.compile('|'.join(self.visible_players) + '|{}'.format(
-            self.main_player_name) if self.visible_players else self.main_player_name)
-        return self.main_player_name and bool(pattern.match(name))
+        pattern = '|'.join(self.visible_players) + '|{}'.format(
+            self.main_player_name) if self.visible_players else self.main_player_name
+        return self.main_player_name and bool(_compile_pattern(pattern).match(name))
 
     @property
     def is_main_player_visible(self) -> bool:
         return self.main_player_name is not ""
+
+
+@functools.lru_cache(maxsize=128)
+def _is_visible_by_config():
+    if 'visibility' in config()['app']:
+        return True
+
+    return False
+
+
+@functools.lru_cache(maxsize=128)
+def _compile_pattern(pattern: str):
+    return re.compile(pattern)
