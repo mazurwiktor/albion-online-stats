@@ -36,8 +36,10 @@ After first execution the app is going to create default configuration file name
     <img src="assets/sbistatement.png">
 </p>
 
-- [x] Tracks your **own** party only
-- [x] Doesn't provide overlay
+- [x] Only monitors your own party
+- [x] Does not modify our game client
+- [x] Does not track players that are not within the player's view
+- [x] Does not have an overlay to the game
 
 > **Note** this traits of the application are true from version 0.9.0+.
 
