@@ -2,6 +2,7 @@ import os
 import sys
 
 from PySide2.QtCore import Qt  # type: ignore
+from PySide2 import QtGui  # type: ignore
 from PySide2.QtWidgets import QApplication  # type: ignore
 from PySide2.QtWidgets import QMessageBox  # type: ignore
 
@@ -14,6 +15,7 @@ from .styling import style
 from ..utils.version import current_version as get_current_version
 from ..utils.version import latest_url
 from ..utils.version import latest_version as get_latest_version
+from ..utils.assets import path
 
 sys.path.append(os.path.dirname(os.path.abspath('__file__')))
 
@@ -40,6 +42,7 @@ def run():
     widget.move(0, geometry.height() - HEIGHT - 280)
 
     widget.setWindowTitle('Albion Online Stats')
+    widget.setWindowIcon(QtGui.QIcon(path('albion-stats-icon.png')))
 
     if window_config['always_on_top']:
         widget.setWindowFlag(Qt.WindowStaysOnTopHint)
