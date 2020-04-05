@@ -11,6 +11,7 @@ backend.log
 .pytest_cache
 *.spec
 env
+venv
 **/build
 **/dist
 **/*.egg-info
