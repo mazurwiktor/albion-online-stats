@@ -1,10 +1,10 @@
 import os
 import sys
 
-from PySide2.QtCore import Qt  # type: ignore
-from PySide2 import QtGui  # type: ignore
-from PySide2.QtWidgets import QApplication  # type: ignore
-from PySide2.QtWidgets import QMessageBox  # type: ignore
+from PyQt5.QtCore import Qt  # type: ignore
+from PyQt5 import QtGui  # type: ignore
+from PyQt5.QtWidgets import QApplication  # type: ignore
+from PyQt5.QtWidgets import QMessageBox  # type: ignore
 
 from ..engine import InitializationResult
 from ..engine import initialize

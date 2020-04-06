@@ -6,7 +6,7 @@ font_size = cfg['window']['font-size']
 style = """
     QWidget {
         font-size: %s;
-        background-color: black;
+        background-color: #000000;
         color: white;
     }
 

@@ -3,20 +3,20 @@ import functools
 import re
 from typing import List
 
-from PySide2 import QtCore  # type: ignore
-from PySide2 import QtGui  # type: ignore
-from PySide2.QtCore import Qt  # type: ignore
-from PySide2.QtGui import QStandardItem  # type: ignore
-from PySide2.QtGui import QStandardItemModel  # type: ignore
-from PySide2.QtWidgets import QApplication  # type: ignore
-from PySide2.QtWidgets import QComboBox  # type: ignore
-from PySide2.QtWidgets import QHBoxLayout  # type: ignore
-from PySide2.QtWidgets import QLabel  # type: ignore
-from PySide2.QtWidgets import QListView  # type: ignore
-from PySide2.QtWidgets import QMessageBox  # type: ignore
-from PySide2.QtWidgets import QProgressBar  # type: ignore
-from PySide2.QtWidgets import QPushButton  # type: ignore
-from PySide2.QtWidgets import QVBoxLayout  # type: ignore
+from PyQt5 import QtCore  # type: ignore
+from PyQt5 import QtGui  # type: ignore
+from PyQt5.QtCore import Qt  # type: ignore
+from PyQt5.QtGui import QStandardItem  # type: ignore
+from PyQt5.QtGui import QStandardItemModel  # type: ignore
+from PyQt5.QtWidgets import QApplication  # type: ignore
+from PyQt5.QtWidgets import QComboBox  # type: ignore
+from PyQt5.QtWidgets import QHBoxLayout  # type: ignore
+from PyQt5.QtWidgets import QLabel  # type: ignore
+from PyQt5.QtWidgets import QListView  # type: ignore
+from PyQt5.QtWidgets import QMessageBox  # type: ignore
+from PyQt5.QtWidgets import QProgressBar  # type: ignore
+from PyQt5.QtWidgets import QPushButton  # type: ignore
+from PyQt5.QtWidgets import QVBoxLayout  # type: ignore
 
 from .....stats.list_item import PlayerListItem
 from .....utils import assets

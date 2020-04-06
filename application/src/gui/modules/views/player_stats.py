@@ -1,8 +1,8 @@
 import datetime
 
-from PySide2.QtWidgets import QLabel  # type: ignore
-from PySide2 import QtGui  # type: ignore
-from PySide2 import QtCore  # type: ignore
+from PyQt5.QtWidgets import QLabel  # type: ignore
+from PyQt5 import QtGui  # type: ignore
+from PyQt5 import QtCore  # type: ignore
 
 from src.utils import assets, number
 from src.stats.list_item import PlayerListItem

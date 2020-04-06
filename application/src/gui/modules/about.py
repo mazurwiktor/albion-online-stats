@@ -1,4 +1,4 @@
-from PySide2.QtWidgets import QMessageBox # type: ignore
+from PyQt5.QtWidgets import QMessageBox # type: ignore
 
 
 text = """

@@ -1,14 +1,14 @@
 import sys
 import functools
 
-from PySide2 import QtGui  # type: ignore
-from PySide2.QtCore import Qt  # type: ignore
-from PySide2.QtCore import QTimer  # type: ignore
-from PySide2.QtWidgets import QComboBox  # type: ignore
-from PySide2.QtWidgets import QHBoxLayout  # type: ignore
-from PySide2.QtWidgets import QPushButton  # type: ignore
-from PySide2.QtWidgets import QVBoxLayout  # type: ignore
-from PySide2.QtWidgets import QWidget  # type: ignore
+from PyQt5 import QtGui  # type: ignore
+from PyQt5.QtCore import Qt  # type: ignore
+from PyQt5.QtCore import QTimer  # type: ignore
+from PyQt5.QtWidgets import QComboBox  # type: ignore
+from PyQt5.QtWidgets import QHBoxLayout  # type: ignore
+from PyQt5.QtWidgets import QPushButton  # type: ignore
+from PyQt5.QtWidgets import QVBoxLayout  # type: ignore
+from PyQt5.QtWidgets import QWidget  # type: ignore
 
 from ... import engine
 
@@ -62,7 +62,7 @@ class TopBar(QWidget):
         self.view_type = ViewTypeWidget()
         self.layout = QHBoxLayout()
         self.layout.setSpacing(0)
-        self.layout.setMargin(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.addWidget(self.view_type)
 
         self.about_button = AboutButton()

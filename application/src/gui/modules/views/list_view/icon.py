@@ -1,6 +1,6 @@
 from io import BytesIO
 from PIL import Image, ImageQt  # type: ignore
-from PySide2 import QtGui  # type: ignore
+from PyQt5 import QtGui  # type: ignore
 
 from .....utils import async_request
 
