@@ -101,9 +101,9 @@ class ListItemView(QListView):
                 QRectF.topLeft(), QRectF.topRight())
             gradient.setColorAt(value-0.001 if value > 0 else 0,
                                 QtGui.QColor(player_style(self.player.items).bg))
-            gradient.setColorAt(value, QtGui.QColor('#000000'))
+            gradient.setColorAt(value, QtGui.QColor('#FFFFFF'))
             gradient.setColorAt(value+0.001 if value <
-                                1 else 1, QtGui.QColor('#000000'))
+                                1 else 1, QtGui.QColor('#FFFFFF'))
 
             brush = QtGui.QBrush(gradient)
 
