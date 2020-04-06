@@ -19,3 +19,5 @@ venv
 __pycache__
 albion-online-stats.cfg
 .mypy_cache
+albion-online-stats.bin
+albion-online-stats.build
