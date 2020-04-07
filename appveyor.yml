@@ -39,13 +39,13 @@ build_script:
   - ps: .\env\Scripts\activate.ps1
   - python -m pip install dataclasses
   - python -m pip install -v -r application\requirements.txt
-  - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data application\src\assets;src\assets application\albion-online-stats.py
+  - python -m nuitka --standalone --recurse-all --plugin-enable=qt-plugins --windows-disable-console --windows-icon=assets\albion-stats-icon.ico application\albion-online-stats.py
   - ps: deactivate
 after_build:
-- ps: mv dist\albion-online-stats.exe albion-online-stats.exe
+- ps: Compress-Archive -Path albion-online-stats.dist -DestinationPath albion-online-stats.zip
 - ps: ls
 artifacts:
-  path: albion-online-stats.exe
+  path: albion-online-stats.zip
   name: binary
 deploy:
   provider: GitHub
