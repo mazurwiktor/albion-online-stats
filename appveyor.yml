@@ -39,7 +39,7 @@ build_script:
   - ps: .\env\Scripts\activate.ps1
   - python -m pip install dataclasses
   - python -m pip install -v -r application\requirements.txt
-  - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data application\src\assets;src\assets application\albion-online-stats.py
+  - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data application\src\assets;src\assets --add-data application\src\scripts;src\scripts application\albion-online-stats.py
   - ps: deactivate
 after_build:
 - ps: mv dist\albion-online-stats.exe albion-online-stats.exe

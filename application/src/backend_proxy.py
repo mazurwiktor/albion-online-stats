@@ -3,7 +3,7 @@ try:
 except:
     class aostats:  # type: ignore
         @staticmethod
-        def initialize(_):
+        def initialize():
             return InitializationResult.NetworkInterfaceListMissing
 
         @staticmethod

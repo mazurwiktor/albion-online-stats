@@ -5,6 +5,7 @@ from PySide2.QtCore import Qt  # type: ignore
 from PySide2 import QtGui  # type: ignore
 from PySide2.QtWidgets import QApplication  # type: ignore
 from PySide2.QtWidgets import QMessageBox  # type: ignore
+from PySide2.QtWidgets import QPushButton  # type: ignore
 
 from ..engine import InitializationResult
 from ..engine import initialize
@@ -16,9 +17,13 @@ from ..utils.version import current_version as get_current_version
 from ..utils.version import latest_url
 from ..utils.version import latest_version as get_latest_version
 from ..utils.assets import path
+from ..utils.assets import scripts
 
 sys.path.append(os.path.dirname(os.path.abspath('__file__')))
 
+def fix_npcap():
+    os.system(scripts('fixnpcap.bat'))
+    sys.exit(0)
 
 def run():
     initialization_result = initialize()
@@ -70,9 +75,15 @@ def run():
         msg.setWindowTitle("Unable to track network traffic data!")
         msg.setText(
             "On windows make sure that WinPcap is installed in your system.")
-        msg.setInformativeText("WinPcap can be installed from <a href='{}'>here</a> <br> <b>Make sure to install with the \"Install Npcap in WinPcap API-compatible Mode\"<b> option"
-                               .format('https://nmap.org/npcap/dist/npcap-0.9986.exe'))
+        msg.setInformativeText("WinPcap can be installed from <a href='{}'>here</a> <br>\
+            <b>Make sure to install with the \"Install Npcap in WinPcap API-compatible Mode\"<b> option<br><br>\
+            In case where npcap is installed try to fix npcap and restart the app"
+                               .format('https://nmap.org/npcap/dist/npcap-0.9990.exe'))
         msg.setStandardButtons(QMessageBox.Ok)
+        button = QPushButton("Fix npcap")                                                                    
+
+        button.clicked.connect(fix_npcap)                                                                    
+        msg.addButton(button, QMessageBox.NoRole)
         msg.show()
 
     sys.exit(app.exec_())
