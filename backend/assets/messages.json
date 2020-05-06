@@ -34,7 +34,7 @@
         },
         {
             "name": "RegenerationHealthChanged",
-            "code": 80,
+            "code": 81,
             "params": [
                 {
                     "name": "source",
@@ -61,7 +61,7 @@
         },
         {
             "name": "KnockedDown",
-            "code": 150,
+            "code": 154,
             "params": [
                 {
                     "name": "source",
@@ -82,7 +82,7 @@
         },
         {
             "name": "NewCharacter",
-            "code": 24,
+            "code": 25,
             "params": [
                 {
                     "name": "source",
@@ -139,7 +139,7 @@
         },
         {
             "name": "CharacterEquipmentChanged",
-            "code": 79,
+            "code": 80,
             "params": [
                 {
                     "name": "source",
@@ -155,13 +155,13 @@
         },
         {
             "name": "PartyInvitation",
-            "code": 210,
+            "code": 212,
             "params": [
             ]
         },
         {
             "name": "PartyJoined",
-            "code": 211,
+            "code": 213,
             "params": [
                 {
                     "name": "party_id",
@@ -182,13 +182,13 @@
         },
         {
             "name": "PartyDisbanded",
-            "code": 212,
+            "code": 214,
             "params": [
             ]
         },
         {
             "name": "PartyPlayerJoined",
-            "code": 213,
+            "code": 215,
             "params": [
                 {
                     "name": "party_id",
@@ -209,13 +209,13 @@
         },
         {
             "name": "PartyChangedOrder",
-            "code": 214,
+            "code": 216,
             "params": [
             ]
         },
         {
             "name": "PartyPlayerLeft",
-            "code": 215,
+            "code": 217,
             "params": [
                 {
                     "name": "party_id",
@@ -231,49 +231,49 @@
         },
         {
             "name": "PartyLeaderChanged",
-            "code": 216,
-            "params": [
-            ]
-        },
-        {
-            "name": "PartyLootSettingChangedPlayer",
-            "code": 217,
-            "params": [
-            ]
-        },
-        {
-            "name": "PartySilverGained",
             "code": 218,
             "params": [
             ]
         },
         {
-            "name": "PartyPlayerUpdated",
+            "name": "PartyLootSettingChangedPlayer",
             "code": 219,
             "params": [
             ]
         },
         {
-            "name": "PartyInvitationPlayerBusy",
+            "name": "PartySilverGained",
             "code": 220,
             "params": [
             ]
         },
         {
-            "name": "PartyMarkedObjectsUpdated",
+            "name": "PartyPlayerUpdated",
             "code": 221,
             "params": [
             ]
         },
         {
-            "name": "PartyOnClusterPartyJoined",
+            "name": "PartyInvitationPlayerBusy",
             "code": 222,
             "params": [
             ]
         },
         {
-            "name": "PartySetRoleFlag",
+            "name": "PartyMarkedObjectsUpdated",
             "code": 223,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartyOnClusterPartyJoined",
+            "code": 224,
+            "params": [
+            ]
+        },
+        {
+            "name": "PartySetRoleFlag",
+            "code": 225,
             "params": [
             ]
         }
