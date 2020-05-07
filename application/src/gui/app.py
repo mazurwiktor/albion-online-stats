@@ -1,11 +1,13 @@
 import os
 import sys
 
+from PySide2 import QtCore  # type: ignore
 from PySide2.QtCore import Qt  # type: ignore
 from PySide2 import QtGui  # type: ignore
 from PySide2.QtWidgets import QApplication  # type: ignore
 from PySide2.QtWidgets import QMessageBox  # type: ignore
 from PySide2.QtWidgets import QPushButton  # type: ignore
+from PySide2.QtWebEngineWidgets import QWebEngineView
 
 from ..engine import InitializationResult
 from ..engine import initialize
@@ -24,6 +26,13 @@ sys.path.append(os.path.dirname(os.path.abspath('__file__')))
 def fix_npcap():
     os.system(scripts('fixnpcap.bat'))
     sys.exit(0)
+
+def get_modt(always_on_top):
+    view = QWebEngineView()
+    view.load(QtCore.QUrl('https://mazurwiktor.github.io/aostats/motd'))
+    view.page().profile().clearHttpCache()
+
+    return view
 
 def run():
     initialization_result = initialize()
@@ -49,12 +58,16 @@ def run():
     widget.setWindowTitle('Albion Online Stats')
     widget.setWindowIcon(QtGui.QIcon(path('albion-stats-icon.png')))
 
+    modt = get_modt(['always_on_top'])
+
     if window_config['always_on_top']:
         widget.setWindowFlag(Qt.WindowStaysOnTopHint)
+        modt.setWindowFlag(Qt.WindowStaysOnTopHint)
     if window_config['frameless']:
         widget.setWindowFlag(Qt.FramelessWindowHint)
 
     widget.show()
+    modt.show()
 
     current_version, latest_version = (
         get_current_version(), get_latest_version())
