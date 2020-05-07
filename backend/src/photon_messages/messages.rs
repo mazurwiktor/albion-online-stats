@@ -563,7 +563,7 @@ pub fn into_game_message(photon_message: photon_decode::Message) -> Option<Messa
                 Some(photon_decode::Value::Short(81)) => RegenerationHealthChanged::parse(parameters),
                 Some(photon_decode::Value::Short(154)) => KnockedDown::parse(parameters),
                 Some(photon_decode::Value::Short(25)) => NewCharacter::parse(parameters),
-                Some(photon_decode::Value::Short(72)) => UpdateFame::parse(parameters),
+                Some(photon_decode::Value::Short(73)) => UpdateFame::parse(parameters),
                 Some(photon_decode::Value::Short(80)) => CharacterEquipmentChanged::parse(parameters),
                 Some(photon_decode::Value::Short(212)) => PartyInvitation::parse(parameters),
                 Some(photon_decode::Value::Short(213)) => PartyJoined::parse(parameters),
