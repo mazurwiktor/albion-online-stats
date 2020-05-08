@@ -10,6 +10,12 @@ style = """
         color: white;
     }
 
+    #Motd, #Motd > * {
+        background-color: none;
+        color: none;
+        font-size: auto;
+    }
+
     QListView { 
         min-height: 100px;
     }

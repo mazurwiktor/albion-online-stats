@@ -1,5 +1,7 @@
 import os
+import platform
 import sys
+import requests
 
 from PySide2 import QtCore  # type: ignore
 from PySide2.QtCore import Qt  # type: ignore
@@ -7,7 +9,6 @@ from PySide2 import QtGui  # type: ignore
 from PySide2.QtWidgets import QApplication  # type: ignore
 from PySide2.QtWidgets import QMessageBox  # type: ignore
 from PySide2.QtWidgets import QPushButton  # type: ignore
-from PySide2.QtWebEngineWidgets import QWebEngineView
 
 from ..engine import InitializationResult
 from ..engine import initialize
@@ -23,16 +24,22 @@ from ..utils.assets import scripts
 
 sys.path.append(os.path.dirname(os.path.abspath('__file__')))
 
+
 def fix_npcap():
     os.system(scripts('fixnpcap.bat'))
     sys.exit(0)
 
-def get_modt(always_on_top):
-    view = QWebEngineView()
-    view.load(QtCore.QUrl('https://mazurwiktor.github.io/aostats/motd'))
-    view.page().profile().clearHttpCache()
 
-    return view
+def get_modt(always_on_top):
+    motd_url = 'https://mazurwiktor.github.io/aostats/motd'
+    msg = QMessageBox()
+    msg.setObjectName("Motd")
+    msg.setWindowTitle("MOTD")
+    msg.setInformativeText(str(requests.get(motd_url).text))
+    msg.setStandardButtons(QMessageBox.Ok)
+
+    return msg
+
 
 def run():
     initialization_result = initialize()
@@ -93,9 +100,9 @@ def run():
             In case where npcap is installed try to fix npcap and restart the app"
                                .format('https://nmap.org/npcap/dist/npcap-0.9990.exe'))
         msg.setStandardButtons(QMessageBox.Ok)
-        button = QPushButton("Fix npcap")                                                                    
+        button = QPushButton("Fix npcap")
 
-        button.clicked.connect(fix_npcap)                                                                    
+        button.clicked.connect(fix_npcap)
         msg.addButton(button, QMessageBox.NoRole)
         msg.show()
 
