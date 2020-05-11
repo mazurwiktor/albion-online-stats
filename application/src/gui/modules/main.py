@@ -20,6 +20,7 @@ from .views import ModeBasedListView
 from .views import StatsType
 
 from . import about
+from . import settings
 
 
 class AboutButton(QPushButton):
@@ -31,6 +32,14 @@ class AboutButton(QPushButton):
         self.setToolTip("About")
         self.clicked.connect(self.about.show)
 
+class SettingsButton(QPushButton):
+    def __init__(self):
+        QPushButton.__init__(self)
+
+        self.settings = settings.Settings()
+        self.setIcon(QtGui.QIcon(assets.path('settings.png')))
+        self.setToolTip("Settings")
+        self.clicked.connect(self.settings.show)
 
 class CloseButton(QPushButton):
     def __init__(self, is_visible):
@@ -67,6 +76,9 @@ class TopBar(QWidget):
 
         self.about_button = AboutButton()
         self.layout.addWidget(self.about_button)
+
+        self.settings_button = SettingsButton()
+        self.layout.addWidget(self.settings_button)
 
         self.close_button = CloseButton(config()['window']['frameless'])
         self.layout.addWidget(self.close_button)

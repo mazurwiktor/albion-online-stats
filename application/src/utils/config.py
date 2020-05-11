@@ -1,7 +1,10 @@
+# problem with importing
+#  from ..gui.modules.settings import width, height, font, opaci, frame, top
 import os
 import sys
 import toml
 
+# i want to connect variables from settings to config file and make it update every time any of variables change
 CFG_VERSION = '0.7'
 
 default = """
