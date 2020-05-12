@@ -63,7 +63,13 @@ fn get_logging_level() -> LevelFilter {
         .to_lowercase()
         .as_str()
     {
-        "debug" => LevelFilter::Debug,
-        _ => LevelFilter::Info,
+        "debug" => {
+            info!("Logging level set to debug");
+            LevelFilter::Debug
+        },
+        _ => {
+            info!("Logging level set to info");
+            LevelFilter::Info
+        },
     }
 }
