@@ -49,12 +49,24 @@ pub fn initialize(subscribers: Subscribers) -> Result<(), InitializationError> {
 }
 
 fn initialize_logging() {
+    let logging_level = get_logging_level();
+    
     CombinedLogger::init(vec![WriteLogger::new(
-        get_logging_level(),
+        logging_level,
         Config::default(),
         File::create("backend.log").unwrap(),
     )])
     .unwrap();
+
+    match logging_level {
+        LevelFilter::Debug => {
+            info!("Logging level set to debug");
+        },
+        _ => {
+            
+            info!("Logging level set to info");
+        }
+    }
 }
 
 fn get_logging_level() -> LevelFilter {
@@ -63,13 +75,7 @@ fn get_logging_level() -> LevelFilter {
         .to_lowercase()
         .as_str()
     {
-        "debug" => {
-            info!("Logging level set to debug");
-            LevelFilter::Debug
-        },
-        _ => {
-            info!("Logging level set to info");
-            LevelFilter::Info
-        },
+        "debug" => LevelFilter::Debug,
+        _ => LevelFilter::Info
     }
 }
