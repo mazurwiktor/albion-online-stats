@@ -2,27 +2,38 @@ import os
 import sys
 import toml
 
+width = 800
+height = 220
+font = 15
+frame = False
+frame_str = str(frame).lower()
+top = False
+top_str = str(top).lower()
+opaci_percent = 100
+opaci = opaci_percent/100
+opaci_formatted = "{:.1f}".format(opaci)
+
 CFG_VERSION = '0.7'
 
 default = """
 [window]
-width = 300
-height = 220
-font-size = '10px'
+width = %d
+height = %d
+font-size = '%dpx'
 
 # Note: do not change!
 # options bellow are here only for testing purposes
 # SBI politics doesn't allow opacity frameless and always on top applications!
-opacity = 1.0
-frameless = false
-always_on_top = false
+opacity = %s
+frameless = %s
+always_on_top = %s
 
 [app]
 
 [config]
 # do not change
 version = '%s'
-""" % (CFG_VERSION)
+""" % (width, height, font, opaci_formatted, frame_str, top_str, CFG_VERSION)
 
 
 # pyinstaller creates tmpdir for python files, thus this is the way to get executable path
