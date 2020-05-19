@@ -14,14 +14,35 @@ from PySide2.QtWidgets import QSlider  # type: ignore
 from PySide2.QtWidgets import QVBoxLayout  # type: ignore
 from PySide2.QtWidgets import QWidget  # type: ignore
 from PySide2.QtWidgets import QLabel  # type: ignore
+from PySide2.QtWidgets import QApplication  # type: ignore
+from ...utils.config import width, height, font, opaci_percent, frame, top, config
 
-width = 300
-height = 220
-font = 10
-opaci_percent = 100
-opaci = opaci_percent/100
-frame = False
-top = False
+width_user = 0
+height_user = 0
+
+
+def resolution_width():
+    def __init__(self):
+        global width_user
+        geometry = QApplication.screens()[0].size()
+        width_user = geometry.width()
+        return width_user
+
+def resolution_height():
+    def __init__(self):
+        global height_user
+        geometry = QApplication.screens()[0].size()
+        height_user = geometry.height()
+        return height_user
+
+def apply():
+    global font, opaci_percent, frame, top, width, height
+    font = FontSpin.value
+    opaci_percent = OpaciSpin.value
+    frame = FrameCheck.checkState
+    top = TopCheck.checkState
+    width = TopBar.width
+    height = TopBar.height
 
 class FontSpin(QSpinBox):
     def __init__(self):
@@ -40,32 +61,16 @@ class OpaciSpin(QSpinBox):
         self.setValue(opaci_percent)
         self.setSingleStep(10)
         self.setSuffix("%")
+
 class FrameCheck(QCheckBox):
     def __init__(self):
         QCheckBox.__init__(self)
         self.setChecked(frame)
 
-
 class TopCheck(QCheckBox):
     def __init__(self):
         QCheckBox.__init__(self)
         self.setChecked(top)
-
-class ApplyButton(QPushButton):
-    def __init__(self):
-        QPushButton.__init__(self)
-        self.setText("Apply")
-
-
-        def Apply():
-            font = FontSpin.value
-            opaci_percent = OpaciSpin.value
-            frame = FrameCheck.checkState
-            top = TopCheck.checkState
-            width = TopBar.width_text
-            height = TopBar.height_text
-        self.clicked.connect(Apply)
-
 
 class TopBar(QWidget):
     def __init__(self):
@@ -80,7 +85,7 @@ class TopBar(QWidget):
 
         WidthSlider = QSlider(Qt.Horizontal)
         WidthSlider.setMinimum(300)
-        WidthSlider.setMaximum(1920)
+        WidthSlider.setMaximum(width_user)
         WidthSlider.setValue(width)
         WidthSlider.setSingleStep(10)
         self.layout.addWidget(WidthSlider)
@@ -96,7 +101,7 @@ class TopBar(QWidget):
 
         HeightSlider = QSlider(Qt.Horizontal)
         HeightSlider.setMinimum(220)
-        HeightSlider.setMaximum(1080)
+        HeightSlider.setMaximum(height_user)
         HeightSlider.setValue(height)
         HeightSlider.setSingleStep(10)
         self.layout.addWidget(HeightSlider)
@@ -147,3 +152,13 @@ class Settings(QWidget):
 
         self.apply_button = ApplyButton()
         self.layout.addWidget(self.apply_button) 
+
+class ApplyButton(QPushButton):
+    def __init__(self):
+        QPushButton.__init__(self)
+        self.setText("Apply")
+        def restart():
+            os.execl(sys.executable, sys.executable, *sys.argv)
+        self.clicked.connect(apply)
+        self.clicked.connect(config)
+        self.clicked.connect(restart)
