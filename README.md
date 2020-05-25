@@ -17,6 +17,8 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 ![0.7.0](https://user-images.githubusercontent.com/11301109/71000581-d9124000-20db-11ea-8c19-4d7f69a2c155.png)
 
 
+> **Note** Network packet tracking and API for game events moved to other project. See [Albion Online Addons](https://github.com/mazurwiktor/albion-online-addons)
+
 # How to use this app
 
 > **Note** this section does not require any coding knowledge. Those simple two steps are required to use this software :)
@@ -52,8 +54,7 @@ After first execution the app is going to create default configuration file name
 
 ## Prerequisites
 
-- Rust installed (https://www.rust-lang.org/tools/install)
-- Python installed (python3.5 / python3.6 / python3.7)
+- Python installed (python3.6 / python3.7 / python3.8)
 - *Windows only prerequisites*  https://github.com/libpnet/libpnet#windows
 
 
@@ -73,19 +74,19 @@ After first execution the app is going to create default configuration file name
     or alternatively using conda and skip installing requirements step
 
     ```shell
-    conda env create --file application/environment.yml
+    conda env create --file environment.yml
     conda activate albion
     ```
 
-3. Install requirements (backend will be compiled during requirements installation)
+3. Install requirements
 
     ```shell
-    pip install -v -r application/requirements.txt
+    pip install -v -r requirements.txt
     ```
 
 4. Run the application
     ```shell
-    [sudo on linux] python application/albion-online-stats.py
+    [sudo on linux] python albion-online-stats.py
     ```
 
 # Contribution

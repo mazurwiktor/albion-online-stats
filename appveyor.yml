@@ -1,51 +1,48 @@
 image: Visual Studio 2017
 environment:
-  RUST_TEST_THREADS: 1
+  TWINE_USERNAME: mazurwiktor
+  # Note: TWINE_PASSWORD is set in Appveyor settings.
   matrix:
-    - TARGET: x86_64-pc-windows-msvc
-      RUST_CHANNEL: beta
-      WPD_LIB_PATH: "C:/dl/wpdpack/WpdPack/Lib/x64/Packet.lib"
+    # Stable 64-bit MSVC
+    - channel: stable
+      target: x86_64-pc-windows-msvc
       PYTHON: "C:\\Python36-x64"
+      PYTHON_SCRIPTS: "C:\\Python36-x64\\Scripts"
       PYTHON_LIB: "C:\\Python36-x64\\libs\\python36.lib"
-      PYTHON_ARCH: "64"
-      VCVARS: "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\bin\\amd64\\vcvars64.bat"
+    # Stable 32-bit MSVC
+    - channel: stable
+      target: i686-pc-windows-msvc
+      PYTHON: "C:\\Python36"
+      PYTHON_SCRIPTS: "C:\\Python36\\Scripts"
+      PYTHON_LIB: "C:\\Python36\\libs\\python36.lib"
+
+
+# From https://github.com/starkat99/appveyor-rust/blob/master/appveyor.yml
 install:
- - ps: ls C:\\Python36-x64
- - SET PATH=%PYTHON%;%path%
- - ps: mkdir C:/dl
- - curl -o "C:/dl/wpd.zip" "https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip"
- - ps: Add-Type -AssemblyName system.io.compression.filesystem
- - ps: "[io.compression.zipfile]::ExtractToDirectory(\"C:/dl/wpd.zip\", \"C:/dl/wpdpack\")"
- - ps: cp ${env:WPD_LIB_PATH} "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\amd64"
- - ps: cp ${env:PYTHON_LIB} "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\amd64"
- - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:RUST_CHANNEL}-${env:TARGET}.exe"
- - rust-%RUST_CHANNEL%-%TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files (x86)\Rust"
- - CALL "%VCVARS%"
- - SET PATH=%PATH%;C:\Program Files (x86)\Rust\bin
- - choco install winpcap
- - rustc -V
- - cargo -V
-test: true
-test_script:
-  - ps: cd backend
-  - cargo test
-  - ps: cd ..
+  - SET PATH=%PYTHON%;%path%
+  - SET PATH=%PYTHON_SCRIPTS%;%path%
+  - python --version
+  - python -m pip install -U pip
+  - python -m venv env
+  - python -m pip install -r requirements.txt
   - python -m pip install tox
-  - ps: cd application
-  - python -m tox -e ut
-  - pd: cd ..
+
 build_script:
   - python -m venv env
   - ps: .\env\Scripts\activate.ps1
   - python -m pip install dataclasses
-  - python -m pip install -v -r application\requirements.txt
-  - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data application\src\assets;src\assets --add-data application\src\scripts;src\scripts application\albion-online-stats.py
+  - python -m pip install -v -r requirements.txt
+  - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data src\assets;src\assets --add-data src\scripts;src\scripts albion-online-stats.py
   - ps: deactivate
+
+test_script:
+  - python -m tox -e ut
+
 after_build:
-- ps: mv dist\albion-online-stats.exe albion-online-stats.exe
+- ps: mv dist\albion-online-stats.exe albion-online-stats-$Env:target.exe
 - ps: ls
 artifacts:
-  path: albion-online-stats.exe
+  path: albion-online-stats*.exe
   name: binary
 deploy:
   provider: GitHub
