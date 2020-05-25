@@ -1,12 +1,4 @@
-**/target
-**/*.rs.bk
-**/target
-backend.log
-*.so
 .vscode
-
-
-# Python
 .tox
 .pytest_cache
 *.spec
