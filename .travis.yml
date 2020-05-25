@@ -1,47 +1,40 @@
-language: rust
-rust:
-  - nightly
-jobs:
+language: python
+matrix:
   include:
-    - os: linux
-      dist: xenial
-      python: 3.7
-      script:
-        - sudo add-apt-repository ppa:deadsnakes/ppa -y
-        - sudo apt-get update 
-        - sudo apt upgrade || true
-        - sudo apt-get install -y python3.7 libpython3.7-dev python3.7-venv || true
-        - python3.7 -m venv env
-        - . env/bin/activate
-        - python -m pip install -v -r application/requirements.txt
-        - pyinstaller -F -w -i assets/albion-stats-icon.ico --add-data application/src/assets:src/assets application/albion-online-stats.py
-        - deactivate
+    - name: Linux
+      os : linux
+      sudo: required
+      install:
+        - sudo apt-get install python3-venv
+        - alias python3=python
+        - alias pip="python3 -m pip"
+      env:
+        - PATH=$PATH:/home/travis/virtualenv/python3.6.7/bin
       before_deploy:
         - cp dist/albion-online-stats albion-online-stats-linux
-      deploy:
-        provider: releases
-        api_key:
-          secure: $GITHUB_TOKEN
-        file:
-          - albion-online-stats-linux
-        skip_cleanup: true
-        on:
-          tags: true
-    - os: osx
-      script:
-        - python3 -m venv env
-        - . env/bin/activate
-        - pip install -v -r application/requirements.txt
-        - pyinstaller -F -w -i assets/albion-stats-icon.ico --add-data application/src/assets:src/assets application/albion-online-stats.py
-        - deactivate
+    - name: macOS
+      os: osx
+      language: generic
       before_deploy:
         - cp dist/albion-online-stats albion-online-stats-osx
-      deploy:
-        provider: releases
-        api_key:
-          secure: $GITHUB_TOKEN
-        file:
-          - albion-online-stats-osx
-        skip_cleanup: true
-        on:
-          tags: true
+
+script:
+  - python3 --version
+  - pip --version
+  - python3 -m venv env
+  - . env/bin/activate
+  - python3 --version
+  - python3 -m pip --version
+  - python3 -m pip install -r requirements.txt
+  - pyinstaller -F -w -i assets/albion-stats-icon.ico --add-data src/assets:src/assets albion-online-stats.py
+  - deactivate
+
+deploy:
+  provider: releases
+  api_key:
+    secure: $GITHUB_TOKEN
+  file_glob: true
+  file: albion-online-stats-*
+  skip_cleanup: true
+  on:
+    tags: true
