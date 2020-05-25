@@ -1,7 +1,7 @@
 try:
-    import aostats # type: ignore
+    import pyaoaddons # type: ignore
 except:
-    class aostats:  # type: ignore
+    class pyaoaddons:  # type: ignore
         @staticmethod
         def initialize():
             return InitializationResult.NetworkInterfaceListMissing
@@ -32,7 +32,7 @@ def initialize():
         return InitializationResult.Ok
 
     try:
-        result = aostats.initialize()
+        result = pyaoaddons.initialize()
 
         return INITIALIZATION_RESULT[result]
     except:
@@ -43,7 +43,7 @@ def subscribe(callback):
     if TEST_ENV_ENABLED:
         return _testing_call_sequence(callback)
 
-    aostats.subscribe(callback)
+    pyaoaddons.subscribe(callback)
 
 
 def _testing_call_sequence(callback):
