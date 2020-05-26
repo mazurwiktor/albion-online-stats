@@ -8,6 +8,7 @@ matrix:
         - sudo apt-get install python3-venv
         - alias python3=python
         - alias pip="python3 -m pip"
+        - pip install dataclasses
       env:
         - PATH=$PATH:/home/travis/virtualenv/python3.6.7/bin
       before_deploy:
