@@ -1,7 +1,7 @@
 import os
 import requests
 
-_version = "0.11.2"
+_version = "0.11.3"
 
 latest_url = "https://github.com/mazurwiktor/albion-online-stats/releases/latest"
 
