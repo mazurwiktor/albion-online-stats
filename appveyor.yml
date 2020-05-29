@@ -47,7 +47,7 @@ artifacts:
 deploy:
   provider: GitHub
   auth_token:
-    secure: cB8zvJaO/tS/Z3v4038LBCsRaO9LqrtRS0CV/eLfHnG5SefWKNSObALSvphoQxC4
+    secure: mByjZ+NzAZmAaJgOVviBTWgj2JZwCw4ngkZxGK4tznOUV+9KGnjuEvIvt6RSGdlk
   artifact: binary
   draft: false
   prerelease: false
