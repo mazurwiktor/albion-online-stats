@@ -1,5 +1,10 @@
 import json
 
+try:
+    from pyaoaddons import item_category_mapping
+except:
+    item_category_mapping = {}
+
 from . import assets
 
 
@@ -21,17 +26,8 @@ class WeaponType:
     Sword = 'sword'
 
 
-_mappings = None
-
-
 def map_weapon(weapon):
-    global _mappings
-
-    if not _mappings:
-        with open(assets.path('item_category_map.json')) as m:
-            _mappings = json.loads(m.read())
-
-    return _mappings[weapon] if weapon in _mappings else None
+    return item_category_mapping[weapon] if weapon in item_category_mapping else None
 
 
 def get_weapon_type(items):
