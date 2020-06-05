@@ -30,7 +30,7 @@ build_script:
   - python -m pip install dataclasses
   - python -m pip install -v -r requirements.txt
   - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data src\assets;src\assets --add-data src\scripts;src\scripts albion-online-stats.py
-  - pyinstaller -F -i assets\albion-stats-icon.ico --add-data src\assets;src\assets --add-data src\scripts;src\scripts -name albion-online-stats-cmd albion-online-stats.py
+  - pyinstaller -F -i assets\albion-stats-icon.ico --add-data src\assets;src\assets --add-data src\scripts;src\scripts -n albion-online-stats-cmd albion-online-stats.py
 
 test_script:
   - python -m tox -e ut
