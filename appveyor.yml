@@ -23,23 +23,21 @@ install:
   - SET PATH=%PYTHON_SCRIPTS%;%path%
   - python --version
   - python -m pip install -U pip
-  - python -m venv env
   - python -m pip install -r requirements.txt
   - python -m pip install tox
 
 build_script:
-  - python -m venv env
-  - ps: .\env\Scripts\activate.ps1
   - python -m pip install dataclasses
   - python -m pip install -v -r requirements.txt
   - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data src\assets;src\assets --add-data src\scripts;src\scripts albion-online-stats.py
-  - ps: deactivate
+  - pyinstaller -F -i assets\albion-stats-icon.ico --add-data src\assets;src\assets --add-data src\scripts;src\scripts -name albion-online-stats-cmd albion-online-stats.py
 
 test_script:
   - python -m tox -e ut
 
 after_build:
 - ps: mv dist\albion-online-stats.exe albion-online-stats-$Env:target.exe
+- ps: mv dist\albion-online-stats-cmd.exe albion-online-stats-$Env:target-cmd.exe
 - ps: ls
 artifacts:
   path: albion-online-stats*.exe
