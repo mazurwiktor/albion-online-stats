@@ -7,6 +7,8 @@ Linux and OS X Build Status: [![Linux and OS X Build Status](https://api.travis-
 Windows Build Status: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/jx445p7q0eow95sk/branch/master?svg=true)](https://ci.appveyor.com/project/mazurwiktor/albion-online-stats)
 
 
+<a href="https://github.com/mazurwiktor/albion-online-addons"> **Powered by Albion Online Addons** <img src="https://raw.githubusercontent.com/mazurwiktor/albion-online-addons/master/assets/albion-online-addons.png" width="100"></a>
+
 [![Discord](https://discordapp.com/api/guilds/639922572368150552/widget.png?style=banner2)](https://discord.gg/3U2rpyV)
 
 Albion Online Stats
@@ -16,8 +18,6 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 
 ![0.7.0](https://user-images.githubusercontent.com/11301109/71000581-d9124000-20db-11ea-8c19-4d7f69a2c155.png)
 
-
-> **Note** Network packet tracking and API for game events moved to other project. See [Albion Online Addons](https://github.com/mazurwiktor/albion-online-addons)
 
 # How to use this app
 
