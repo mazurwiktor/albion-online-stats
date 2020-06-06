@@ -24,16 +24,18 @@ install:
   - python --version
   - python -m pip install --upgrade pip
   - python -m pip install --upgrade virtualenv
-  - python -m pip install -r requirements.txt
-  - python -m pip install tox
 
 build_script:
+  - python -m venv env
+  - ps: .\env\Scripts\activate.ps1
   - python -m pip install dataclasses
   - python -m pip install -v -r requirements.txt
   - pyinstaller -F -w -i assets\albion-stats-icon.ico --add-data src\assets;src\assets --add-data src\scripts;src\scripts albion-online-stats.py
   - pyinstaller -F -i assets\albion-stats-icon.ico --add-data src\assets;src\assets --add-data src\scripts;src\scripts -n albion-online-stats-cmd albion-online-stats.py
+  - ps: deactivate
 
 test_script:
+  - python -m pip install tox
   - python -m tox -e ut
 
 after_build:
