@@ -1,11 +1,12 @@
 image: Visual Studio 2017
 environment:
-  # Stable 64-bit MSVC
-  - channel: stable
-    target: x86_64-pc-windows-msvc
-    PYTHON: "C:\\Python36-x64"
-    PYTHON_SCRIPTS: "C:\\Python36-x64\\Scripts"
-    PYTHON_LIB: "C:\\Python36-x64\\libs\\python36.lib"
+  matrix:
+    # Stable 64-bit MSVC
+    - channel: stable
+      target: x86_64-pc-windows-msvc
+      PYTHON: "C:\\Python36-x64"
+      PYTHON_SCRIPTS: "C:\\Python36-x64\\Scripts"
+      PYTHON_LIB: "C:\\Python36-x64\\libs\\python36.lib"
 
 # From https://github.com/starkat99/appveyor-rust/blob/master/appveyor.yml
 install:
