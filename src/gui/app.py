@@ -33,8 +33,9 @@ def fix_npcap():
 def get_modt(always_on_top):
     motd_url = 'https://mazurwiktor.github.io/aostats/motd'
     msg = QMessageBox()
+    msg.setWindowIcon(QtGui.QIcon(path('albion-stats-icon.png')))
     msg.setObjectName("Motd")
-    msg.setWindowTitle("MOTD")
+    msg.setWindowTitle("Message of the day")
     msg.setInformativeText(str(requests.get(motd_url).text))
     msg.setStandardButtons(QMessageBox.Ok)
 
