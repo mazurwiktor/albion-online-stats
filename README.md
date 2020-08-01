@@ -7,7 +7,7 @@ Linux and OS X Build Status: [![Linux and OS X Build Status](https://api.travis-
 Windows Build Status: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/jx445p7q0eow95sk/branch/master?svg=true)](https://ci.appveyor.com/project/mazurwiktor/albion-online-stats)
 
 
-<a href="https://github.com/mazurwiktor/albion-online-addons"> **Powered by Albion Online Addons** <img src="https://raw.githubusercontent.com/mazurwiktor/albion-online-addons/master/assets/albion-online-addons.png" width="100"></a>
+<a href="https://github.com/mazurwiktor/aoaddons-python"> **Powered by pyaoaddons** <img src="https://raw.githubusercontent.com/mazurwiktor/albion-online-addons/master/assets/albion-online-addons.png" width="100"></a>
 
 [![Discord](https://discordapp.com/api/guilds/639922572368150552/widget.png?style=banner2)](https://discord.gg/3U2rpyV)
 
