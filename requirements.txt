@@ -3,4 +3,4 @@ pyinstaller~=3.6
 toml~=0.10
 requests~=2.23
 Pillow~=7.2
-pyaoaddons==0.2.1
+pyaoaddons==0.2.2
