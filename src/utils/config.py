@@ -1,4 +1,5 @@
 import os
+import platform
 import sys
 import toml
 
@@ -30,15 +31,22 @@ _script_path = sys.argv[0]
 _config = None
 
 
+def get_config_path():
+    cfg_file_name = 'albion-online-stats.cfg'
+    script_dir = os.path.dirname(_script_path)
+    if platform.system() == 'Windows':
+        return os.path.join(os.getenv('APPDATA', script_dir), cfg_file_name)
+    else:
+        return os.path.join(script_dir, cfg_file_name)
+
+
 def config():
-    global _script_path
     global _config
 
     if _config:
         return _config
 
-    conf_file = os.path.join(os.path.dirname(
-        _script_path), 'albion-online-stats.cfg')
+    conf_file = get_config_path()
 
     try:
         with open(conf_file, "r") as cfg_file:
