@@ -11,8 +11,8 @@ style = """
     }
 
     #Motd, #Motd > * {
-        background-color: black;
-        color: white;
+        background-color: none;
+        color: none;
         font-size: auto;
     }
 
