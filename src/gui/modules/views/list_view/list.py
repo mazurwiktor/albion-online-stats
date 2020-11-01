@@ -25,7 +25,7 @@ from .....utils import weapon
 
 from .icon import get_weapon_icon as player_icon
 
-Style = collections.namedtuple('Style', 'bg')
+Style = collections.namedtuple('Style', ['bg','fg'])
 
 enchant_re = re.compile(r"(.*)@(\d+)")
 
@@ -43,37 +43,37 @@ def player_style(items):
     weapon_type = weapon.get_weapon_type(items)
 
     if weapon_type == weapon.WeaponType.Arcane:
-        return Style(bg='#f032e6')
+        return Style(bg='#f032e6', fg='#ffffff')
     elif weapon_type == weapon.WeaponType.Axe:
-        return Style(bg='#800000')
+        return Style(bg='#800000', fg='#7fffff')
     elif weapon_type == weapon.WeaponType.Bow:
-        return Style(bg='#469990')
+        return Style(bg='#469990', fg='#ED9247')
     elif weapon_type == weapon.WeaponType.Crossbow:
-        return Style(bg='#000075')
+        return Style(bg='#000075', fg='#ffff8a')
     elif weapon_type == weapon.WeaponType.Curse:
-        return Style(bg='#911eb4')
+        return Style(bg='#911eb4', fg='#6ee14b')
     elif weapon_type == weapon.WeaponType.Dagger:
-        return Style(bg='#4d5f20')
+        return Style(bg='#4d5f20', fg='#ffffff')
     elif weapon_type == weapon.WeaponType.Fire:
-        return Style(bg='#e6194B')
+        return Style(bg='#e6194B', fg='#4763ED')
     elif weapon_type == weapon.WeaponType.Frost:
-        return Style(bg='#4363d8')
+        return Style(bg='#4363d8', fg='#eeeeee')
     elif weapon_type == weapon.WeaponType.Hammer:
-        return Style(bg='#9A6324')
+        return Style(bg='#9A6324', fg='#2FEAED')
     elif weapon_type == weapon.WeaponType.Holy:
-        return Style(bg='#42d4f4')
+        return Style(bg='#42d4f4', fg='#bd2b0b')
     elif weapon_type == weapon.WeaponType.Mace:
-        return Style(bg='#808000')
+        return Style(bg='#808000', fg='#2FEAED')
     elif weapon_type == weapon.WeaponType.Nature:
-        return Style(bg='#3cb44b')
+        return Style(bg='#3cb44b', fg='#EDC647')
     elif weapon_type == weapon.WeaponType.Quarterstaff:
-        return Style(bg='#f58231')
+        return Style(bg='#f58231', fg='#0a7dce')
     elif weapon_type == weapon.WeaponType.Spear:
-        return Style(bg='#a9a9a9')
+        return Style(bg='#a9a9a9', fg='#18ED54')
     elif weapon_type == weapon.WeaponType.Sword:
-        return Style(bg='#b59d00')
+        return Style(bg='#b59d00', fg='#4a62ff')
     else:
-        return Style(bg='#42413c')
+        return Style(bg='#42413c', fg='#bdbec3')
 
 
 class ListItemView(QListView):
@@ -83,6 +83,7 @@ class ListItemView(QListView):
             self.parent = parent
             self.player = player
             self.update(player)
+            self.setFlags(self.flags() & ~Qt.ItemIsSelectable)
 
             self.setTextAlignment(
                 QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
@@ -108,6 +109,11 @@ class ListItemView(QListView):
             brush = QtGui.QBrush(gradient)
 
             self.setBackground(brush)
+
+            brush_fg = QtGui.QBrush(QtGui.QColor(player_style(self.player.items).fg))
+            self.setForeground(brush_fg)
+
+
             icon = player_icon(self.player.items['weapon'])
             self.setToolTip('\n'.join(
                 [f'{k}: {map_name(v)}' for (k, v) in self.player.items.items() if v]))
@@ -130,6 +136,7 @@ class ListItemView(QListView):
         self.model = self.ItemModel(self)
         self.proxy = self.SortProxyModel()
         self.proxy.setSourceModel(self.model)
+
 
         self.setModel(self.proxy)
 

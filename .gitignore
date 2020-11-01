@@ -13,3 +13,4 @@ albion-online-stats.cfg
 .mypy_cache
 aoaddons.log
 .eggs
+.idea
