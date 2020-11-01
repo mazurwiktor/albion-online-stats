@@ -11,8 +11,8 @@ style = """
     }
 
     #Motd, #Motd > * {
-        background-color: none;
-        color: none;
+        background-color: black;
+        color: white;
         font-size: auto;
     }
 
@@ -27,4 +27,10 @@ style = """
     QListView::item:selected {
         background-color: black;
     }
+
+    QListView::item:selected:!active {
+        background-color: black;
+        color: white;
+    }
+
 """ % (font_size)
