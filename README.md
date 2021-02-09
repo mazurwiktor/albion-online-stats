@@ -16,7 +16,13 @@ Albion Online Stats
 
 Albion online stats is an extension to MMORPG game - Albion Online. It tracks network traffic and displays various statistics, such as damage and DPS meter calculated from in-game actions.
 
+## App preview
+
 ![0.7.0](https://user-images.githubusercontent.com/11301109/71000581-d9124000-20db-11ea-8c19-4d7f69a2c155.png)
+
+## Youtube live preview
+
+[![Video](http://img.youtube.com/vi/Dy3YyherSmw/0.jpg)](http://www.youtube.com/watch?v=Dy3YyherSmw "Albion online stats")
 
 
 # How to use this app
