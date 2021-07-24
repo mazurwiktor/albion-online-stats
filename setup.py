@@ -2,17 +2,19 @@ from setuptools import setup, find_packages
 
 
 install_requires = [
-    "requests==2.23.0",
-    "pyside2==5.14.2",
-    "toml==0.10.1",
-    "pillow==7.2.0",
-    "pyaoaddons==0.2.5"
+    "requests==2.26.0",
+    "pyside2==5.15.2",
+    "toml==0.10.2",
+    "pillow==8.3.1",
+    "pyaoaddons==0.2.7.dev"
 ]
 
 setup(
     name='aostats',
-    version='0.11.11',
+    version='1.0.0',
     packages=find_packages('.', include=('src*')),
+    package_data={'': ['**/*.png']},
+    include_package_data=True,
     install_requires=install_requires,
     entry_points={
         'console_scripts': [
