@@ -1,6 +1,6 @@
 from os import path
 from setuptools import setup, find_packages
-from src.utils import version
+from src.version import version
 
 install_requires = [
     "requests==2.26.0",
@@ -17,13 +17,12 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     setup(
         name='aostats',
         author="Wiktor Mazur",
-        version=version.get_version(),
+        version=version,
         author_email="wiktormazur1@gmail.com",
         url="https://github.com/mazurwiktor/albion-online-stats",
         long_description=long_description,
         long_description_content_type='text/markdown',
         packages=find_packages('.', include=('src*')),
-        package_data={'': ['**/*.png']},
         include_package_data=True,
         install_requires=install_requires,
         entry_points={

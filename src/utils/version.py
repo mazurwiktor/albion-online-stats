@@ -1,13 +1,13 @@
 import os
 import requests
 
-_version = "1.0.0"
+from ..version import version
 
 latest_url = "https://github.com/mazurwiktor/albion-online-stats/releases/latest"
 
 
 def get_version():
-    return _version
+    return version
 
 
 def latest_version():
@@ -18,4 +18,4 @@ def latest_version():
 
 
 def current_version():
-    return _version
+    return version
