@@ -1,10 +1,6 @@
 <p align="center">
-    <img src="assets/albion-stats-icon.png" width="100">
+    <img src="https://raw.githubusercontent.com/mazurwiktor/albion-online-stats/master/assets/albion-stats-icon.png" width="100">
 </p>
-
-Linux and OS X Build Status: [![Linux and OS X Build Status](https://api.travis-ci.org/mazurwiktor/albion-online-stats.svg)](https://travis-ci.org/mazurwiktor/albion-online-stats)
-
-Windows Build Status: [![Windows Build Status](https://ci.appveyor.com/api/projects/status/jx445p7q0eow95sk/branch/master?svg=true)](https://ci.appveyor.com/project/mazurwiktor/albion-online-stats)
 
 
 <a href="https://github.com/mazurwiktor/aoaddons-python"> **Powered by pyaoaddons** <img src="https://raw.githubusercontent.com/mazurwiktor/albion-online-addons/master/assets/albion-online-addons.png" width="100"></a>
