@@ -4,6 +4,7 @@
 *.spec
 env
 venv
+launchers/python_env
 **/build
 **/dist
 **/*.egg-info

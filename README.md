@@ -32,7 +32,8 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 ## Installation
 
 1. On windows make sure that WinPcap is installed in your system. [Npcap 0.9983 installer for Windows Vista/2008, 7/2008R2, 8/2012, 8.1/2012R2, 10/2016 (x86 and x64)](https://nmap.org/npcap/dist/npcap-0.9983.exe) **Make sure to install with the "Install Npcap in WinPcap API-compatible Mode"**
-2. Download latest release from https://github.com/mazurwiktor/albion-online-stats/releases/latest (.exe for windows .tar for linux and mac)
+2. Install python https://docs.python.org/3/using/
+3. Download latest launcher from https://github.com/mazurwiktor/albion-online-stats/releases/latest (albion-online-stats.bat for windows albion-online-stats.sh for linux and mac)
 3. Enjoy :)
 
 ## Configuration
@@ -60,7 +61,7 @@ After first execution the app is going to create default configuration file name
 
 ## Prerequisites
 
-- Python installed (python3.6 / python3.7 / python3.8)
+- Python installed (python3.6+)
 - *Windows only prerequisites*  https://github.com/libpnet/libpnet#windows
 
 
@@ -74,25 +75,20 @@ After first execution the app is going to create default configuration file name
     ```shell
     python -m venv env
     [linux/mac] . env/bin/activate
-    [windows] .\env\Scripts\activate.ps1
+    [windows powershell] .\env\Scripts\activate.ps1
+    [windows cmd.exe] .\env\Scripts\activate.bat
     ```
 
-    or alternatively using conda and skip installing requirements step
+
+3. Install package
 
     ```shell
-    conda env create --file environment.yml
-    conda activate albion
-    ```
-
-3. Install requirements
-
-    ```shell
-    pip install -v -r requirements.txt
+    python setup.py install
     ```
 
 4. Run the application
     ```shell
-    [sudo on linux] python albion-online-stats.py
+    aostats
     ```
 
 # Contribution
