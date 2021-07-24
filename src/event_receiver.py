@@ -23,14 +23,15 @@ class VisibilityEventReceiver(EventReceiver):
             self.on_player_appeared(value[consts.EvKeyName])
         elif event_name == consts.EvNameUpdateParty:
             self.on_visible_players_changed(value[consts.EvKeyPlayerNames])
-    
+
     @abc.abstractmethod
     def on_player_appeared(self, main_player_name: str):
         pass
 
     @abc.abstractmethod
-    def on_visible_players_changed(self, visible_players : List[str]):
+    def on_visible_players_changed(self, visible_players: List[str]):
         pass
+
 
 class FameEventReceiver(EventReceiver):
 

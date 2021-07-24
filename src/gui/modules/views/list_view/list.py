@@ -25,7 +25,7 @@ from .....utils import weapon
 
 from .icon import get_weapon_icon as player_icon
 
-Style = collections.namedtuple('Style', ['bg','fg'])
+Style = collections.namedtuple('Style', ['bg', 'fg'])
 
 enchant_re = re.compile(r"(.*)@(\d+)")
 
@@ -110,9 +110,9 @@ class ListItemView(QListView):
 
             self.setBackground(brush)
 
-            brush_fg = QtGui.QBrush(QtGui.QColor(player_style(self.player.items).fg))
+            brush_fg = QtGui.QBrush(QtGui.QColor(
+                player_style(self.player.items).fg))
             self.setForeground(brush_fg)
-
 
             icon = player_icon(self.player.items['weapon'])
             self.setToolTip('\n'.join(
@@ -136,7 +136,6 @@ class ListItemView(QListView):
         self.model = self.ItemModel(self)
         self.proxy = self.SortProxyModel()
         self.proxy.setSourceModel(self.model)
-
 
         self.setModel(self.proxy)
 

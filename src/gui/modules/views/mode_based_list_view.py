@@ -67,7 +67,8 @@ class ModeBasedListView(QWidget):
 
     def update(self, prefix, elapsed, fame, fame_per_hour, players: PlayerListItem):
         self.session_bar.player_stats.update(elapsed, fame, fame_per_hour)
-        self.session_bar.copy_button.update(prefix, self.list_view.get_player_list_items(), self.session_bar.mode.get_mode(), fame)
+        self.session_bar.copy_button.update(
+            prefix, self.list_view.get_player_list_items(), self.session_bar.mode.get_mode(), fame)
         self.list_view.update(players)
         self.session_bar.update()
 

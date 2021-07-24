@@ -1,4 +1,4 @@
-from PySide2.QtWidgets import QMessageBox # type: ignore
+from PySide2.QtWidgets import QMessageBox  # type: ignore
 
 
 text = """
@@ -13,6 +13,7 @@ Quick contact - catch me on discord JaWiktor#1717
 See you in game, WedrowyczJakub
 """
 
+
 class About(QMessageBox):
     def __init__(self):
         QMessageBox.__init__(self)
@@ -24,7 +25,5 @@ class About(QMessageBox):
             "https://github.com/mazurwiktor/albion-online-stats",
             "https://github.com/mazurwiktor/albion-online-stats/releases/latest",
             "https://www.patreon.com/wiktormazur",
-            ))
+        ))
         self.setStandardButtons(QMessageBox.Ok)
-
-

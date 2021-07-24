@@ -4,6 +4,7 @@ from typing import List
 from ..utils.number import Number
 from .combat_state import CombatState
 
+
 @dataclass
 class StandalonePlayerListItem:
     name: str

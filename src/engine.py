@@ -60,7 +60,8 @@ class GameStats():
                 self._construct_new_stats([VisibilityType.LastFight])
 
         elif event[ev_consts.EvKeyName] == ev_consts.EvNameZoneChange:
-            self.history[StatType.Combat].update_non_idle(self.zone[StatType.Combat])
+            self.history[StatType.Combat].update_non_idle(
+                self.zone[StatType.Combat])
             self.history[StatType.Fame].update(self.zone[StatType.Fame])
             self.history[StatType.Time].update(self.zone[StatType.Time])
 
@@ -155,6 +156,7 @@ cached_players = ()  # do not compute values if there is nothing in queue
 cached_stat_type = None
 cached_combat_stat_type = None
 
+
 def get_stats(stat_type: str, combat_stat_type: str):
     global cached_players, cached_stat_type, cached_combat_stat_type
     new_events = False
@@ -172,8 +174,9 @@ def get_stats(stat_type: str, combat_stat_type: str):
         return (cached_players, fame, time)
 
     cached_players = {
-        CombatStatType.Damage: lambda stat_type : game_stats.get_damage_stats(stat_type),
-        CombatStatType.Healing: lambda stat_type : game_stats.get_healing_stats(stat_type)
+        CombatStatType.Damage: lambda stat_type: game_stats.get_damage_stats(stat_type),
+        CombatStatType.Healing: lambda stat_type: game_stats.get_healing_stats(
+            stat_type)
     }[combat_stat_type](stat_type)
 
     cached_stat_type = stat_type

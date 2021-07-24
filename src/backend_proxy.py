@@ -1,5 +1,5 @@
 try:
-    import pyaoaddons # type: ignore
+    import pyaoaddons  # type: ignore
 except:
     class pyaoaddons:  # type: ignore
         @staticmethod
@@ -129,9 +129,12 @@ def _testing_call_sequence(callback):
         *add_player(1, 'Fire', 'T5_MAIN_FIRESTAFF@1'),
         {'name': 'EnterCombat', 'value': {'id': 0, 'name': 'Arcane'}},
         {'name': 'UpdateParty', 'value': {'player_names': ['Arcane', 'Fire']}},
-        {'name': 'HealthReceived', 'value': {'source': 0, 'target': 1, 'value': 100.0}},
-        {'name': 'HealthReceived', 'value': {'source': 0, 'target': 0, 'value': 100.0}},
-        {'name': 'HealthReceived', 'value': {'source': 1, 'target': 0, 'value': 100.0}},
+        {'name': 'HealthReceived', 'value': {
+            'source': 0, 'target': 1, 'value': 100.0}},
+        {'name': 'HealthReceived', 'value': {
+            'source': 0, 'target': 0, 'value': 100.0}},
+        {'name': 'HealthReceived', 'value': {
+            'source': 1, 'target': 0, 'value': 100.0}},
     ]
 
     def run_sequence():

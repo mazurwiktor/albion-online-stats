@@ -8,5 +8,6 @@ except:
 
 from . import assets
 
+
 def map_name(name):
     return localization_mapping[name] if name in localization_mapping else name

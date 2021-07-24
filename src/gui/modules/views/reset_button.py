@@ -10,6 +10,7 @@ from .... import engine
 
 from .stats_type import StatsType
 
+
 class ResetButton(QPushButton):
     def __init__(self):
         QPushButton.__init__(self)
@@ -28,6 +29,6 @@ class ResetButton(QPushButton):
         }
 
         reset[self.stat_type]()
-    
+
     def update(self, stat_type: str):
         self.stat_type = stat_type

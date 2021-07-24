@@ -52,11 +52,11 @@ class Player(Stats):
     healing_done: float = 0.0
     combat_time: CombatTime = field(default_factory=lambda: CombatTime())
     combat_state: int = CombatState.OutOfCombat
-    active: bool  = False
+    active: bool = False
 
     def activate(self):
         self.active = True
-    
+
     def is_active(self) -> bool:
         return self.active
 
@@ -167,7 +167,8 @@ class CombatStats(CombatEventReceiver, Stats):
 
     def update_non_idle(self, other):
         self.update(other)
-        self.players = dict(filter(lambda elem: elem[1].has_stats(), self.players.items()))
+        self.players = dict(
+            filter(lambda elem: elem[1].has_stats(), self.players.items()))
 
         for player in self.players.values():
             player.activate()
