@@ -3,9 +3,15 @@
 </p>
 
 
-<a href="https://github.com/mazurwiktor/aoaddons-python"> **Powered by pyaoaddons** <img src="https://raw.githubusercontent.com/mazurwiktor/albion-online-addons/master/assets/albion-online-addons.png" width="100"></a>
+
+
+   
+**Powered by**
+       
+<a href="https://github.com/mazurwiktor/aoaddons-python"> **pyaoaddons** </a> & <a href="https://github.com/mazurwiktor/albion-online-addons"> **albion online addons** </a> 
 
 [![Discord](https://discordapp.com/api/guilds/639922572368150552/widget.png?style=banner2)](https://discord.gg/3U2rpyV)
+
 
 Albion Online Stats
 ===================
