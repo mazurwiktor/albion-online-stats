@@ -21,6 +21,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
         author_email="wiktormazur1@gmail.com",
         url="https://github.com/mazurwiktor/albion-online-stats",
         long_description=long_description,
+        long_description_content_type='text/markdown',
         packages=find_packages('.', include=('src*')),
         package_data={'': ['**/*.png']},
         include_package_data=True,
