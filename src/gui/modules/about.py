@@ -1,5 +1,6 @@
-from PySide2.QtWidgets import QMessageBox  # type: ignore
+from PySide2.QtWidgets import QMessageBox  # noqa type: ignore
 
+from ...utils.version import  get_version
 
 text = """
 This software is free to use and delivered to you with a lot on fun :)
@@ -18,7 +19,7 @@ class About(QMessageBox):
     def __init__(self):
         QMessageBox.__init__(self)
         self.setIcon(QMessageBox.Information)
-        self.setWindowTitle("Albion online stats")
+        self.setWindowTitle(f"Albion online stats {get_version()}")
         self.setText(text)
         self.setInformativeText('<a href="{}"> Report Bug/Feature request </a> | <a href="{}"> Contribute </a> | <a href="{}"> Download </a> | <a href="{}"> Donate </a>'.format(
             "https://github.com/mazurwiktor/albion-online-stats/issues/new/choose",

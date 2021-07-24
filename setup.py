@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-
+from src.utils import version
 
 install_requires = [
     "requests==2.26.0",
@@ -11,7 +11,7 @@ install_requires = [
 
 setup(
     name='aostats',
-    version='1.0.0',
+    version=version.get_version(),
     packages=find_packages('.', include=('src*')),
     package_data={'': ['**/*.png']},
     include_package_data=True,

@@ -17,7 +17,6 @@ from ..utils.config import config
 from .modules.main import MainWidget
 from .styling import style
 from ..utils.version import current_version as get_current_version
-from ..utils.version import latest_url
 from ..utils.version import latest_version as get_latest_version
 from ..utils.assets import path
 from ..utils.assets import scripts
@@ -28,18 +27,6 @@ sys.path.append(os.path.dirname(os.path.abspath('__file__')))
 def fix_npcap():
     os.system(scripts('fixnpcap.bat'))
     sys.exit(0)
-
-
-def get_modt(always_on_top):
-    motd_url = 'https://mazurwiktor.github.io/aostats/motd'
-    msg = QMessageBox()
-    msg.setWindowIcon(QtGui.QIcon(path('albion-stats-icon.png')))
-    msg.setObjectName("Motd")
-    msg.setWindowTitle("Message of the day")
-    msg.setInformativeText(str(requests.get(motd_url).text))
-    msg.setStandardButtons(QMessageBox.Ok)
-
-    return msg
 
 
 def run():
@@ -66,16 +53,12 @@ def run():
     widget.setWindowTitle('Albion Online Stats')
     widget.setWindowIcon(QtGui.QIcon(path('albion-stats-icon.png')))
 
-    modt = get_modt(['always_on_top'])
-
     if window_config['always_on_top']:
         widget.setWindowFlag(Qt.WindowStaysOnTopHint)
-        modt.setWindowFlag(Qt.WindowStaysOnTopHint)
     if window_config['frameless']:
         widget.setWindowFlag(Qt.FramelessWindowHint)
 
     widget.show()
-    modt.show()
 
     current_version, latest_version = (
         get_current_version(), get_latest_version())
@@ -85,8 +68,8 @@ def run():
         msg.setIcon(QMessageBox.Warning)
         msg.setWindowTitle("Update available!")
         msg.setText("Another version of app is avaliable.")
-        msg.setInformativeText("You are using app in version {}, new version {} available <a href='{}'>here</a>".format(
-            current_version, latest_version, latest_url))
+        msg.setInformativeText("You are using app in version {}, latest version is {}".format(
+            current_version, latest_version))
         msg.setStandardButtons(QMessageBox.Ok)
         msg.show()
 

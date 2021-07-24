@@ -1,9 +1,13 @@
 import os
 import requests
 
-_version = "0.11.12"
+_version = "1.0.0"
 
 latest_url = "https://github.com/mazurwiktor/albion-online-stats/releases/latest"
+
+
+def get_version():
+    return _version
 
 
 def latest_version():
