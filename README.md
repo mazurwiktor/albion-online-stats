@@ -1,14 +1,11 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/mazurwiktor/albion-online-stats/master/assets/albion-stats-icon.png" width="100">
-</p>
+<div align="center">
+    <img src="https://raw.githubusercontent.com/mazurwiktor/albion-online-stats/master/assets/albion-stats-icon.png" width="100"/>
+</div>
 
-
-
+[![Downloads](https://pepy.tech/badge/aostats)](https://pepy.tech/project/aostats)
 
    
-**Powered by**
-       
-<a href="https://github.com/mazurwiktor/aoaddons-python"> **pyaoaddons** </a> & <a href="https://github.com/mazurwiktor/albion-online-addons"> **albion online addons** </a> 
+**Powered by**  <a href="https://github.com/mazurwiktor/aoaddons-python"> **pyaoaddons** </a> & <a href="https://github.com/mazurwiktor/albion-online-addons"> **albion online addons** </a> 
 
 [![Discord](https://discordapp.com/api/guilds/639922572368150552/widget.png?style=banner2)](https://discord.gg/3U2rpyV)
 
