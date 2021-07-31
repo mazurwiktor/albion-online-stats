@@ -31,7 +31,7 @@ Albion online stats is an extension to MMORPG game - Albion Online. It tracks ne
 ## Installation
 
 1. On windows make sure that WinPcap is installed in your system. [Npcap 0.9983 installer for Windows Vista/2008, 7/2008R2, 8/2012, 8.1/2012R2, 10/2016 (x86 and x64)](https://nmap.org/npcap/dist/npcap-0.9983.exe) **Make sure to install with the "Install Npcap in WinPcap API-compatible Mode"**
-2. Install python https://docs.python.org/3/using/
+2. Install python [all platforms installation instructions](https://docs.python.org/3/using/) or via [Microsoft Store](https://www.microsoft.com/en-us/p/python-39/9p7qfqmjrfp7).
 3. Download latest launcher from https://github.com/mazurwiktor/albion-online-stats/releases/latest (albion-online-stats.bat for windows albion-online-stats.sh for linux and mac)
 3. Enjoy :)
 
