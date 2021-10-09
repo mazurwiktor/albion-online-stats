@@ -1,6 +1,6 @@
 
-from PySide2.QtWidgets import QPushButton  # type: ignore
-from PySide2 import QtGui  # type: ignore
+from PySide6.QtWidgets import QPushButton  # type: ignore
+from PySide6 import QtGui  # type: ignore
 
 from ....utils import assets
 from ....stats.list_item import PlayerListItem

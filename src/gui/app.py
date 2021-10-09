@@ -3,12 +3,12 @@ import platform
 import sys
 import requests
 
-from PySide2 import QtCore  # type: ignore
-from PySide2.QtCore import Qt  # type: ignore
-from PySide2 import QtGui  # type: ignore
-from PySide2.QtWidgets import QApplication  # type: ignore
-from PySide2.QtWidgets import QMessageBox  # type: ignore
-from PySide2.QtWidgets import QPushButton  # type: ignore
+from PySide6 import QtCore  # type: ignore
+from PySide6.QtCore import Qt  # type: ignore
+from PySide6 import QtGui  # type: ignore
+from PySide6.QtWidgets import QApplication  # type: ignore
+from PySide6.QtWidgets import QMessageBox  # type: ignore
+from PySide6.QtWidgets import QPushButton  # type: ignore
 
 from ..engine import InitializationResult
 from ..engine import initialize

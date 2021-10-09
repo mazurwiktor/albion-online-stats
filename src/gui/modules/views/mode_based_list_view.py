@@ -1,12 +1,12 @@
-# from PySide2.QtCore import QTimer
-# from PySide2.QtCore import Qt
+# from PySide6.QtCore import QTimer
+# from PySide6.QtCore import Qt
 
 from typing import Callable
 
-from PySide2.QtWidgets import QHBoxLayout  # type: ignore
-from PySide2.QtWidgets import QVBoxLayout  # type: ignore
-from PySide2.QtWidgets import QComboBox  # type: ignore
-from PySide2.QtWidgets import QWidget  # type: ignore
+from PySide6.QtWidgets import QHBoxLayout  # type: ignore
+from PySide6.QtWidgets import QVBoxLayout  # type: ignore
+from PySide6.QtWidgets import QComboBox  # type: ignore
+from PySide6.QtWidgets import QWidget  # type: ignore
 
 from ....stats.list_item import PlayerListItem
 
@@ -56,7 +56,7 @@ class ModeBasedListView(QWidget):
         QWidget.__init__(self)
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
-        self.layout.setMargin(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.session_bar = SessionBar(clipboard)
         self.layout.addWidget(self.session_bar)
 

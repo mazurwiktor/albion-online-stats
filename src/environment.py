@@ -19,7 +19,6 @@ if TEST_ENV_ENABLED:
     test_type = os.getenv('TESTING')
 
     if test_type not in _test_types:
-        raise Exception('Unavailable GUI test type, avaliable values: {}'.format(
-            ','.join(_test_types.keys())))
+        raise Exception(f'Unavailable GUI test type: {test_type}, avaliable values: {",".join(_test_types.keys())}')
 
     TEST_TYPE = _test_types[test_type.lower()]

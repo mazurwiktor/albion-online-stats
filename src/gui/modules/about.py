@@ -1,4 +1,4 @@
-from PySide2.QtWidgets import QMessageBox  # noqa type: ignore
+from PySide6.QtWidgets import QMessageBox  # noqa type: ignore
 
 from ...utils.version import  get_version
 
