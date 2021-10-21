@@ -1,11 +1,7 @@
-import json
-
 try:
     from pyaoaddons import item_category_mapping
 except:
     item_category_mapping = {}
-
-from . import assets
 
 
 class WeaponType:
@@ -26,12 +22,8 @@ class WeaponType:
     Sword = 'sword'
 
 
-def map_weapon(weapon):
-    return item_category_mapping[weapon] if weapon in item_category_mapping else None
-
-
 def get_weapon_type(items):
-    weapon = map_weapon(items['weapon'])
+    weapon = item_category_mapping.get(items.get('weapon', None), None)
 
     if weapon == WeaponType.Arcane:
         return WeaponType.Arcane

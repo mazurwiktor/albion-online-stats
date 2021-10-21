@@ -6,8 +6,8 @@ install_requires = [
     "requests==2.26.0",
     "PySide6==6.2.0",
     "toml==0.10.2",
-    "pillow==8.3.2",
-    "pyaoaddons==0.2.7.dev"
+    "pillow==8.4.0",
+    "pyaoaddons==0.2.8"
 ]
 
 this_directory = path.abspath(path.dirname(__file__))
