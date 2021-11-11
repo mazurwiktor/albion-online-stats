@@ -14,9 +14,12 @@ if not defined FOUND_PYTHON (goto python_not_found)
     %FOUND_PYTHON% -m venv python_env
     call .\python_env\Scripts\activate.bat
 
+    for /f "tokens=* delims=" %%a in ('python --version') do (echo Python version: %%a)
+    for /f "tokens=* delims=" %%a in ('python -m pip --version') do (echo Pip version: %%a)
+
     echo Installing newest version of aostats...
     python -m pip install --upgrade pip
-    python -m pip install aostats 
+    python -m pip install aostats
     python -m pip install --upgrade aostats
 
     goto execute
