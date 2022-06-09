@@ -85,7 +85,7 @@ class Player(Stats):
         self.items = value
 
     def register_damage_done(self, value):
-        if self.combat_state == CombatState.OutOfCombat:
+        if self.party.combat_state() == CombatState.OutOfCombat:
             return
 
         self.damage_done += value
