@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 from src.version import version
 
 install_requires = [
-    "requests==2.26.0",
+    "requests==2.31.0",
     "PySide6==6.2.0",
     "toml==0.10.2",
     "pillow==8.4.0",
